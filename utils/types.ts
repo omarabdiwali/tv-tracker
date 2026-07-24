@@ -51,7 +51,7 @@ export interface ShowProps {
   title: string;
   image: string;
   overview: string;
-  episodes?: EpisodesData; // Already parsed on backend
+  episodes?: EpisodesData;
   imdbId?: string;
   genres?: string[];
   voteAverage?: string | number;

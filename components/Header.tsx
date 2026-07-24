@@ -24,10 +24,9 @@ export function Header() {
     setSearch("");
   };
 
-  const redirect = (href: string) => {
+  const eraseSearch = () => {
     setSearch("");
     inputRef.current?.blur();
-    router.push(href);
   };
 
   if (status === "loading") return null;
@@ -37,27 +36,30 @@ export function Header() {
       {status === "authenticated" ? (
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-2">
           <div className="flex flex-wrap gap-2 justify-center sm:justify-center">
-            <button 
-              onClick={() => redirect("/")} 
-              title={"Home"} 
-              className="p-2 sm:p-3 cursor-pointer hover:bg-slate-800 bg-[var(--input-bg)] rounded-lg transition-colors flex-shrink-0"
-            >
-              <IoIosHome size={20} />
-            </button>
-            <button 
-              onClick={() => redirect("/movies")} 
-              title={"Saved Movies"} 
-              className="p-2.5 sm:p-3 cursor-pointer hover:bg-slate-800 bg-[var(--input-bg)] rounded-lg transition-colors flex-shrink-0"
-            >
-              <BiSolidCameraMovie size={20} />
-            </button>
-            <button 
-              onClick={() => redirect("/shows")} 
-              title={"Saved Shows"} 
-              className="p-2.5 sm:p-3 cursor-pointer hover:bg-slate-800 bg-[var(--input-bg)] rounded-lg transition-colors flex-shrink-0"
-            >
-              <IoIosTv size={20} />
-            </button>
+            <Link href={'/'} onClick={eraseSearch}>
+              <button 
+                title={"Home"} 
+                className="p-2 sm:p-3 cursor-pointer hover:bg-slate-800 bg-[var(--input-bg)] rounded-lg transition-colors flex-shrink-0"
+              >
+                <IoIosHome size={20} />
+              </button>
+            </Link>
+            <Link href={'/movies'} onClick={eraseSearch}>
+              <button 
+                title={"Saved Movies"} 
+                className="p-2.5 sm:p-3 cursor-pointer hover:bg-slate-800 bg-[var(--input-bg)] rounded-lg transition-colors flex-shrink-0"
+              >
+                <BiSolidCameraMovie size={20} />
+              </button>
+            </Link>
+            <Link href={'/shows'} onClick={eraseSearch}>
+              <button 
+                title={"Saved Shows"} 
+                className="p-2.5 sm:p-3 cursor-pointer hover:bg-slate-800 bg-[var(--input-bg)] rounded-lg transition-colors flex-shrink-0"
+              >
+                <IoIosTv size={20} />
+              </button>
+            </Link>
           </div>
           
           <form onSubmit={handleSubmit} className="flex flex-1 w-full sm:w-auto min-w-0 gap-2">
