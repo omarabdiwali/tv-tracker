@@ -30,9 +30,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const watchedEpisodes = new Set(watchedEpisodesList);
   
   if (setWatched && watchedEpisodes.has(`${epId}`)) {
-    return res.status(200).json({ success: true, message: "Episode has already been watched." });
+    return res.status(200).json({ success: true, message: "has already been watched." });
   } else if (!setWatched && !watchedEpisodes.has(`${epId}`)) {
-    return res.status(200).json({ success: true, message: "Episode has already not been watched." });
+    return res.status(200).json({ success: true, message: "has already not been watched." });
   }
 
   if (setWatched) {
@@ -40,12 +40,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   } else {
     const epIndex = watchedEpisodesList.findIndex((ep) => ep == `${epId}`);
     if (epIndex == -1) {
-      return res.status(200).json({ success: true, message: "Episode has already not been watched." });
+      return res.status(200).json({ success: true, message: "has already not been watched." });
     }
     watchedEpisodesList.splice(epIndex, 1);
   }
 
   user.savedShows[index].watchedEpisodes = [...watchedEpisodesList];
   user.save();
-  return res.status(200).json({ success: true, message: `Episode has been set to${setWatched ? '' : ' not'} watched!` });
+  return res.status(200).json({ success: true, message: `has been set to${setWatched ? '' : ' not'} watched!` });
 }

@@ -4,23 +4,19 @@ import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { enqueueSnackbar, useSnackbar } from 'notistack';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, memo } from 'react';
 import { IoIosAddCircleOutline, IoIosCloseCircleOutline, IoIosHourglass, IoMdArrowDropdown, IoMdArrowDropup } from 'react-icons/io';
 
-// Memoized Episode Item Component
-const EpisodeItem = ({ episode, showId, onToggleWatched }: { 
-  episode: Episode; 
-  showId: string | number; 
-  onToggleWatched: (id: string | number, watched: boolean) => Promise<boolean> 
+const EpisodeItem = memo(({ episode, onToggleWatched }: { 
+  episode: Episode;
+  onToggleWatched: (id: string | number, watched: boolean, episode: number) => Promise<boolean> 
 }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleClick = useCallback(async () => {
     setIsLoading(true);
-    const result = await onToggleWatched(episode.id, !episode.watched);
-    if (result) {
-      episode.watched = !episode.watched;
-    }
+    const newWatched = !episode.watched;
+    await onToggleWatched(episode.id, newWatched, episode.number);
     setIsLoading(false);
   }, [episode.id, episode.watched, onToggleWatched]);
 
@@ -63,23 +59,31 @@ const EpisodeItem = ({ episode, showId, onToggleWatched }: {
       </button>
     </div>
   );
-};
+});
 
-// Memoized Season Section Component
 const SeasonSection = ({ 
   seasonNumber, 
-  episodes, 
-  showId, 
+  episodes: initialEpisodes, 
   onToggleWatched 
 }: { 
   seasonNumber: number; 
   episodes: Episode[]; 
-  showId: string | number; 
-  onToggleWatched: (id: string | number, watched: boolean) => Promise<boolean> 
+  onToggleWatched: (id: string | number, watched: boolean, season: number, episode: number) => Promise<boolean> 
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [episodes, setEpisodes] = useState<Episode[]>(initialEpisodes);
   
   const watchedCount = episodes.filter(ep => ep.watched).length;
+  
+  const handleToggleWatched = useCallback(async (episodeId: string | number, setWatched: boolean, episode: number) => {
+    const result = await onToggleWatched(episodeId, setWatched, seasonNumber, episode);
+    if (result) {
+      setEpisodes(prev => prev.map(ep => 
+        ep.id === episodeId ? { ...ep, watched: setWatched } : ep
+      ));
+    }
+    return result;
+  }, [onToggleWatched]);
   
   return (
     <div className="border border-gray-700 rounded-lg overflow-hidden">
@@ -108,9 +112,8 @@ const SeasonSection = ({
           {episodes.map(episode => (
             <EpisodeItem 
               key={episode.id} 
-              episode={episode} 
-              showId={showId} 
-              onToggleWatched={onToggleWatched} 
+              episode={episode}
+              onToggleWatched={handleToggleWatched} 
             />
           ))}
         </div>
@@ -119,7 +122,6 @@ const SeasonSection = ({
   );
 };
 
-// Episode List Component
 interface EpisodeListProps {
   showId: string | number;
   episodes: EpisodesData;
@@ -128,7 +130,7 @@ interface EpisodeListProps {
 function EpisodeList({ showId, episodes }: EpisodeListProps) {
   const { enqueueSnackbar } = useSnackbar();
   
-  const handleToggleWatched = useCallback(async (episodeId: string | number, setWatched: boolean) => {
+  const handleToggleWatched = useCallback(async (episodeId: string | number, setWatched: boolean, season: number, episode: number) => {
     const reqBody = { 
       showId, 
       epId: episodeId, 
@@ -145,7 +147,7 @@ function EpisodeList({ showId, episodes }: EpisodeListProps) {
     .then(res => res.json())
     .then(data => {
       if (data.success) {
-        enqueueSnackbar(data.message, { variant: 'success', autoHideDuration: 1500 });
+        enqueueSnackbar(`S${season} E${episode} ${data.message}`, { variant: 'success', autoHideDuration: 1500 });
         return true;
       } else {
         enqueueSnackbar(data.message, { variant: 'error', autoHideDuration: 1500 });
@@ -178,7 +180,6 @@ function EpisodeList({ showId, episodes }: EpisodeListProps) {
           key={seasonNum}
           seasonNumber={seasonNum}
           episodes={episodes[seasonNum]}
-          showId={showId}
           onToggleWatched={handleToggleWatched}
         />
       ))}
@@ -245,12 +246,12 @@ export default function ShowDetails({ show }: ShowDetailsProps) {
               <div className="flex items-center justify-between">
                 {show.homepage ? (
                   <Link href={show.homepage} target='__blank'>
-                    <h1 className="text-xl hover:underline font-bold text-gray-900 dark:text-white line-clamp-2">
+                    <h1 className="text-xl hover:underline font-bold text-white line-clamp-2">
                       {show.title}
                     </h1>
                   </Link>
                 ) : (
-                  <h1 className="text-xl font-bold text-gray-900 dark:text-white line-clamp-2">
+                  <h1 className="text-xl font-bold text-white line-clamp-2">
                     {show.title}
                   </h1>
                 )}
@@ -274,13 +275,13 @@ export default function ShowDetails({ show }: ShowDetailsProps) {
                     <svg className="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
                       <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
                     </svg>
-                    <span className="text-2xl font-bold text-gray-900 dark:text-white">
+                    <span className="text-2xl font-bold text-white">
                       {parseFloat(show.voteAverage as string).toFixed(1)}
                     </span>
                   </div>
                 </div>
                 
-                <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
+                <div className="w-full bg-gray-600 rounded-full h-2">
                   <div 
                     className="bg-gradient-to-r from-yellow-400 to-yellow-500 h-2 rounded-full transition-all duration-500"
                     style={{ width: `${(parseFloat(show.voteAverage as string || '0') / 10) * 100}%` }}
@@ -305,8 +306,8 @@ export default function ShowDetails({ show }: ShowDetailsProps) {
         <div className="lg:col-span-2 space-y-6">
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 py-5 rounded-xl">
             <div className='bg-gray-800 p-2 rounded-lg px-3'>
-              <div className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-1">Release Date</div>
-              <div className="text-gray-900 dark:text-white flex items-center gap-2">
+              <div className="text-sm font-semibold text-gray-400 mb-1">Release Date</div>
+              <div className="text-white flex items-center gap-2">
                 <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
@@ -315,8 +316,8 @@ export default function ShowDetails({ show }: ShowDetailsProps) {
             </div>
             
             <div className='bg-gray-800 p-2 rounded-lg px-3'>
-              <div className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-1">Language</div>
-              <div className="text-gray-900 dark:text-white flex items-center gap-2">
+              <div className="text-sm font-semibold text-gray-400 mb-1">Language</div>
+              <div className="text-white flex items-center gap-2">
                 <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <circle cx="12" cy="12" r="10" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} />
                   <path d="M2 12h20" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} />
@@ -327,8 +328,8 @@ export default function ShowDetails({ show }: ShowDetailsProps) {
             </div>
             
             <div className="col-span-2 sm:col-span-1 bg-gray-800 p-2 px-3 rounded-lg">
-              <div className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-1">Status</div>
-              <div className="text-gray-900 dark:text-white flex items-center gap-2">
+              <div className="text-sm font-semibold text-gray-400 mb-1">Status</div>
+              <div className="text-white flex items-center gap-2">
                 <svg className="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
@@ -338,7 +339,7 @@ export default function ShowDetails({ show }: ShowDetailsProps) {
           </div>
           
           <div className="space-y-4">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+            <h2 className="text-2xl font-bold text-white flex items-center gap-2">
               Overview
             </h2>
             
@@ -351,7 +352,7 @@ export default function ShowDetails({ show }: ShowDetailsProps) {
             )}
           </div>
           
-          <div className="flex flex-col sm:flex-row gap-4 pb-6 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex flex-col sm:flex-row gap-4 pb-6 border-b border-gray-700">
             {show.imdbId && status == 'authenticated' ? 
             <button disabled={disabled} onClick={saveShow} className="flex cursor-pointer items-center justify-center gap-2 px-6 py-3 bg-gray-700 text-gray-300 rounded-lg font-semibold enabled:hover:bg-gray-600 transition-all duration-200 transform enabled:hover:scale-105">
               {buttonText == 'Add to Watchlist' ? <IoIosAddCircleOutline size={26} /> : buttonText == 'Loading...' ? <IoIosHourglass size={26} /> : <IoIosCloseCircleOutline size={26} />}
@@ -361,7 +362,7 @@ export default function ShowDetails({ show }: ShowDetailsProps) {
 
           {status == 'authenticated' && show.episodes && Object.keys(show.episodes).length > 0 && (
             <div className="space-y-4">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+              <h2 className="text-2xl font-bold text-white">
                 Episodes
               </h2>
               <EpisodeList 

@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/router";
 import { useSession, signIn, signOut } from "next-auth/react";
 import Link from "next/link";
-import { IoIosFilm, IoIosHome, IoIosTv } from "react-icons/io";
+import { IoIosHome, IoIosTv } from "react-icons/io";
 import { BiSolidCameraMovie } from "react-icons/bi";
 
 export function Header() {
@@ -30,44 +30,68 @@ export function Header() {
     router.push(href);
   };
 
-  if (status === "loading") return null; // or a skeleton/spinner
+  if (status === "loading") return null;
 
   return (
-    <>
+    <header className="px-0 py-3 mx-4">
       {status === "authenticated" ? (
-        <div className="m-4 gap-2 flex justify-center items-center">
-          <button onClick={() => redirect("/")} title={"Home"} className="py-3 px-4 cursor-pointer hover:bg-slate-800 bg-[var(--input-bg)] rounded-lg">
-            <IoIosHome size={20} />
-          </button>
-          <button onClick={() => redirect("/movies")} title={"Saved Movies"} className="py-3 px-4 cursor-pointer hover:bg-slate-800 bg-[var(--input-bg)] rounded-lg">
-            <BiSolidCameraMovie size={20} />
-          </button>
-          <button onClick={() => redirect("/shows")} title={"Saved Shows"} className="py-3 px-4 cursor-pointer hover:bg-slate-800 bg-[var(--input-bg)] rounded-lg">
-            <IoIosTv size={20} />
-          </button>
-          <form onSubmit={handleSubmit} className="flex flex-1 gap-2">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-2">
+          <div className="flex flex-wrap gap-2 justify-center sm:justify-center">
+            <button 
+              onClick={() => redirect("/")} 
+              title={"Home"} 
+              className="p-2 sm:p-3 cursor-pointer hover:bg-slate-800 bg-[var(--input-bg)] rounded-lg transition-colors flex-shrink-0"
+            >
+              <IoIosHome size={20} />
+            </button>
+            <button 
+              onClick={() => redirect("/movies")} 
+              title={"Saved Movies"} 
+              className="p-2.5 sm:p-3 cursor-pointer hover:bg-slate-800 bg-[var(--input-bg)] rounded-lg transition-colors flex-shrink-0"
+            >
+              <BiSolidCameraMovie size={20} />
+            </button>
+            <button 
+              onClick={() => redirect("/shows")} 
+              title={"Saved Shows"} 
+              className="p-2.5 sm:p-3 cursor-pointer hover:bg-slate-800 bg-[var(--input-bg)] rounded-lg transition-colors flex-shrink-0"
+            >
+              <IoIosTv size={20} />
+            </button>
+          </div>
+          
+          <form onSubmit={handleSubmit} className="flex flex-1 w-full sm:w-auto min-w-0 gap-2">
             <input
               ref={inputRef}
               onChange={(e) => setSearch(e.target.value)}
               value={search}
-              placeholder="Search Movies and TV Shows..."
-              className="flex-1 bg-[var(--input-bg)] text-gray-200 placeholder-gray-400 p-2 rounded-lg border border-[var(--border-color)] focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
+              placeholder="Search..."
+              className="flex-1 min-w-0 bg-[var(--input-bg)] text-gray-200 placeholder-gray-400 px-3 py-2 rounded-lg border border-[var(--border-color)] focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all text-sm"
             />
-            <button type="button" onClick={handleSignOut} className="bg-orange-400 hover:bg-orange-300 text-black p-2 cursor-pointer rounded-lg transition-colors font-medium">
+            <button 
+              type="button" 
+              onClick={handleSignOut} 
+              className="bg-orange-400 hover:bg-orange-300 text-black px-3 sm:px-4 py-2 cursor-pointer rounded-lg transition-colors font-medium text-sm whitespace-nowrap"
+            >
               Sign Out
             </button>
           </form>
         </div>
       ) : (
-        <div className="flex flex-row m-6">
+        <div className="flex flex-col mx-2 sm:flex-row gap-3 sm:gap-0 items-center">
           <Link href={'/'}>
-            <div className="text-2xl cursor-pointer hover:text-gray-400">TV Tracker</div>
+            <div className="text-xl sm:text-2xl cursor-pointer hover:text-gray-400 transition-colors">
+              TV Tracker
+            </div>
           </Link>
-          <button className="m-4 my-auto p-2 ml-auto rounded-lg hover:bg-slate-600 bg-slate-500 cursor-pointer" onClick={() => signIn("google")}>
+          <button 
+            className="px-4 py-2 rounded-lg ml-auto hover:bg-slate-600 bg-slate-500 cursor-pointer transition-colors w-full sm:w-auto" 
+            onClick={() => signIn("google")}
+          >
             Sign in with Google
           </button>
         </div>
       )}
-    </>
+    </header>
   );
 }

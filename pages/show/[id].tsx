@@ -10,13 +10,11 @@ export default function Details() {
 
   const [error, setError] = useState("");
   const [details, setDetails] = useState<ShowProps | null>(null);
-  const [episodes, setEpisodes] = useState<any>(null);
   
   useEffect(() => {
     if (id) {
       setError('');
       fetchDetails(id as string);
-      // fetchEpisodes(id as string);
     }
   }, [id])
 
@@ -24,19 +22,6 @@ export default function Details() {
     fetch(`/api/show/details?id=${showId}`).then(res => res.json()).then(data => {
       if (data.success) {
         setDetails(data.show);
-      } else {
-        setError(data.message);
-      }
-    }).catch(err => {
-      console.log(err);
-      setError(err.message);
-    })
-  }
-
-  const fetchEpisodes = async (showId: string) => {
-    fetch(`/api/show/episodes?id=${showId}`).then(res => res.json()).then(data => {
-      if (data.success) {
-        setEpisodes(data.episodes);
       } else {
         setError(data.message);
       }
