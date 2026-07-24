@@ -9,7 +9,7 @@ export default function Details() {
   const { id } = router.query;
 
   const [error, setError] = useState("");
-  const [details, setDetails] = useState<ShowProps | null>(null);
+  const [show, setShow] = useState<ShowProps | null>(null);
   
   useEffect(() => {
     if (id) {
@@ -21,7 +21,7 @@ export default function Details() {
   const fetchDetails = async (showId: string) => {
     fetch(`/api/show/details?id=${showId}`).then(res => res.json()).then(data => {
       if (data.success) {
-        setDetails(data.show);
+        setShow(data.show);
       } else {
         setError(data.message);
       }
@@ -34,7 +34,7 @@ export default function Details() {
   function Title() {
     return (
       <Head>
-        <title>{details ? `${details.title} | TV Tracker` : 'TV Tracker'}</title>
+        <title>{show ? `${show.title} | TV Tracker` : 'TV Tracker'}</title>
       </Head>
     )
   }
@@ -48,7 +48,7 @@ export default function Details() {
     )
   }
 
-  if (details == null) {
+  if (show == null) {
     return (
       <>
         <Title />
@@ -62,7 +62,7 @@ export default function Details() {
   return (
     <>
       <Title />
-      {details && <ShowDetails show={details} />}
+      {show && <ShowDetails show={show} />}
     </>
   );
 }

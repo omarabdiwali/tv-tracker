@@ -5,9 +5,29 @@ import dbConnect from "@/utils/dbConnect";
 import Users from "@/models/Users";
 import { IUser, EpisodesData } from "@/utils/types";
 
+const getEpisodeId = (href: string | undefined | null) => {
+  if (!href) return null;
+  const lastSlashIndex = href.lastIndexOf('/');
+  if (lastSlashIndex == -1) return null;
+  const id = href.slice(lastSlashIndex + 1);
+  return id;
+}
 
-const parseEpisodes = (episodes: any, watchedList: Set<string>): EpisodesData => {
-  if (!episodes) return {};
+interface ParseEpisodes {
+  episodes: EpisodesData,
+  nextEpisode: string | null,
+  lastEpisode: string | null
+}
+
+const parseEpisodes = (episodes: any, watchedList: Set<string>, nextEpisodeId: string | null, lastEpisodeId: string | null): ParseEpisodes => {
+  if (!episodes) return {
+    episodes: {},
+    nextEpisode: null,
+    lastEpisode: null
+  };
+
+  let nextEpisode = null;
+  let lastEpisode = null;
 
   const seasons: EpisodesData = {};
   for (const episode of episodes) {
@@ -20,6 +40,14 @@ const parseEpisodes = (episodes: any, watchedList: Set<string>): EpisodesData =>
     const summary = episode.summary;
     const watched = watchedList.has(`${id}`);
 
+    if (nextEpisode == null && `${id}` == nextEpisodeId) {
+      const episodeString = `${number}`.padStart(2, '0');
+      nextEpisode = `${season}x${episodeString} / ${airdate}`;
+    } else if (lastEpisode == null && `${id}` == lastEpisodeId) {
+      const episodeString = `${number}`.padStart(2, '0');
+      lastEpisode = `${season}x${episodeString} / ${airdate}`;
+    }
+
     if (!id || !title || !number || !airdate || !season) continue;
     if (!(season in seasons)) {
       seasons[season] = [];
@@ -28,7 +56,11 @@ const parseEpisodes = (episodes: any, watchedList: Set<string>): EpisodesData =>
     seasons[season].push({ id, title, number, airdate, rating, summary, watched });
   }
 
-  return seasons;
+  return {
+    episodes: seasons,
+    nextEpisode,
+    lastEpisode
+  }
 }
 
 const queryTVMaze = async (showId: string, saved: boolean, watched: Set<string>) => {
@@ -46,7 +78,9 @@ const queryTVMaze = async (showId: string, saved: boolean, watched: Set<string>)
     const releaseDate = data.premiered;
     const voteAverage = data.rating?.average;
     const status = data.status;
-    const episodes = parseEpisodes(data._embedded.episodes, watched);
+    const lastEpisodeId = getEpisodeId(data._links?.previousepisode?.href);
+    const nextEpisodeId = getEpisodeId(data._links?.nextepisode?.href);
+    const { episodes, nextEpisode, lastEpisode } = parseEpisodes(data._embedded.episodes, watched, nextEpisodeId, lastEpisodeId);
     
     let image = data.image?.original;
     if (!image) {
@@ -54,8 +88,8 @@ const queryTVMaze = async (showId: string, saved: boolean, watched: Set<string>)
     }
     
     return {
-      title, genres, language, status, homepage, imdbId, image,
-      overview, releaseDate, voteAverage, id, saved, episodes
+      title, genres, language, status, homepage, imdbId, image, overview,
+      releaseDate, voteAverage, id, saved, episodes, nextEpisode, lastEpisode
     }
   }).catch(err => {
     console.error(err);

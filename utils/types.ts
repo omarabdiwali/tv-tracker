@@ -60,6 +60,8 @@ export interface ShowProps {
   language?: string;
   status?: string;
   saved?: boolean;
+  nextEpisode?: string | null;
+  lastEpisode?: string | null;
 }
 
 export interface MovieDetailsProps {
