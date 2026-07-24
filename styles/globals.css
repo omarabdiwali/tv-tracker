@@ -1,8 +1,15 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: oklch(14% 0.005 260);
+  --foreground: #e5e7eb;
+  --card-bg: oklch(20% 0.02 260);
+  --card-hover: oklch(25% 0.03 260);
+  --border-color: oklch(35% 0.05 260);
+  --input-bg: oklch(25% 0.05 260);
+  --button-bg: oklch(40% 0.15 260);
+  --button-hover: oklch(45% 0.15 260);
+  --accent-green: #10b981;
 }
 
 @theme inline {
@@ -10,13 +17,6 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {

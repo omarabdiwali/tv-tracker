@@ -1,25 +1,27 @@
+import { IMovie } from "@/utils/types";
 import { useSession } from "next-auth/react";
 import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import { useSnackbar } from "notistack";
 import { useEffect, useState } from "react";
 import { IoIosAdd, IoIosHourglass, IoIosRemove } from "react-icons/io";
 
 interface ItemProps {
-  id: string | number,
-  name: string,
+  id: string,
+  title: string,
   image: string,
-  year?: string,
-  type: string,
-  isSaved: boolean,
-  status: 'unauthenticated' | 'authenticated' | 'loading'
+  releaseDate?: string,
+  status: 'unauthenticated' | 'authenticated' | 'loading';
+  removeFromMovies: (id: string) => void;
 }
 
-function Item({ id, name, image, type, status, isSaved }: ItemProps) {
-  const [action, setAction] = useState(isSaved ? 'remove' : 'add');
+function Item({ id, image, title, releaseDate, status, removeFromMovies }: ItemProps) {
+  const [action, setAction] = useState('remove');
   const [disabled, setDisabled] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
+  const year = releaseDate ? releaseDate.split('-', 1).at(0) : null;
 
   const saveItem = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
     e.preventDefault();
@@ -29,16 +31,19 @@ function Item({ id, name, image, type, status, isSaved }: ItemProps) {
     setDisabled(true);
     setAction('loading');
     
-    fetch(`/api/${type}/save`, {
+    fetch(`/api/movie/save`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ id: `${id}`, title: name, save: prevAction == 'add' })
+      body: JSON.stringify({ id, title, save: prevAction == 'add' })
     }).then(res => res.json()).then(data => {
       if (data.success) {
         setAction(prevAction == 'add' ? 'remove' : 'add');
         enqueueSnackbar(data.message, { variant: "success", autoHideDuration: 1500 });
+        if (prevAction == 'remove') {
+          removeFromMovies(id);
+        }
       } else {
         if (data.message == 'Unauthenticated user.') {
           window.location.href = '/';
@@ -69,11 +74,11 @@ function Item({ id, name, image, type, status, isSaved }: ItemProps) {
         {action == 'add' ? <IoIosAdd className="my-[0.5]" /> : action == 'remove' ?
          <IoIosRemove className="my-[0.5]" /> : <IoIosHourglass className="my-[0.5]" />}
       </button>}
-      <Link href={`/${type}/${id}`} title={name} className="h-full">
+      <Link href={`/movie/${id}`} title={title} className="h-full">
         <div className="relative cursor-pointer flex flex-col h-full group">
           <div className="relative p-4 bg-slate-800 rounded-t-lg flex-1 min-h-[200px]">
             <Image
-              alt={name}
+              alt={title}
               src={image}
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -83,7 +88,7 @@ function Item({ id, name, image, type, status, isSaved }: ItemProps) {
           </div>
 
           <div className="bg-slate-700 p-2 text-center rounded-b-lg flex items-center justify-center text-gray-200 group-hover:text-emerald-400 group-hover:underline">
-            {name}
+            {`${title}${year ? ` (${year})` : ''}`}
           </div>
         </div>
       </Link>
@@ -94,52 +99,52 @@ function Item({ id, name, image, type, status, isSaved }: ItemProps) {
 function Title() {
   return (
     <Head>
-      <title>TV Tracker</title>
+      <title>Saved Movies | TV Tracker</title>
     </Head>
   )
 }
 
-export default function Home() {
+export default function Movies() {
+  const router = useRouter();
   const { data: _, status } = useSession();
-  const [trending, setTrending] = useState<ItemProps[]>([]);
-  const [trending1, setTrending1] = useState<ItemProps[]>([]);
+  const [movies, setMovies] = useState<IMovie[]>([]);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    fetchTrendingMovies(1);
-    fetchTrendingMovies(2);
-  }, [])
+    if (status == 'loading') return;
+    if (status == 'unauthenticated') {
+      router.push('/');
+      return;
+    }
+    fetchSavedMovies();
+  }, [status])
 
-  const fetchTrendingMovies = async (page: number) => {
-    fetch(`/api/movie/trending?page=${page}`).then(res => res.json()).then(data => {
+  const fetchSavedMovies = async () => {
+    setError('');
+    setLoading(true);
+
+    fetch(`/api/movie/watchlist`).then(res => res.json()).then(data => {
       if (data.success) {
-        page == 1 ? setTrending(data.movies) : setTrending1(data.movies);
+        setMovies(data.movies);
       } else {
         setError(data.message);
       }
     }).catch(err => {
       console.error(err);
       setError(err.message);
+    }).finally(() => {
+      setLoading(false);
     })
   }
 
-  const concatMovies = (a: ItemProps[], b: ItemProps[]) : ItemProps[] => {
-    const unique = new Set();
-    const combination = [];
-    
-    for (const movie of a) {
-      if (unique.has(movie.id)) continue;
-      unique.add(movie.id);
-      combination.push(movie);
+  const removeFromMovies = (id: string) => {
+    const moviesCopy = [...movies];
+    const index = moviesCopy.findIndex((movie) => movie.id == id);
+    if (index != -1) {
+      moviesCopy.splice(index, 1);
     }
-
-    for (const movie of b) {
-      if (unique.has(movie.id)) continue;
-      unique.add(movie.id);
-      combination.push(movie);
-    }
-
-    return combination;
+    setMovies(moviesCopy);
   }
 
   if (error) {
@@ -151,7 +156,7 @@ export default function Home() {
     )
   }
 
-  if (trending.length == 0 && trending1.length == 0) {
+  if (loading) {
     return (
       <>
         <Title />
@@ -165,12 +170,24 @@ export default function Home() {
   return (
     <>
       <Title />
-      <h2 className="text-2xl font-bold text-gray-100 mb-2 ml-4">Trending Movies</h2>
-      <div className="grid items-stretch grid-cols-[repeat(auto-fill,_minmax(170px,_1fr))] gap-4 m-4">
-        {concatMovies(trending, trending1).map((movie) => {
-          return <Item key={`movie-trending-${movie.id}`} status={status} id={movie.id} name={movie.name} image={movie.image} isSaved={movie.isSaved} type={'movie'} />
-        })}
-      </div>
+      <h2 className="text-2xl font-bold text-gray-100 mb-2 ml-4">Saved Movies</h2>
+      {movies.length > 0 ? (
+        <div className="grid items-stretch grid-cols-[repeat(auto-fill,_minmax(170px,_1fr))] gap-4 m-4">
+          {movies.map((movie) => {
+            return <Item 
+                      key={`movie-saved-${movie.id}`} 
+                      status={status} id={movie.id} 
+                      title={movie.title} 
+                      image={movie.image} 
+                      releaseDate={movie.releaseDate}
+                      removeFromMovies={removeFromMovies}
+                    />
+          })}
+        </div>) : (
+          <div className="flex flex-1 justify-center items-center">
+            <div className="text-gray-400">There are currently no movies saved.</div>
+          </div>
+        )}
     </>
   );
 }

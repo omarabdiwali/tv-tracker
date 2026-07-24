@@ -1,40 +1,91 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
+# TV Tracker
+
+A modern web application for tracking your favorite TV shows and movies. Save content to your personal watchlist and keep track of episodes you've watched.
+
+### The project is hosted at: https://tracktvshows.vercel.app
+
+## Features
+
+- **Personal Watchlist**: Save and manage your favorite TV shows and movies
+- **Episode Tracking**: Mark individual episodes as watched/unwatched with a collapsible season view
+- **Search Functionality**: Search across both movies and TV shows
+- **Trending Content**: Discover trending movies on the homepage
+- **Google Authentication**: Secure sign-in with Google accounts
+- **Responsive Design**: Works seamlessly across desktop and mobile devices
+
+## Tech Stack
+
+- **Frontend**: Next.js, React, TypeScript
+- **Styling**: Tailwind CSS
+- **Authentication**: NextAuth.js with Google provider
+- **Notifications**: Notistack
+- **Icons**: React Icons (IoIcons, BiIcons)
+- **Backend API Routes**: Built-in Next.js API handlers
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
+- Node.js 16+
+- npm or yarn
+- MongoDB database
+- Google OAuth credentials
+
+### Installation
+
+1. Clone the repository:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/omarabdiwali/tv-tracker.git
+cd tv-tracker
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Install dependencies:
+```bash
+npm install
+```
 
-You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
+3. Set up environment variables:
+Create a `.env.local` file in the root directory:
+```
+MONGODB_URI=your_mongodb_connection_string
+NEXTAUTH_SECRET=your_nextauth_secret
+NEXTAUTH_URL=http://localhost:3000
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+TMDB_API_KEY=your_tmdb_api_key
+```
 
-[API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
+4. Run the development server:
+```bash
+npm run dev
+```
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) instead of React pages.
+Open [http://localhost:3000](http://localhost:3000) to view the application.
 
-This project uses [`next/font`](https://nextjs.org/docs/pages/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Usage
 
-## Learn More
+### Authentication
+- Click "Sign in with Google" to access your personal watchlist
+- Upon authentication, you'll be redirected to the main application
 
-To learn more about Next.js, take a look at the following resources:
+### Browsing Content
+- **Homepage**: View trending movies
+- **Search**: Use the search bar in the header to find movies and TV shows
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn-pages-router) - an interactive Next.js tutorial.
+### Managing Your Watchlist
+- **Movies & Shows Pages**: View all saved content
+- Each item has a remove button (minus icon) to remove from your list
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Episode Tracking (TV Shows)
+- Navigate to any TV show detail page
+- Expand seasons to view episodes
+- Click "Mark Watched" to track viewed episodes
+- Watch count displays at each season header
 
-## Deploy on Vercel
+## Contributing
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Contributions are welcome! Please feel free to submit pull requests or open issues for bugs and feature requests.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/pages/building-your-application/deploying) for more details.
+## License
+
+This project is open-source and available under the MIT License.
