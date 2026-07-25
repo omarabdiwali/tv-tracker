@@ -16,10 +16,21 @@ const verifyRequiredKeys = (info: any) => {
   return true;
 }
 
+const fetchEpisodeInfo = async (href: string | undefined) => {
+  if (!href) return null;
+  return fetch(href).then(res => res.json()).then(data => {
+    const season = data.season;
+    const episode = data.number;
+    const airdate = data.airdate;
+    if (season == undefined || season == null || episode == undefined || episode == null || !airdate) return null;
+    return `${season}x${episode} / ${airdate}`;
+  })
+} 
+
 const queryTVMaze = async (showId: string, targetTitle: string) => {
   const url = `https://api.tvmaze.com/shows/${showId}`;
 
-  return fetch(url).then(res => res.json()).then(data => {
+  return fetch(url).then(res => res.json()).then(async (data) => {
     const id = data.id;
     const title = data.name;
     const genres = data.genres;
@@ -29,6 +40,12 @@ const queryTVMaze = async (showId: string, targetTitle: string) => {
     const language = data.language;
     const overview = data.summary;
     const releaseDate = data.premiered;
+    
+    const lastEpisodeHref = data._links?.previousepisode?.href;
+    const nextEpisodeHref = data._links?.nextepisode?.href;
+    const lastEpisode = await fetchEpisodeInfo(lastEpisodeHref);
+    const nextEpisode = await fetchEpisodeInfo(nextEpisodeHref);
+    
     const voteAverage = data.rating?.average;
     const status = data.status;
     
@@ -39,8 +56,8 @@ const queryTVMaze = async (showId: string, targetTitle: string) => {
 
     if (!id || !title || title != targetTitle || !image) return {};
     return {
-      id, title, image, imdbId, releaseDate, genres,
-      homepage, language, overview, voteAverage, status
+      id, title, image, imdbId, releaseDate, genres, lastEpisode,
+      nextEpisode, homepage, language, overview, voteAverage, status
     };
   }).catch(err => {
     console.error(err);

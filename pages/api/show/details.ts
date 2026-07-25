@@ -107,11 +107,11 @@ const queryTVMaze = async (showId: string) => {
   })
 }
 
-const aDayOld = (from: Date): boolean => {
-  const dayMs = 86400000;
+const timeToRefresh = (from: Date, status: string): boolean => {
+  const refreshTime = status != 'Ended' ? 86400000 : 86400000 * 5;
   const current = new Date().getTime();
   const fromMs = new Date(from).getTime();
-  return (current - fromMs) >= dayMs;
+  return (current - fromMs) >= refreshTime;
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -141,7 +141,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (user) {
       const show: IShow | null = await Show.findOne({ id }, showKeys);
-      if (!show || !show.episodes || aDayOld(show.updatedAt)) {
+      if (!show || !show.episodes || timeToRefresh(show.updatedAt, show.status)) {
         const info = await queryTVMaze(id as string);
         if (verifyRequiredKeys(info)) {
           !show ? await Show.create(info) : await Show.findOneAndUpdate({ id }, info);
@@ -156,7 +156,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   } else {
     const keys = 'title genres language status homepage imdbId image overview releaseDate voteAverage id nextEpisode lastEpisode updatedAt';
     const show: IShow | null = await Show.findOne({ id }, keys);
-    if (!show || aDayOld(show.updatedAt)) {
+    if (!show || timeToRefresh(show.updatedAt, show.status)) {
       const info = await queryTVMaze(id as string);
       if (verifyRequiredKeys(info)) {
         !show ? await Show.create(info) : await Show.findOneAndUpdate({ id }, info);

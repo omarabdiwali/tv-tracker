@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/router";
 import { useSession, signIn, signOut } from "next-auth/react";
 import Link from "next/link";
-import { IoIosHome, IoIosTv } from "react-icons/io";
+import { IoIosCalendar, IoIosFilm, IoIosHome, IoIosTv } from "react-icons/io";
 import { BiSolidCameraMovie } from "react-icons/bi";
 
 export function Header() {
@@ -58,6 +58,14 @@ export function Header() {
                 className="p-2.5 sm:p-3 cursor-pointer hover:bg-slate-800 bg-[var(--input-bg)] rounded-lg transition-colors flex-shrink-0"
               >
                 <IoIosTv size={20} />
+              </button>
+            </Link>
+            <Link href={'/playing'} onClick={eraseSearch}>
+              <button 
+                title={"Now Playing"} 
+                className="p-2.5 sm:p-3 cursor-pointer hover:bg-slate-800 bg-[var(--input-bg)] rounded-lg transition-colors flex-shrink-0"
+              >
+                <IoIosFilm size={20} />
               </button>
             </Link>
           </div>

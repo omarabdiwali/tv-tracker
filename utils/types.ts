@@ -107,3 +107,23 @@ export interface IShow extends Document {
   updatedAt: Date;
   createdAt: Date;
 }
+
+export interface ScheduledShows {
+  id: string,
+  showId: string,
+  title: string,
+  image: string,
+  year: string | undefined,
+  isSaved: boolean | undefined,
+  season: number | undefined,
+  episode: number | undefined
+}
+
+export interface UpcomingMovie {
+  id: string,
+  releaseDate: string | undefined,
+  image: string,
+  title: string,
+  isSaved: boolean,
+  year?: string | null,
+}

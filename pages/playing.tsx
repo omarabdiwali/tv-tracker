@@ -1,4 +1,4 @@
-import { IShow } from "@/utils/types";
+import { UpcomingMovie } from "@/utils/types";
 import { useSession } from "next-auth/react";
 import Head from "next/head";
 import Image from "next/image";
@@ -12,20 +12,16 @@ interface ItemProps {
   id: string,
   title: string,
   image: string,
-  nextEpisode: string | undefined | null,
-  lastEpisode: string | undefined | null,
+  saved: boolean,
   releaseDate?: string,
-  authStatus: 'unauthenticated' | 'authenticated' | 'loading';
-  showStatus: string,
-  removeFromShows: (id: string) => void;
+  year?: string | null,
+  status: 'unauthenticated' | 'authenticated' | 'loading';
 }
 
-function Item({ id, image, title, releaseDate, nextEpisode, lastEpisode, showStatus, authStatus, removeFromShows }: ItemProps) {
-  const [action, setAction] = useState('remove');
+function Item({ id, image, title, releaseDate, year, saved, status }: ItemProps) {
+  const [action, setAction] = useState(saved ? 'remove' : 'add');
   const [disabled, setDisabled] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
-  const year = releaseDate ? releaseDate.split('-', 1).at(0) : null;
-  const notEndedAndLast = showStatus != 'Ended' && !nextEpisode && lastEpisode;
 
   const saveItem = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
     e.preventDefault();
@@ -35,7 +31,7 @@ function Item({ id, image, title, releaseDate, nextEpisode, lastEpisode, showSta
     setDisabled(true);
     setAction('loading');
     
-    fetch(`/api/show/save`, {
+    fetch(`/api/movie/save`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -45,15 +41,13 @@ function Item({ id, image, title, releaseDate, nextEpisode, lastEpisode, showSta
       if (data.success) {
         setAction(prevAction == 'add' ? 'remove' : 'add');
         enqueueSnackbar(data.message, { variant: "success", autoHideDuration: 1500 });
-        if (prevAction == 'remove') {
-          removeFromShows(id);
-        }
       } else {
         if (data.message == 'Unauthenticated user.') {
           window.location.href = '/';
           return;
         } else {
           enqueueSnackbar(data.message, { variant: "error", autoHideDuration: 1500 });
+          setAction(prevAction);
         }
       }
     }).catch(err => {
@@ -65,7 +59,7 @@ function Item({ id, image, title, releaseDate, nextEpisode, lastEpisode, showSta
   
   return (
     <div className="relative flex h-full flex-col justify-start">
-      {authStatus == 'authenticated' && <button
+      {status == 'authenticated' && <button
         onClick={saveItem}
         disabled={disabled}
         className={`
@@ -78,14 +72,8 @@ function Item({ id, image, title, releaseDate, nextEpisode, lastEpisode, showSta
         {action == 'add' ? <IoIosAdd className="my-[0.5]" /> : action == 'remove' ?
          <IoIosRemove className="my-[0.5]" /> : <IoIosHourglass className="my-[0.5]" />}
       </button>}
-      {(nextEpisode || lastEpisode) && (
-        <div
-        className={`absolute left-[50%] text-center -translate-x-1/2 text-xs 
-                    py-[3px] px-[5px] w-full ${nextEpisode ? 'bg-green-800' : notEndedAndLast ? 'bg-orange-700' : 'bg-red-800'} rounded-t-md z-100`}>
-          {nextEpisode ? nextEpisode : lastEpisode}
-        </div>
-        )}
-      <Link href={`/show/${id}`} title={title} className="h-full">
+      {releaseDate && <div className="absolute left-[50%] top-[2%] -translate-x-1/2 bg-black/80 text-xs py-[3px] px-[5px] rounded-lg z-100">{releaseDate}</div>}
+      <Link href={`/movie/${id}`} title={title} className="h-full">
         <div className="relative cursor-pointer flex flex-col h-full group">
           <div className="relative p-4 bg-slate-800 rounded-t-lg flex-1 min-h-[200px]">
             <Image
@@ -110,17 +98,27 @@ function Item({ id, image, title, releaseDate, nextEpisode, lastEpisode, showSta
 function Title() {
   return (
     <Head>
-      <title>Saved Shows | TV Tracker</title>
+      <title>Now Playing | TV Tracker</title>
     </Head>
   )
 }
 
-export default function Shows() {
+export default function Movies() {
   const router = useRouter();
   const { data: _, status } = useSession();
-  const [shows, setShows] = useState<IShow[]>([]);
+  const [movies, setMovies] = useState<UpcomingMovie[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const sortMovies = (a: UpcomingMovie, b: UpcomingMovie) => {
+    if (!a.releaseDate && !b.releaseDate) return 0;
+    if (!a.releaseDate && b.releaseDate) return 1;
+    if (a.releaseDate && !b.releaseDate) return -1;
+
+    const aTime = new Date(a.releaseDate as string).getTime();
+    const bTime = new Date(b.releaseDate as string).getTime();
+    return aTime - bTime;
+  }
 
   useEffect(() => {
     if (status == 'loading') return;
@@ -128,44 +126,17 @@ export default function Shows() {
       router.push('/');
       return;
     }
-    fetchSavedShows();
+    fetchUpcomingMovies();
   }, [status])
 
-  const hasAnyEpisode = (show: IShow) => show.nextEpisode || show.lastEpisode;
-
-  const doComparison = (a: string | null | undefined, b: string | null | undefined, value: number = 1) => {
-    if (!a && !b) return 0;
-    if (!a && b) return value;
-    if (a && !b) return -value;
-
-    const aDate = (a as string).slice((a as string).indexOf('/') + 2);
-    const bDate = (b as string).slice((b as string).indexOf('/') + 2);
-    return (new Date(aDate).getTime() - new Date(bDate).getTime()) * value;
-  };
-
-  const sortShows = (a: IShow, b: IShow) => {
-    const aHasAny = hasAnyEpisode(a);
-    const bHasAny = hasAnyEpisode(b);
-
-    if (!aHasAny && bHasAny) return 1;
-    if (aHasAny && !bHasAny) return -1;
-    if (!aHasAny && !bHasAny) return 0;
-
-    let res = doComparison(a.nextEpisode, b.nextEpisode);
-    if (res === 0) {
-      res = doComparison(a.lastEpisode, b.lastEpisode, -1);
-    }
-    return res;
-  };
-
-  const fetchSavedShows = async () => {
+  const fetchUpcomingMovies = async () => {
     setError('');
     setLoading(true);
 
-    fetch(`/api/show/watchlist`).then(res => res.json()).then(data => {
+    fetch(`/api/movie/playing`).then(res => res.json()).then(data => {
       if (data.success) {
-        const sorted = data.shows.sort(sortShows);
-        setShows(sorted);
+        const sorted = data.movies.sort(sortMovies);
+        setMovies(sorted);
       } else {
         setError(data.message);
       }
@@ -175,15 +146,6 @@ export default function Shows() {
     }).finally(() => {
       setLoading(false);
     })
-  }
-
-  const removeFromShows = (id: string) => {
-    const showsCopy = [...shows];
-    const index = showsCopy.findIndex((show) => show.id == id);
-    if (index != -1) {
-      showsCopy.splice(index, 1);
-    }
-    setShows(showsCopy);
   }
 
   if (error) {
@@ -209,25 +171,23 @@ export default function Shows() {
   return (
     <>
       <Title />
-      <h2 className="text-2xl font-bold text-gray-100 mb-2 ml-4">Saved Shows</h2>
-      {shows.length > 0 ? (
+      <h2 className="text-2xl font-bold text-gray-100 mb-2 ml-4">Now Playing</h2>
+      {movies && movies.length > 0 ? (
         <div className="grid items-stretch grid-cols-[repeat(auto-fill,_minmax(170px,_1fr))] gap-4 m-4">
-          {shows.map((show) => {
+          {movies.map((movie) => {
             return <Item 
-                      key={`show-saved-${show.id}`}
-                      authStatus={status} id={show.id}
-                      showStatus={show.status}
-                      title={show.title}
-                      image={show.image}
-                      nextEpisode={show.nextEpisode}
-                      lastEpisode={show.lastEpisode}
-                      releaseDate={show.releaseDate}
-                      removeFromShows={removeFromShows}
+                      key={`movie-saved-${movie.id}`} 
+                      status={status} id={movie.id} 
+                      title={movie.title} 
+                      image={movie.image} 
+                      releaseDate={movie.releaseDate}
+                      saved={movie.isSaved}
+                      year={movie.year}
                     />
           })}
         </div>) : (
           <div className="flex flex-1 justify-center items-center">
-            <div className="text-gray-400">There are currently no shows saved.</div>
+            <div className="text-gray-400">There are currently no movies saved.</div>
           </div>
         )}
     </>
