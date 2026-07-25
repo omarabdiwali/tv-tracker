@@ -21,7 +21,7 @@ const queryTMDB = async (movieId: string, targetTitle: string) => {
     const releaseDate = data.release_date;
     const image = buildPosterURL(data.poster_path, 'w342');
 
-    if (!id || !title || title != targetTitle || !imdbId || !image) return {};
+    if (!id || !title || title != targetTitle || !image) return {};
     return { id, title, imdbId, image, releaseDate };
   }).catch(err => {
     console.error(err);

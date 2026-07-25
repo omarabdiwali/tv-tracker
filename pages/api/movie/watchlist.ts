@@ -12,7 +12,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!session) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
   
   await dbConnect();
-  const movieFields = 'id image title imdbId releaseDate'
+  const movieFields = 'id image title releaseDate'
   let user: IUser | null = await Users.findOne({ email: session.user?.email });
   let savedMovies = [];
   

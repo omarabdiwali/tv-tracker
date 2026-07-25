@@ -386,7 +386,7 @@ export default function ShowDetails({ show }: ShowDetailsProps) {
           </div>
           
           <div className="flex flex-col sm:flex-row gap-4 pb-6 border-b border-gray-700">
-            {show.imdbId && status == 'authenticated' ? 
+            {status == 'authenticated' ? 
             <button disabled={disabled} onClick={saveShow} className="flex cursor-pointer items-center justify-center gap-2 px-6 py-3 bg-gray-700 text-gray-300 rounded-lg font-semibold enabled:hover:bg-gray-600 transition-all duration-200 transform enabled:hover:scale-105">
               {buttonText == 'Add to Watchlist' ? <IoIosAddCircleOutline size={26} /> : buttonText == 'Loading...' ? <IoIosHourglass size={26} /> : <IoIosCloseCircleOutline size={26} />}
               {buttonText}

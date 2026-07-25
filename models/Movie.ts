@@ -18,9 +18,7 @@ const movieSchema = new Schema<IMovie>({
   },
   imdbId: { 
     type: String, 
-    required: true,
-    unique: true,
-    index: true 
+    required: false,
   },
   releaseDate: { 
     type: String, 

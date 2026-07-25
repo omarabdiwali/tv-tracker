@@ -7,9 +7,8 @@ import { IShow, IUser } from "@/utils/types";
 import Show from "@/models/Show";
 
 const verifyRequiredKeys = (info: any) => {
-  const { id, imdbId, overview, image, title } = info;
+  const { id, overview, image, title } = info;
   if (id == null || id == undefined) return false;
-  if (imdbId == null || imdbId == undefined) return false;
   if (overview == null || overview == undefined) return false;
   if (image == null || image == undefined) return false;
   if (title == null || title == undefined) return false;
@@ -38,7 +37,7 @@ const queryTVMaze = async (showId: string, targetTitle: string) => {
       image = data.image?.medium;
     }
 
-    if (!id || !title || title != targetTitle || !imdbId || !image) return {};
+    if (!id || !title || title != targetTitle || !image) return {};
     return {
       id, title, image, imdbId, releaseDate, genres,
       homepage, language, overview, voteAverage, status

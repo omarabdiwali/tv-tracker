@@ -12,7 +12,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!session) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
   
   await dbConnect();
-  const showFields = 'id image title imdbId releaseDate'
+  const showFields = 'id image title releaseDate'
   let user: IUser | null = await Users.findOne({ email: session.user?.email });
   let savedShows = [];
   

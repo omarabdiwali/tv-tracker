@@ -8,12 +8,7 @@ const showSchema = new Schema<IShow>({
     unique: true,
     index: true 
   },
-  imdbId: { 
-    type: String, 
-    required: true,
-    unique: true,
-    index: true 
-  },
+  imdbId: { type: String, required: false },
   overview: { type: String, required: true },
   image: { type: String, required: true },
   title: { type: String, required: true },

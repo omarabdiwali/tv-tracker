@@ -181,7 +181,7 @@ export default function MovieDetails({ movie }: MovieDetailsProps) {
             </Link>
             }
             
-            {movie.imdbId && status == 'authenticated' ? 
+            {status == 'authenticated' ? 
             <button disabled={disabled} onClick={saveMovie} className="flex cursor-pointer items-center justify-center gap-2 px-6 py-3 bg-gray-700 text-gray-300 rounded-lg font-semibold enabled:hover:bg-gray-600 transition-all duration-200 transform enabled:hover:scale-105">
               {buttonText == 'Add to Watchlist' ? <IoIosAddCircleOutline size={26} /> : buttonText == 'Loading...' ? <IoIosHourglass size={26} /> : <IoIosCloseCircleOutline size={26} />}
               {buttonText}
