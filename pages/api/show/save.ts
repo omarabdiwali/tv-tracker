@@ -6,14 +6,32 @@ import Users from "@/models/Users";
 import { IShow, IUser } from "@/utils/types";
 import Show from "@/models/Show";
 
+const verifyRequiredKeys = (info: any) => {
+  const { id, imdbId, overview, image, title } = info;
+  if (id == null || id == undefined) return false;
+  if (imdbId == null || imdbId == undefined) return false;
+  if (overview == null || overview == undefined) return false;
+  if (image == null || image == undefined) return false;
+  if (title == null || title == undefined) return false;
+
+  return true;
+}
+
 const queryTVMaze = async (showId: string, targetTitle: string) => {
   const url = `https://api.tvmaze.com/shows/${showId}`;
 
   return fetch(url).then(res => res.json()).then(data => {
     const id = data.id;
     const title = data.name;
+    const genres = data.genres;
+    const homepage = data.officialSite;
     const imdbId = data.externals?.imdb;
+
+    const language = data.language;
+    const overview = data.summary;
     const releaseDate = data.premiered;
+    const voteAverage = data.rating?.average;
+    const status = data.status;
     
     let image = data.image?.original;
     if (!image) {
@@ -21,7 +39,10 @@ const queryTVMaze = async (showId: string, targetTitle: string) => {
     }
 
     if (!id || !title || title != targetTitle || !imdbId || !image) return {};
-    return { id, title, image, imdbId, releaseDate };
+    return {
+      id, title, image, imdbId, releaseDate, genres,
+      homepage, language, overview, voteAverage, status
+    };
   }).catch(err => {
     console.error(err);
     return {};
@@ -57,8 +78,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const info = await queryTVMaze(id as string, title as string);
     if (Object.keys(info).length == 0) {
       return res.status(200).json({ success: false, message: "Invalid show." });
+    } else if (verifyRequiredKeys(info)) {
+      await Show.create(info);
     }
-    await Show.create(info);
   }
 
   if (save && savedShows.has(id)) {

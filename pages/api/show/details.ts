@@ -3,7 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]";
 import dbConnect from "@/utils/dbConnect";
 import Users from "@/models/Users";
-import { IUser, EpisodesData } from "@/utils/types";
+import { IUser, EpisodesData, IShow } from "@/utils/types";
+import Show from "@/models/Show";
 
 const getEpisodeId = (href: string | undefined | null) => {
   if (!href) return null;
@@ -19,7 +20,7 @@ interface ParseEpisodes {
   lastEpisode: string | null
 }
 
-const parseEpisodes = (episodes: any, watchedList: Set<string>, nextEpisodeId: string | null, lastEpisodeId: string | null): ParseEpisodes => {
+const parseEpisodes = (episodes: any, nextEpisodeId: string | null, lastEpisodeId: string | null): ParseEpisodes => {
   if (!episodes) return {
     episodes: {},
     nextEpisode: null,
@@ -29,7 +30,7 @@ const parseEpisodes = (episodes: any, watchedList: Set<string>, nextEpisodeId: s
   let nextEpisode = null;
   let lastEpisode = null;
 
-  const seasons: EpisodesData = {};
+  const seasons: any = {};
   for (const episode of episodes) {
     const id = episode.id;
     const title = episode.name;
@@ -38,7 +39,6 @@ const parseEpisodes = (episodes: any, watchedList: Set<string>, nextEpisodeId: s
     const airdate = episode.airdate;
     const rating = episode.rating.average;
     const summary = episode.summary;
-    const watched = watchedList.has(`${id}`);
 
     if (nextEpisode == null && `${id}` == nextEpisodeId) {
       const episodeString = `${number}`.padStart(2, '0');
@@ -53,9 +53,9 @@ const parseEpisodes = (episodes: any, watchedList: Set<string>, nextEpisodeId: s
       seasons[season] = [];
     }
 
-    seasons[season].push({ id, title, number, airdate, rating, summary, watched });
+    seasons[season].push({ id, title, number, airdate, rating, summary });
   }
-
+  
   return {
     episodes: seasons,
     nextEpisode,
@@ -63,7 +63,18 @@ const parseEpisodes = (episodes: any, watchedList: Set<string>, nextEpisodeId: s
   }
 }
 
-const queryTVMaze = async (showId: string, saved: boolean, watched: Set<string>) => {
+const verifyRequiredKeys = (info: any) => {
+  const { id, imdbId, overview, image, title } = info;
+  if (id == null || id == undefined) return false;
+  if (imdbId == null || imdbId == undefined) return false;
+  if (overview == null || overview == undefined) return false;
+  if (image == null || image == undefined) return false;
+  if (title == null || title == undefined) return false;
+
+  return true;
+}
+
+const queryTVMaze = async (showId: string) => {
   const url = `https://api.tvmaze.com/shows/${showId}?embed=episodes`;
 
   return fetch(url).then(res => res.json()).then(data => {
@@ -80,7 +91,7 @@ const queryTVMaze = async (showId: string, saved: boolean, watched: Set<string>)
     const status = data.status;
     const lastEpisodeId = getEpisodeId(data._links?.previousepisode?.href);
     const nextEpisodeId = getEpisodeId(data._links?.nextepisode?.href);
-    const { episodes, nextEpisode, lastEpisode } = parseEpisodes(data._embedded.episodes, watched, nextEpisodeId, lastEpisodeId);
+    const { episodes, nextEpisode, lastEpisode } = parseEpisodes(data._embedded.episodes, nextEpisodeId, lastEpisodeId);
     
     let image = data.image?.original;
     if (!image) {
@@ -89,12 +100,19 @@ const queryTVMaze = async (showId: string, saved: boolean, watched: Set<string>)
     
     return {
       title, genres, language, status, homepage, imdbId, image, overview,
-      releaseDate, voteAverage, id, saved, episodes, nextEpisode, lastEpisode
+      releaseDate, voteAverage, id, episodes, nextEpisode, lastEpisode
     }
   }).catch(err => {
     console.error(err);
     return {};
   })
+}
+
+const aDayOld = (from: Date): boolean => {
+  const dayMs = 86400000;
+  const current = new Date().getTime();
+  const fromMs = new Date(from).getTime();
+  return (current - fromMs) >= dayMs;
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -105,19 +123,50 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const session = await getServerSession(req, res, authOptions);
   let saved = false;
   let watched: Set<string> = new Set();
+  let watchedList: Array<string> = [];
+  let showInfo = {};
+  const showKeys = 'title genres language status homepage imdbId image overview releaseDate voteAverage id episodes nextEpisode lastEpisode updatedAt';
 
   if (session) {
     await dbConnect();
-    const user: IUser | null = await Users.findOne({ email: session.user?.email });
+    let user: IUser | null = await Users.findOne({ email: session.user?.email });
+
     if (!user) {
-      await Users.create({ email: session.user?.email, savedMovies: [], savedShows: [] });
+      user = await Users.create({ email: session.user?.email, savedMovies: [], savedShows: [] });
     } else {
       const index = user.savedShows.findIndex((show) => show.showId == `${id}`);
       saved = index != -1;
       watched = saved ? new Set(user.savedShows[index].watchedEpisodes) : watched;
+      watchedList = saved ? user.savedShows[index].watchedEpisodes : watchedList;
+    }
+
+    if (user) {
+      const show: IShow | null = await Show.findOne({ id }, showKeys);
+      if (!show || !show.episodes || aDayOld(show.updatedAt)) {
+        const info = await queryTVMaze(id as string);
+        if (verifyRequiredKeys(info)) {
+          !show ? await Show.create(info) : await Show.findOneAndUpdate({ id }, info);
+        }
+        showInfo = info;
+      } else {
+        showInfo = show;
+      }
+    } else {
+      return res.status(200).json({ success: false, message: 'Error creating user.' });
+    }
+  } else {
+    const keys = 'title genres language status homepage imdbId image overview releaseDate voteAverage id nextEpisode lastEpisode updatedAt';
+    const show: IShow | null = await Show.findOne({ id }, keys);
+    if (!show || aDayOld(show.updatedAt)) {
+      const info = await queryTVMaze(id as string);
+      if (verifyRequiredKeys(info)) {
+        !show ? await Show.create(info) : await Show.findOneAndUpdate({ id }, info);
+      }
+      showInfo = info;
+    } else {
+      showInfo = show;
     }
   }
 
-  const info = await queryTVMaze(id as string, saved, watched);
-  return res.status(200).json({ success: true, show: info });
+  return res.status(200).json({ success: true, show: showInfo, saved, watched: watchedList });
 }

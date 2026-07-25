@@ -21,7 +21,8 @@ export default function Details() {
   const fetchDetails = async (showId: string) => {
     fetch(`/api/show/details?id=${showId}`).then(res => res.json()).then(data => {
       if (data.success) {
-        setShow(data.show);
+        const obj = { ...data.show, saved: data.saved, watched: new Set(data.watched) };
+        setShow(obj);
       } else {
         setError(data.message);
       }

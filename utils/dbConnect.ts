@@ -26,14 +26,28 @@ async function dbConnect(): Promise<Mongoose> {
     return cached.conn;
   }
 
+  const opts = {
+    bufferCommands: false,
+    serverSelectionTimeoutMS: 5000,
+    socketTimeoutMS: 45000,
+  };
+
   if (!cached.promise) {
-    cached.promise = mongoose.connect(MONGODB_URI as string).then((mongooseInstance) => {
+    cached.promise = mongoose.connect(MONGODB_URI as string, opts).then((mongooseInstance) => {
       return mongooseInstance;
+    }).catch(error => {
+      cached.promise = null;
+      throw error;
     });
   }
 
-  cached.conn = await cached.promise;
-  return cached.conn;
+  try {
+    cached.conn = await cached.promise;
+    return cached.conn;
+  } catch (error) {
+    cached.promise = null;
+    throw error;
+  }
 }
 
 export default dbConnect;

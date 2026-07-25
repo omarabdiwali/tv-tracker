@@ -4,24 +4,24 @@ import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { enqueueSnackbar, useSnackbar } from 'notistack';
-import { useState, useCallback, memo } from 'react';
+import { useState, useCallback, memo, useEffect } from 'react';
 import { FaImdb, FaStar } from 'react-icons/fa';
 import { HiOutlineStatusOnline } from 'react-icons/hi';
 import { IoIosAddCircleOutline, IoIosCloseCircleOutline, IoIosHourglass, IoMdArrowDropdown, IoMdArrowDropup, IoMdCalendar } from 'react-icons/io';
 import { RxClock } from 'react-icons/rx';
 
-const EpisodeItem = memo(({ episode, onToggleWatched }: { 
+const EpisodeItem = memo(({ episode, watched, onToggleWatched }: { 
   episode: Episode;
+  watched: Set<string>;
   onToggleWatched: (id: string | number, watched: boolean, episode: number) => Promise<boolean> 
 }) => {
   const [isLoading, setIsLoading] = useState(false);
-
   const handleClick = useCallback(async () => {
     setIsLoading(true);
-    const newWatched = !episode.watched;
+    const newWatched = !watched.has(`${episode.id}`);
     await onToggleWatched(episode.id, newWatched, episode.number);
     setIsLoading(false);
-  }, [episode.id, episode.watched, onToggleWatched]);
+  }, [episode.id, watched, onToggleWatched]);
 
   return (
     <div className="flex items-start justify-between p-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors duration-200">
@@ -46,19 +46,19 @@ const EpisodeItem = memo(({ episode, onToggleWatched }: {
         onClick={handleClick}
         disabled={isLoading}
         className={`ml-3 flex-shrink-0 enabled:cursor-pointer flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 ${
-          episode.watched 
+          watched.has(`${episode.id}`)
             ? 'bg-green-600 hover:bg-green-700 text-white' 
             : 'bg-gray-600 hover:bg-gray-500 text-gray-300'
         } disabled:opacity-50`}
       >
         {isLoading ? (
           <IoIosHourglass size={14} className="animate-spin" />
-        ) : episode.watched ? (
+        ) : watched.has(`${episode.id}`) ? (
           <IoIosCloseCircleOutline size={14} />
         ) : (
           <IoIosAddCircleOutline size={14} />
         )}
-        {episode.watched ? 'Watched' : 'Mark Watched'}
+        {watched.has(`${episode.id}`) ? 'Watched' : 'Mark Watched'}
       </button>
     </div>
   );
@@ -66,24 +66,31 @@ const EpisodeItem = memo(({ episode, onToggleWatched }: {
 
 const SeasonSection = ({ 
   seasonNumber, 
-  episodes: initialEpisodes, 
+  episodes, 
+  watched: initialWatched,
   onToggleWatched 
 }: { 
   seasonNumber: number; 
   episodes: Episode[]; 
+  watched: Set<string>;
   onToggleWatched: (id: string | number, watched: boolean, season: number, episode: number) => Promise<boolean> 
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [episodes, setEpisodes] = useState<Episode[]>(initialEpisodes);
+  const [watched, setWatched] = useState(initialWatched);
+  const [watchedCount, setWatchedCount] = useState(episodes.filter(ep => watched.has(`${ep.id}`)).length);
   
-  const watchedCount = episodes.filter(ep => ep.watched).length;
+  useEffect(() => {
+    setWatchedCount(episodes.filter(ep => watched.has(`${ep.id}`)).length);
+  }, [episodes, watched])
   
-  const handleToggleWatched = useCallback(async (episodeId: string | number, setWatched: boolean, episode: number) => {
-    const result = await onToggleWatched(episodeId, setWatched, seasonNumber, episode);
+  const handleToggleWatched = useCallback(async (episodeId: string | number, setToWatched: boolean, episode: number) => {
+    const result = await onToggleWatched(episodeId, setToWatched, seasonNumber, episode);
     if (result) {
-      setEpisodes(prev => prev.map(ep => 
-        ep.id === episodeId ? { ...ep, watched: setWatched } : ep
-      ));
+      setWatched((prev) => {
+        const prevCopy = new Set(prev);
+        setToWatched ? prevCopy.add(`${episodeId}`) : prevCopy.delete(`${episodeId}`);
+        return prevCopy;
+      })
     }
     return result;
   }, [onToggleWatched]);
@@ -116,6 +123,7 @@ const SeasonSection = ({
             <EpisodeItem 
               key={episode.id} 
               episode={episode}
+              watched={watched}
               onToggleWatched={handleToggleWatched} 
             />
           ))}
@@ -128,9 +136,10 @@ const SeasonSection = ({
 interface EpisodeListProps {
   showId: string | number;
   episodes: EpisodesData;
+  watched: Set<string>;
 }
 
-function EpisodeList({ showId, episodes }: EpisodeListProps) {
+function EpisodeList({ showId, episodes, watched }: EpisodeListProps) {
   const { enqueueSnackbar } = useSnackbar();
   
   const handleToggleWatched = useCallback(async (episodeId: string | number, setWatched: boolean, season: number, episode: number) => {
@@ -184,6 +193,7 @@ function EpisodeList({ showId, episodes }: EpisodeListProps) {
           key={seasonNum}
           seasonNumber={seasonNum}
           episodes={episodes[seasonNum]}
+          watched={watched}
           onToggleWatched={handleToggleWatched}
         />
       ))}
@@ -286,7 +296,7 @@ export default function ShowDetails({ show }: ShowDetailsProps) {
                 src={show.image}
                 width={342}
                 height={513}
-                priority={true}
+                preload={true}
                 className='rounded-2xl mx-auto'
               />
             </div>
@@ -391,6 +401,7 @@ export default function ShowDetails({ show }: ShowDetailsProps) {
               <EpisodeList 
                 showId={show.id} 
                 episodes={show.episodes} 
+                watched={show.watched}
               />
             </div>
           )}

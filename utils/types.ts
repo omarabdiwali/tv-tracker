@@ -62,6 +62,7 @@ export interface ShowProps {
   saved?: boolean;
   nextEpisode?: string | null;
   lastEpisode?: string | null;
+  watched: Set<string>;
 }
 
 export interface MovieDetailsProps {
@@ -94,4 +95,15 @@ export interface IShow extends Document {
   title: string;     // Show title
   imdbId: string;    // IMDb ID (e.g., "tt0944947")
   releaseDate: string; // First air date
+  overview: string;
+  episodes: EpisodesData;
+  genres: Array<string>;
+  voteAverage: string;
+  homepage: string;
+  language: string;
+  status: string;
+  nextEpisode: string;
+  lastEpisode: string;
+  updatedAt: Date;
+  createdAt: Date;
 }

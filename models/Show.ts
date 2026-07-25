@@ -8,24 +8,24 @@ const showSchema = new Schema<IShow>({
     unique: true,
     index: true 
   },
-  image: { 
-    type: String, 
-    required: true 
-  },
-  title: { 
-    type: String, 
-    required: true 
-  },
   imdbId: { 
     type: String, 
     required: true,
     unique: true,
     index: true 
   },
-  releaseDate: { 
-    type: String, 
-    required: false 
-  }
+  overview: { type: String, required: true },
+  image: { type: String, required: true },
+  title: { type: String, required: true },
+  episodes: { type: Object, required: false },
+  genres: { type: [String], required: false },
+  voteAverage: { type: String, required: false },
+  homepage: { type: String, required: false },
+  language: { type: String, required: false },
+  status: { type: String, required: false },
+  nextEpisode: { type: String, required: false },
+  lastEpisode: { type: String, required: false },
+  releaseDate: { type: String, required: false }
 }, {
   timestamps: true
 });
