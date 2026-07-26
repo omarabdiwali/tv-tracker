@@ -62,8 +62,8 @@ function Item({ id, name, image, year, isSaved, type }: ItemProps) {
         disabled={disabled}
         className={`
           absolute left-[75%] top-[8%] z-10
-          bg-slate-500 py-[3px] px-[5px] rounded-md
-          enabled:hover:bg-slate-600 ${action == 'add' ? 'hover:text-green-400' : action == 'remove' ? 'hover:text-red-400' : ''}
+          bg-black/80 py-[3px] px-[5px] rounded-md
+          enabled:hover:bg-black ${action == 'add' ? 'hover:text-green-400' : action == 'remove' ? 'hover:text-red-400' : ''}
           cursor-pointer
         `}
       >
