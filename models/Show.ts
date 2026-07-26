@@ -11,6 +11,7 @@ const showSchema = new Schema<IShow>({
   imdbId: { type: String, required: false },
   overview: { type: String, required: true },
   image: { type: String, required: true },
+  imageSmall : { type: String, required: false },
   title: { type: String, required: true },
   episodes: { type: Object, required: false },
   genres: { type: [String], required: false },

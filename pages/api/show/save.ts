@@ -50,13 +50,14 @@ const queryTVMaze = async (showId: string, targetTitle: string) => {
     const status = data.status;
     
     let image = data.image?.original;
+    let imageSmall = data.image?.medium;
     if (!image) {
       image = data.image?.medium;
     }
 
     if (!id || !title || title != targetTitle || !image) return {};
     return {
-      id, title, image, imdbId, releaseDate, genres, lastEpisode,
+      id, title, image, imdbId, releaseDate, genres, lastEpisode, imageSmall,
       nextEpisode, homepage, language, overview, voteAverage, status
     };
   }).catch(err => {

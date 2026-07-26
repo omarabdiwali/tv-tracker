@@ -36,6 +36,7 @@ const addCategory = (shows: IShow[], savedShows: ObjType) => {
     populated.push({
       id: show.id,
       image: show.image,
+      imageSmall: show.imageSmall,
       title: show.title,
       releaseDate: show.releaseDate,
       nextEpisode: show.nextEpisode,
@@ -54,7 +55,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!session) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
   
   await dbConnect();
-  const showFields = 'id image title episodeCount releaseDate nextEpisode lastEpisode status'
+  const showFields = 'id image imageSmall title episodeCount releaseDate nextEpisode lastEpisode status'
   let user: IUser | null = await Users.findOne({ email: session.user?.email });
   let savedShows: IShow[] = [];
   let formatted: ShowWatchlist[] = [];

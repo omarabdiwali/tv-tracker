@@ -12,6 +12,7 @@ interface ItemProps {
   id: string,
   title: string,
   image: string,
+  imageSmall?: string,
   nextEpisode: string | undefined | null,
   lastEpisode: string | undefined | null,
   releaseDate?: string,
@@ -20,7 +21,8 @@ interface ItemProps {
   removeFromShows: (id: string) => void;
 }
 
-function Item({ id, image, title, releaseDate, nextEpisode, lastEpisode, showStatus, authStatus, removeFromShows }: ItemProps) {
+function Item({ id, image, imageSmall, title, releaseDate, 
+  nextEpisode, lastEpisode, showStatus, authStatus, removeFromShows }: ItemProps) {
   const [action, setAction] = useState('remove');
   const [disabled, setDisabled] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
@@ -90,7 +92,8 @@ function Item({ id, image, title, releaseDate, nextEpisode, lastEpisode, showSta
           <div className="relative p-4 bg-slate-800 rounded-t-lg flex-1 min-h-[200px]">
             <Image
               alt={title}
-              src={image}
+              src={imageSmall ? imageSmall : image}
+              unoptimized={imageSmall ? true : false}
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               className="p-4 object-contain"
@@ -234,6 +237,7 @@ export default function Shows() {
                       showStatus={show.status}
                       title={show.title}
                       image={show.image}
+                      imageSmall={show.imageSmall}
                       nextEpisode={show.nextEpisode}
                       lastEpisode={show.lastEpisode}
                       releaseDate={show.releaseDate}
@@ -255,6 +259,7 @@ export default function Shows() {
                           showStatus={show.status}
                           title={show.title}
                           image={show.image}
+                          imageSmall={show.imageSmall}
                           nextEpisode={show.nextEpisode}
                           lastEpisode={show.lastEpisode}
                           releaseDate={show.releaseDate}
@@ -271,6 +276,7 @@ export default function Shows() {
                           showStatus={show.status}
                           title={show.title}
                           image={show.image}
+                          imageSmall={show.imageSmall}
                           nextEpisode={show.nextEpisode}
                           lastEpisode={show.lastEpisode}
                           releaseDate={show.releaseDate}
@@ -287,6 +293,7 @@ export default function Shows() {
                           showStatus={show.status}
                           title={show.title}
                           image={show.image}
+                          imageSmall={show.imageSmall}
                           nextEpisode={show.nextEpisode}
                           lastEpisode={show.lastEpisode}
                           releaseDate={show.releaseDate}

@@ -100,14 +100,16 @@ const queryTVMaze = async (showId: string) => {
     const nextEpisodeId = getEpisodeId(data._links?.nextepisode?.href);
     const { episodes, nextEpisode, lastEpisode } = parseEpisodes(data._embedded.episodes, nextEpisodeId, lastEpisodeId);
     const episodeCount = countNumberOfEpisodes(episodes);
-    
+
     let image = data.image?.original;
+    let imageSmall = data.image?.medium;    
+    
     if (!image) {
       image = data.image?.medium;
     }
     
     return {
-      title, genres, language, status, homepage, imdbId, image, overview,
+      title, genres, language, status, homepage, imdbId, image, overview, imageSmall,
       releaseDate, voteAverage, id, episodes, nextEpisode, lastEpisode, episodeCount
     }
   }).catch(err => {

@@ -93,6 +93,7 @@ export interface IShow extends Document {
   _id: Types.ObjectId;
   id: string;        // External ID (e.g., TMDB, TVMaze)
   image: string;     // Poster/backdrop URL
+  imageSmall: string;
   title: string;     // Show title
   imdbId: string;    // IMDb ID (e.g., "tt0944947")
   releaseDate: string; // First air date
@@ -133,6 +134,7 @@ export interface UpcomingMovie {
 export interface ShowWatchlist {
   id: string,
   image: string,
+  imageSmall?: string,
   title: string,
   releaseDate: string,
   nextEpisode: string,
