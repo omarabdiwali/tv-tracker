@@ -122,7 +122,7 @@ export default function Shows() {
   const router = useRouter();
   const { data: _, status } = useSession();
   const [shows, setShows] = useState<ShowWatchlist[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [sortBy, setSortBy] = useState('date');
 

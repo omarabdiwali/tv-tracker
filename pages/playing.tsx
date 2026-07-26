@@ -108,7 +108,7 @@ export default function Movies() {
   const router = useRouter();
   const { data: _, status } = useSession();
   const [movies, setMovies] = useState<UpcomingMovie[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   const sortMovies = (a: UpcomingMovie, b: UpcomingMovie) => {

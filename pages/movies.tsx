@@ -109,7 +109,7 @@ export default function Movies() {
   const router = useRouter();
   const { data: _, status } = useSession();
   const [movies, setMovies] = useState<MovieWatchlist[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [sortBy, setSortBy] = useState('date');
 
