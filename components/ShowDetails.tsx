@@ -68,16 +68,19 @@ const SeasonSection = ({
   seasonNumber, 
   episodes, 
   watched: initialWatched,
-  onToggleWatched 
+  onToggleWatched,
+  onMarkAllWatched
 }: { 
   seasonNumber: number; 
   episodes: Episode[]; 
   watched: Set<string>;
-  onToggleWatched: (id: string | number, watched: boolean, season: number, episode: number) => Promise<boolean> 
+  onToggleWatched: (id: string | number, watched: boolean, season: number, episode: number) => Promise<boolean>;
+  onMarkAllWatched: (seasonNumber: number, episodeIds: (string | number)[], watched: boolean) => Promise<boolean>;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [watched, setWatched] = useState(initialWatched);
   const [watchedCount, setWatchedCount] = useState(episodes.filter(ep => watched.has(`${ep.id}`)).length);
+  const [loading, setLoading] = useState(false);
   
   useEffect(() => {
     setWatchedCount(episodes.filter(ep => watched.has(`${ep.id}`)).length);
@@ -94,6 +97,24 @@ const SeasonSection = ({
     }
     return result;
   }, [onToggleWatched]);
+
+  const handleMarkAllClick = useCallback(async () => {
+    if (loading) return;
+
+    setLoading(true);
+    const episodeIds = episodes.map((ep) => ep.id);
+    const watchStatus = watchedCount < episodes.length;
+    const result = await onMarkAllWatched(seasonNumber, episodeIds, watchStatus);
+
+    if (result) {
+      setWatched((prev) => {
+        const prevCopy = new Set(prev);
+        episodeIds.forEach(ep => watchStatus ? prevCopy.add(`${ep}`) : prevCopy.delete(`${ep}`));
+        return prevCopy;
+      })
+    }
+    setLoading(false);
+  }, [onMarkAllWatched, seasonNumber, episodes, watchedCount]);
   
   return (
     <div className="border border-gray-700 rounded-lg overflow-hidden">
@@ -113,6 +134,15 @@ const SeasonSection = ({
           <span className="text-sm text-green-400">
             {watchedCount}/{episodes.length} Watched
           </span>
+          <div
+            onClick={(e) => {
+              e.stopPropagation();
+              handleMarkAllClick();
+            }}
+            className={`flex items-center gap-1 px-2 py-1 text-xs ${watchedCount == episodes.length ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-600/80 hover:bg-gray-500 text-gray-300'} cursor-pointer text-white rounded-full transition-colors duration-200`}
+          >
+            {loading ? 'Loading...' : watchedCount < episodes.length ? 'Mark All Watched' : 'Watched'}
+          </div>
           {isOpen ? <IoMdArrowDropup size={20} /> : <IoMdArrowDropdown size={20} />}
         </div>
       </button>
@@ -178,6 +208,41 @@ function EpisodeList({ showId, episodes, watched }: EpisodeListProps) {
     });
   }, [showId, enqueueSnackbar]);
 
+  const handleMarkAllWatched = useCallback(async (seasonNumber: number, episodeIds: (string | number)[], watchStatus: boolean) => {
+    const reqBody = { 
+      showId, 
+      episodeIds,
+      watched: watchStatus
+    };
+    
+    return fetch('/api/show/watchedSeason', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(reqBody)
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        enqueueSnackbar(`S${seasonNumber} marked as ${watchStatus ? 'watched' : 'unwatched'}`, { variant: 'success', autoHideDuration: 1500 });
+        return true;
+      } else {
+        if (data.message == "Unauthenticated user.") {
+          window.location.href = '/';
+          return false;
+        }
+        enqueueSnackbar(data.message, { variant: 'error', autoHideDuration: 1500 });
+        return false;
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      enqueueSnackbar('Failed to update watched status', { variant: 'error', autoHideDuration: 1500 });
+      return false;
+    });
+  }, [showId, enqueueSnackbar]);
+
   const seasonNumbers = Object.keys(episodes)
     .map(Number)
     .sort((a, b) => a - b);
@@ -199,6 +264,7 @@ function EpisodeList({ showId, episodes, watched }: EpisodeListProps) {
           episodes={episodes[seasonNum]}
           watched={watched}
           onToggleWatched={handleToggleWatched}
+          onMarkAllWatched={handleMarkAllWatched}
         />
       ))}
     </div>
