@@ -106,18 +106,17 @@ function Item({ id, image, imageSmall, title, releaseDate, episodeCount, episode
       : 0;
 
     return (
-      <div className="absolute top-[0%] w-full bg-red-600 h-1">
+      <div className="absolute flex top-[0%] w-full bg-red-600 h-1">
         <div
           className="bg-gradient-to-r z-100 from-green-400 to-green-500 h-1 transition-all duration-500"
           style={{ width: `${(episodesWatched / episodeCount) * 100}%` }}
         />
-        {nextEpisodeNumber && nextEpisodeNumber <= episodeCount && (
+        {nextEpisodeNumber && nextEpisodeNumber > episodesWatched && nextEpisodeNumber <= episodeCount && (
           <div
-            className="absolute cursor-default z-50 top-0 bottom-0 bg-blue-500"
+            className="cursor-default z-50 bg-blue-500"
             style={{
               left: `${nextEpisodePosition}%`,
-              zIndex: 10,
-              width: `max(${1 / episodeCount * 100}%, 0.5rem)`,
+              width: `max(${1 / episodeCount * 100}%, 0.75rem)`,
             }}
             title={`Next: Episode ${nextEpisode}`}
           />
