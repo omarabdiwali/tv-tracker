@@ -128,7 +128,7 @@ const queryTVMaze = async (showId: string) => {
 }
 
 const timeToRefresh = (from: Date, status: string): boolean => {
-  const refreshTime = status != 'Ended' ? 86400000 : 86400000 * 5;
+  const refreshTime = status != 'Ended' ? 86400000 / 2 : 86400000 * 5;
   const current = new Date().getTime();
   const fromMs = new Date(from).getTime();
   return (current - fromMs) >= refreshTime;
