@@ -26,11 +26,11 @@ function Item({ id, image, title, releaseDate, year, saved, status }: ItemProps)
   const saveItem = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     const prevAction = action;
     setDisabled(true);
     setAction('loading');
-    
+
     fetch(`/api/movie/save`, {
       method: 'POST',
       headers: {
@@ -56,7 +56,7 @@ function Item({ id, image, title, releaseDate, year, saved, status }: ItemProps)
       setDisabled(false);
     })
   }
-  
+
   return (
     <div className="relative flex h-full flex-col justify-start">
       {status == 'authenticated' && <button
@@ -176,11 +176,11 @@ export default function Movies() {
       {movies && movies.length > 0 ? (
         <div className="grid items-stretch grid-cols-[repeat(auto-fill,_minmax(170px,_1fr))] gap-4 m-4">
           {movies.map((movie) => {
-            return <Item 
-                      key={`movie-saved-${movie.id}`} 
-                      status={status} id={movie.id} 
-                      title={movie.title} 
-                      image={movie.image} 
+            return <Item
+                      key={`movie-saved-${movie.id}`}
+                      status={status} id={movie.id}
+                      title={movie.title}
+                      image={movie.image}
                       releaseDate={movie.releaseDate}
                       saved={movie.isSaved}
                       year={movie.year}

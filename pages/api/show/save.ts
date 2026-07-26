@@ -25,7 +25,7 @@ const fetchEpisodeInfo = async (href: string | undefined) => {
     if (season == undefined || season == null || episode == undefined || episode == null || !airdate) return null;
     return `${season}x${episode} / ${airdate}`;
   })
-} 
+}
 
 const queryTVMaze = async (showId: string, targetTitle: string) => {
   const url = `https://api.tvmaze.com/shows/${showId}`;
@@ -40,15 +40,15 @@ const queryTVMaze = async (showId: string, targetTitle: string) => {
     const language = data.language;
     const overview = data.summary;
     const releaseDate = data.premiered;
-    
+
     const lastEpisodeHref = data._links?.previousepisode?.href;
     const nextEpisodeHref = data._links?.nextepisode?.href;
     const lastEpisode = await fetchEpisodeInfo(lastEpisodeHref);
     const nextEpisode = await fetchEpisodeInfo(nextEpisodeHref);
-    
+
     const voteAverage = data.rating?.average;
     const status = data.status;
-    
+
     let image = data.image?.original;
     let imageSmall = data.image?.medium;
     if (!image) {
@@ -77,20 +77,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   await dbConnect();
-  
+
   let user : IUser | null = await Users.findOne({ email: session.user?.email });
   let savedShows = new Set();
-  
+
   if (!user) {
     user = await Users.create({ email: session.user?.email, savedShows: [], savedMovies: [] });
   } else {
     const mappedList = user.savedShows.map((show) => show.showId);
     savedShows = new Set(mappedList);
   }
-  
+
   if (!user) return res.status(200).json({ success: false, message: "Unauthenticated user." });
   const show: IShow | null = await Show.findOne({ id: id });
-  
+
   if (!show) {
     const info = await queryTVMaze(id as string, title as string);
     if (Object.keys(info).length == 0) {

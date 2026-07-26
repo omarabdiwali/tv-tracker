@@ -40,20 +40,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   await dbConnect();
-  
+
   let user : IUser | null = await Users.findOne({ email: session.user?.email });
   let savedMovies = new Set();
-  
+
   if (!user) {
     user = await Users.create({ email: session.user?.email, savedMovies: [], savedShows: [] });
   } else {
     const mappedList = user.savedMovies.map((movie) => movie.movieId);
     savedMovies = new Set(mappedList);
   }
-  
+
   if (!user) return res.status(200).json({ success: false, message: "Error creating user." });
   const movie: IMovie | null = await Movie.findOne({ id: id });
-  
+
   if (!movie) {
     const info = await queryTMDB(id as string, title as string);
     if (Object.keys(info).length == 0) {

@@ -23,7 +23,7 @@ const queryTMDB = async (queryString: string, savedMovies: Set<string>) => {
       const image = movie.poster_path;
       const name = movie.title;
       const isSaved = savedMovies.has(`${id}`);
-      
+
       let year = null;
 
       if (id == null || id == undefined || !name || !image) continue;
@@ -55,7 +55,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   await dbConnect();
-  
+
   const user: IUser | null = await Users.findOne({ email: session.user?.email });
   if (!user) {
     await Users.create({ email: session.user?.email, savedMovies: [], savedShows: [] })

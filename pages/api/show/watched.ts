@@ -28,7 +28,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const watchedEpisodesList = user.savedShows[index].watchedEpisodes;
   const watchedEpisodes = new Set(watchedEpisodesList);
-  
+
   if (setWatched && watchedEpisodes.has(`${epId}`)) {
     return res.status(200).json({ success: true, message: "has already been watched." });
   } else if (!setWatched && !watchedEpisodes.has(`${epId}`)) {

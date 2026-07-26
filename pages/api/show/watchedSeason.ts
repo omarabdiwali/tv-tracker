@@ -28,7 +28,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const watchedEpisodesList = user.savedShows[index].watchedEpisodes;
   const watchedEpisodes = new Set(watchedEpisodesList);
-  
+
   if (watched) {
     episodeIds.forEach((id: string | number) => watchedEpisodes.add(`${id}`));
   } else {

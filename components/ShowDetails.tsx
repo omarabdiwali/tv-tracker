@@ -10,10 +10,10 @@ import { HiOutlineStatusOnline } from 'react-icons/hi';
 import { IoIosAddCircleOutline, IoIosCloseCircleOutline, IoIosHourglass, IoMdArrowDropdown, IoMdArrowDropup, IoMdCalendar } from 'react-icons/io';
 import { RxClock } from 'react-icons/rx';
 
-const EpisodeItem = memo(({ episode, watched, onToggleWatched }: { 
+const EpisodeItem = memo(({ episode, watched, onToggleWatched }: {
   episode: Episode;
   watched: Set<string>;
-  onToggleWatched: (id: string | number, watched: boolean, episode: number) => Promise<boolean> 
+  onToggleWatched: (id: string | number, watched: boolean, episode: number) => Promise<boolean>
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const handleClick = useCallback(async () => {
@@ -41,13 +41,13 @@ const EpisodeItem = memo(({ episode, watched, onToggleWatched }: {
           <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(episode.summary || 'No summary')}} className="text-xs text-gray-300" />
         )}
       </div>
-      
+
       <button
         onClick={handleClick}
         disabled={isLoading}
         className={`ml-3 flex-shrink-0 enabled:cursor-pointer flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 ${
           watched.has(`${episode.id}`)
-            ? 'bg-green-600 hover:bg-green-700 text-white' 
+            ? 'bg-green-600 hover:bg-green-700 text-white'
             : 'bg-gray-600 hover:bg-gray-500 text-gray-300'
         } disabled:opacity-50`}
       >
@@ -64,15 +64,15 @@ const EpisodeItem = memo(({ episode, watched, onToggleWatched }: {
   );
 });
 
-const SeasonSection = ({ 
-  seasonNumber, 
-  episodes, 
+const SeasonSection = ({
+  seasonNumber,
+  episodes,
   watched: initialWatched,
   onToggleWatched,
   onMarkAllWatched
-}: { 
-  seasonNumber: number; 
-  episodes: Episode[]; 
+}: {
+  seasonNumber: number;
+  episodes: Episode[];
   watched: Set<string>;
   onToggleWatched: (id: string | number, watched: boolean, season: number, episode: number) => Promise<boolean>;
   onMarkAllWatched: (seasonNumber: number, episodeIds: (string | number)[], watched: boolean) => Promise<boolean>;
@@ -81,11 +81,11 @@ const SeasonSection = ({
   const [watched, setWatched] = useState(initialWatched);
   const [watchedCount, setWatchedCount] = useState(episodes.filter(ep => watched.has(`${ep.id}`)).length);
   const [loading, setLoading] = useState(false);
-  
+
   useEffect(() => {
     setWatchedCount(episodes.filter(ep => watched.has(`${ep.id}`)).length);
   }, [episodes, watched])
-  
+
   const handleToggleWatched = useCallback(async (episodeId: string | number, setToWatched: boolean, episode: number) => {
     const result = await onToggleWatched(episodeId, setToWatched, seasonNumber, episode);
     if (result) {
@@ -115,7 +115,7 @@ const SeasonSection = ({
     }
     setLoading(false);
   }, [onMarkAllWatched, seasonNumber, episodes, watchedCount]);
-  
+
   return (
     <div className="border border-gray-700 rounded-lg overflow-hidden">
       <button
@@ -146,15 +146,15 @@ const SeasonSection = ({
           {isOpen ? <IoMdArrowDropup size={20} /> : <IoMdArrowDropdown size={20} />}
         </div>
       </button>
-      
+
       {isOpen && (
         <div className="p-3 space-y-2 max-h-96 overflow-y-auto bg-gray-800/50">
           {episodes.map(episode => (
-            <EpisodeItem 
-              key={episode.id} 
+            <EpisodeItem
+              key={episode.id}
               episode={episode}
               watched={watched}
-              onToggleWatched={handleToggleWatched} 
+              onToggleWatched={handleToggleWatched}
             />
           ))}
         </div>
@@ -171,14 +171,14 @@ interface EpisodeListProps {
 
 function EpisodeList({ showId, episodes, watched }: EpisodeListProps) {
   const { enqueueSnackbar } = useSnackbar();
-  
+
   const handleToggleWatched = useCallback(async (episodeId: string | number, setWatched: boolean, season: number, episode: number) => {
-    const reqBody = { 
-      showId, 
-      epId: episodeId, 
-      setWatched 
+    const reqBody = {
+      showId,
+      epId: episodeId,
+      setWatched
     };
-    
+
     return fetch('/api/show/watched', {
       method: 'POST',
       headers: {
@@ -209,12 +209,12 @@ function EpisodeList({ showId, episodes, watched }: EpisodeListProps) {
   }, [showId, enqueueSnackbar]);
 
   const handleMarkAllWatched = useCallback(async (seasonNumber: number, episodeIds: (string | number)[], watchStatus: boolean) => {
-    const reqBody = { 
-      showId, 
+    const reqBody = {
+      showId,
       episodeIds,
       watched: watchStatus
     };
-    
+
     return fetch('/api/show/watchedSeason', {
       method: 'POST',
       headers: {
@@ -258,7 +258,7 @@ function EpisodeList({ showId, episodes, watched }: EpisodeListProps) {
   return (
     <div className="space-y-3">
       {seasonNumbers.map(seasonNum => (
-        <SeasonSection 
+        <SeasonSection
           key={seasonNum}
           seasonNumber={seasonNum}
           episodes={episodes[seasonNum]}
@@ -288,7 +288,7 @@ function InfoBoxes({ status, releaseDate, lastEpisode, nextEpisode } : InfoBoxes
           {releaseDate || 'N/A'}
         </div>
       </div>
-      
+
       {(!lastEpisode || !nextEpisode) && <div className="col-span-2 sm:col-span-1 bg-gray-800 p-2 px-3 rounded-lg">
         <div className="text-sm font-semibold text-gray-400 mb-1">Status</div>
         <div className="text-white flex items-center gap-2">
@@ -304,7 +304,7 @@ function InfoBoxes({ status, releaseDate, lastEpisode, nextEpisode } : InfoBoxes
           {lastEpisode}
         </div>
       </div>}
-      
+
       {(lastEpisode || nextEpisode) && <div className="col-span-2 sm:col-span-1 bg-gray-800 p-2 px-3 rounded-lg">
         <div className="text-sm font-semibold text-gray-400 mb-1">{nextEpisode ? 'Next Episode' : 'Last Episode'}</div>
         <div className="text-white flex items-center gap-2">
@@ -354,7 +354,7 @@ export default function ShowDetails({ show }: ShowDetailsProps) {
       setDisabled(false);
     })
   }
-  
+
   return (
     <div className="flex h-full w-full mx-auto p-4 sm:p-6 lg:p-8">
       <div className="w-full grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
@@ -370,7 +370,7 @@ export default function ShowDetails({ show }: ShowDetailsProps) {
                 className='rounded-2xl mx-auto'
               />
             </div>
-            
+
             <div className="mt-4 space-y-3">
               <div className="flex items-center justify-between">
                 {show.homepage ? (
@@ -394,8 +394,8 @@ export default function ShowDetails({ show }: ShowDetailsProps) {
                   IMDb
                 </Link>}
               </div>
-              
-              {show.voteAverage ? 
+
+              {show.voteAverage ?
               (<div className="rounded-lg py-2">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
@@ -405,15 +405,15 @@ export default function ShowDetails({ show }: ShowDetailsProps) {
                     </span>
                   </div>
                 </div>
-                
+
                 <div className="w-full bg-gray-600 rounded-full h-2">
-                  <div 
+                  <div
                     className="bg-gradient-to-r from-yellow-400 to-yellow-500 h-2 rounded-full transition-all duration-500"
                     style={{ width: `${(parseFloat(show.voteAverage as string || '0') / 10) * 100}%` }}
                   />
                 </div>
               </div>) : ''}
-              
+
               <div className="flex flex-wrap gap-2">
                 {show.genres && show.genres.map((genre: string) => (
                   <span
@@ -432,7 +432,7 @@ export default function ShowDetails({ show }: ShowDetailsProps) {
             </div>
           </div>
         </div>
-        
+
         <div className="lg:col-span-2 space-y-6">
           <InfoBoxes
             status={show.status}
@@ -440,12 +440,12 @@ export default function ShowDetails({ show }: ShowDetailsProps) {
             lastEpisode={show.lastEpisode}
             nextEpisode={show.nextEpisode}
           />
-          
+
           <div className="space-y-4">
             <h2 className="text-2xl font-bold text-white flex items-center gap-2">
               Overview
             </h2>
-            
+
             {show.overview ? <div className="max-w-none whitespace-pre-line text-gray-300 text-lg space-y-3" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(show.overview) }} /> : (
               <div className="max-w-none">
                 <p className="text-gray-300 whitespace-pre-line text-lg">
@@ -454,9 +454,9 @@ export default function ShowDetails({ show }: ShowDetailsProps) {
             </div>
             )}
           </div>
-          
+
           <div className="flex flex-col sm:flex-row gap-4 pb-6 border-b border-gray-700">
-            {status == 'authenticated' ? 
+            {status == 'authenticated' ?
             <button disabled={disabled} onClick={saveShow} className="flex cursor-pointer items-center justify-center gap-2 px-6 py-3 bg-gray-700 text-gray-300 rounded-lg font-semibold enabled:hover:bg-gray-600 transition-all duration-200 transform enabled:hover:scale-105">
               {buttonText == 'Add to Watchlist' ? <IoIosAddCircleOutline size={26} /> : buttonText == 'Loading...' ? <IoIosHourglass size={26} /> : <IoIosCloseCircleOutline size={26} />}
               {buttonText}
@@ -468,9 +468,9 @@ export default function ShowDetails({ show }: ShowDetailsProps) {
               <h2 className="text-2xl font-bold text-white">
                 Episodes
               </h2>
-              <EpisodeList 
-                showId={show.id} 
-                episodes={show.episodes} 
+              <EpisodeList
+                showId={show.id}
+                episodes={show.episodes}
                 watched={show.watched}
               />
             </div>

@@ -12,7 +12,7 @@ const formatNumberOfVotes = (count: string) : string => {
   const parsedCount = parseInt(count);
   if (isNaN(parsedCount)) return '0 votes.';
   if (parsedCount < 1000) return `${count} votes`;
-  
+
   const asThousand = (parsedCount / 1000).toFixed(1);
   return `${asThousand}k votes`;
 }
@@ -92,7 +92,7 @@ export default function MovieDetails({ movie }: MovieDetailsProps) {
       setDisabled(false);
     })
   }
-  
+
   return (
     <div className="flex h-full w-full mx-auto p-4 sm:p-6 lg:p-8">
       <div className="w-full grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
@@ -109,7 +109,7 @@ export default function MovieDetails({ movie }: MovieDetailsProps) {
                 className='rounded-2xl mx-auto'
               />
             </div>
-            
+
             <div className="mt-4 space-y-3">
               <div className="flex items-center justify-between">
                 {movie.homepage ? (
@@ -133,8 +133,8 @@ export default function MovieDetails({ movie }: MovieDetailsProps) {
                   IMDb
                 </Link>}
               </div>
-              
-              {movie.voteCount && movie.voteAverage ? 
+
+              {movie.voteCount && movie.voteAverage ?
               (<div className="rounded-lg py-2">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
@@ -147,15 +147,15 @@ export default function MovieDetails({ movie }: MovieDetailsProps) {
                     {formatNumberOfVotes(movie.voteCount as string)}
                   </div>
                 </div>
-                
+
                 <div className="w-full bg-gray-600 rounded-full h-2">
-                  <div 
+                  <div
                     className="bg-gradient-to-r from-yellow-400 to-yellow-500 h-2 rounded-full transition-all duration-500"
                     style={{ width: `${(parseFloat(movie.voteAverage as string || '0') / 10) * 100}%` }}
                   />
                 </div>
               </div>) : ''}
-              
+
               <div className="flex flex-wrap gap-2">
                 {movie.genres && movie.genres.map((genre: MovieGenre) => (
                   <span
@@ -169,7 +169,7 @@ export default function MovieDetails({ movie }: MovieDetailsProps) {
             </div>
           </div>
         </div>
-        
+
         <div className="lg:col-span-2 space-y-6">
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 py-5 rounded-xl">
             <div className='bg-gray-800 p-2 rounded-lg px-3'>
@@ -179,7 +179,7 @@ export default function MovieDetails({ movie }: MovieDetailsProps) {
                 {movie.releaseDate || 'N/A'}
               </div>
             </div>
-            
+
             <div className='bg-gray-800 p-2 rounded-lg px-3'>
               <div className="text-sm font-semibold text-gray-400 mb-1">Origin</div>
               <div className="text-white flex items-center gap-2">
@@ -187,7 +187,7 @@ export default function MovieDetails({ movie }: MovieDetailsProps) {
                 {movie.origin?.join(', ') || 'N/A'}
               </div>
             </div>
-            
+
             <div className="col-span-2 sm:col-span-1 bg-gray-800 p-2 px-3 rounded-lg">
               <div className="text-sm font-semibold text-gray-400 mb-1">Runtime</div>
               <div className="text-white flex items-center gap-2">
@@ -196,21 +196,21 @@ export default function MovieDetails({ movie }: MovieDetailsProps) {
               </div>
             </div>
           </div>
-          
+
           <div className="space-y-4">
             <h2 className="text-2xl font-bold text-white flex items-center gap-2">
               Overview
             </h2>
-            
+
             <div className=" max-w-none">
               <p className="text-gray-300 whitespace-pre-line text-lg">
                 {movie.overview || 'No overview available.'}
               </p>
             </div>
           </div>
-          
+
           <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-700">
-            {movie.video && 
+            {movie.video &&
             <Link href={movie.video} target='__blank'>
               <button className="flex items-center justify-center gap-2 px-6 py-3 bg-slate-500 cursor-pointer text-white rounded-lg font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg">
                 <IoIosVideocam size={26} />
@@ -218,14 +218,14 @@ export default function MovieDetails({ movie }: MovieDetailsProps) {
               </button>
             </Link>
             }
-            
-            {status == 'authenticated' ? 
+
+            {status == 'authenticated' ?
             <button disabled={disabled} onClick={saveMovie} className="flex cursor-pointer items-center justify-center gap-2 px-6 py-3 bg-gray-700 text-gray-300 rounded-lg font-semibold enabled:hover:bg-gray-600 transition-all duration-200 transform enabled:hover:scale-105">
               {buttonText == 'Add to Watchlist' ? <IoIosAddCircleOutline size={26} /> : buttonText == 'Loading...' ? <IoIosHourglass size={26} /> : <IoIosCloseCircleOutline size={26} />}
               {buttonText}
             </button> : null}
 
-            {status == 'authenticated' && movie.saved ? 
+            {status == 'authenticated' && movie.saved ?
             <button disabled={disabled} onClick={handleChange} className={`flex cursor-pointer items-center justify-center gap-2 px-6 py-3 ${watchStatus ? 'bg-green-700 enabled:hover:bg-green-600' : 'bg-gray-700 enabled:hover:bg-gray-600'} text-gray-300 rounded-lg font-semibold transition-all duration-200 transform enabled:hover:scale-105`}>
               {loading ? <IoIosHourglass size={26} /> : <IoIosCheckmarkCircle size={26} />}
               {loading ? 'Loading...' : watchStatus ? 'Watched' : 'Mark As Watched'}

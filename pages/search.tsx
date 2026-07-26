@@ -24,7 +24,7 @@ function Item({ id, name, image, year, isSaved, type }: ItemProps) {
   const saveItem = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     const prevAction = action;
     setDisabled(true);
     setAction('loading');
@@ -54,7 +54,7 @@ function Item({ id, name, image, year, isSaved, type }: ItemProps) {
       setDisabled(false);
     })
   }
-  
+
   return (
     <div className="relative flex h-full flex-col justify-start">
       <button

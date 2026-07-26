@@ -7,16 +7,16 @@ import Users from "@/models/Users";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method != "POST") return res.status(200).json({ success: false, message: 'Method not allowed.' });
-  
+
   const session = await getServerSession(req, res, authOptions);
   const { id, status } = req.body;
-  
+
   if (!session || !id || status == undefined || status == null) {
     return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
   }
 
   await dbConnect();
-  
+
   const user: IUser | null = await Users.findOne({ email: session.user?.email });
   if (!user) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
   const movieIndex = user.savedMovies.findIndex((movie) => movie.movieId == id);

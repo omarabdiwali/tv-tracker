@@ -8,23 +8,23 @@ const userSchema = new Schema<IUser>({
     required: true
   },
   savedMovies: [{
-    movieId: { 
-      type: String, 
-      ref: 'Movie', 
-      required: true 
+    movieId: {
+      type: String,
+      ref: 'Movie',
+      required: true
     },
-    watched: { 
-      type: Boolean, 
-      default: false 
+    watched: {
+      type: Boolean,
+      default: false
     }
   }],
   savedShows: [{
-    showId: { 
-      type: String, 
-      ref: 'Show', 
-      required: true 
+    showId: {
+      type: String,
+      ref: 'Show',
+      required: true
     },
-    watchedEpisodes: [{ 
+    watchedEpisodes: [{
       type: String
     }]
   }]

@@ -10,7 +10,7 @@ export default function Details() {
 
   const [error, setError] = useState("");
   const [show, setShow] = useState<ShowProps | null>(null);
-  
+
   useEffect(() => {
     if (id) {
       setError('');
@@ -63,7 +63,7 @@ export default function Details() {
       </>
     )
   }
-  
+
   return (
     <>
       <Title />

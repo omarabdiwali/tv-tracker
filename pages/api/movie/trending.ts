@@ -22,7 +22,7 @@ const queryTMDB = async (page: string, savedMovies: Set<string>) => {
       const image = movie.poster_path;
       const name = movie.title;
       const isSaved = savedMovies.has(`${id}`);
-      
+
       let year = null;
 
       if (id == null || id == undefined || !name || !image) continue;
@@ -46,10 +46,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { page } = req.query;
   if (req.method != "GET") return res.status(200).json({ success: false, message: 'Method not allowed.' });
   if (!page || (page != '1' && page != '2')) return res.status(200).json({ sucess: false, message: 'Invalid parameter.' });
-  
+
   const session = await getServerSession(req, res, authOptions);
   let savedMovies: Set<string> = new Set();
-  
+
   if (session) {
     await dbConnect();
     const user: IUser | null = await Users.findOne({ email: session.user?.email });
@@ -60,7 +60,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       savedMovies = new Set(info);
     }
   }
-  
+
   const movies = await queryTMDB(page as string, savedMovies);
   return res.status(200).json({ success: true, movies });
 }

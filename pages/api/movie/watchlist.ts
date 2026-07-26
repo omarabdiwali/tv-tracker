@@ -12,7 +12,7 @@ type ObjType = {
 
 const addWatchedStatus = (movies: IMovie[], savedMovies: ObjType) => {
   const populated: MovieWatchlist[] = [];
-  
+
   for (const movie of movies) {
     const info = savedMovies[movie.id];
     if (!info) continue;
@@ -29,16 +29,16 @@ const addWatchedStatus = (movies: IMovie[], savedMovies: ObjType) => {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method != "GET") return res.status(200).json({ success: false, message: 'Method not allowed.' });  
+  if (req.method != "GET") return res.status(200).json({ success: false, message: 'Method not allowed.' });
   const session = await getServerSession(req, res, authOptions);
   if (!session) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
-  
+
   await dbConnect();
   const movieFields = 'id image title releaseDate'
   let user: IUser | null = await Users.findOne({ email: session.user?.email });
   let savedMovies: IMovie[] = [];
   let formatted: MovieWatchlist[] = [];
-  
+
   if (!user) {
     user = await Users.create({ email: session.user?.email, savedMovies: [], savedShows: [] });
   } else {
@@ -47,7 +47,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       acc[movie.movieId] = movie;
       return acc;
     }, {})
-    
+
     savedMovies = await Movie.find({ id: { $in: movieIds } }, movieFields);
     formatted = addWatchedStatus(savedMovies, movieObj);
   }

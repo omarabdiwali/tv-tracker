@@ -70,7 +70,7 @@ const queryTMDB = async (movieId: string, saved: boolean, watched: boolean) => {
     const runtime = data.runtime ? `${data.runtime} mins` : data.runtime;
     const image = buildPosterURL(data.poster_path, 'w342');
     const video = getBestVideo(data.videos.results);
-    
+
     return {
       title, genres, video, runtime, homepage, imdbId, origin, image,
       overview, releaseDate, voteCount, voteAverage, saved, id, watched

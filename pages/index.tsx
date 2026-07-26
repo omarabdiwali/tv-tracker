@@ -24,11 +24,11 @@ function Item({ id, name, image, type, status, isSaved }: ItemProps) {
   const saveItem = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     const prevAction = action;
     setDisabled(true);
     setAction('loading');
-    
+
     fetch(`/api/${type}/save`, {
       method: 'POST',
       headers: {
@@ -53,7 +53,7 @@ function Item({ id, name, image, type, status, isSaved }: ItemProps) {
       setDisabled(false);
     })
   }
-  
+
   return (
     <div className="relative flex h-full flex-col justify-start">
       {status == 'authenticated' && <button
@@ -127,7 +127,7 @@ export default function Home() {
   const concatMovies = (a: ItemProps[], b: ItemProps[]) : ItemProps[] => {
     const unique = new Set();
     const combination = [];
-    
+
     for (const movie of a) {
       if (unique.has(movie.id)) continue;
       unique.add(movie.id);

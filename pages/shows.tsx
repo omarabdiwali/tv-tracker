@@ -1,4 +1,4 @@
-import { ShowWatchlist } from "@/utils/types";
+import { SeasonEpisodeCountType, ShowWatchlist } from "@/utils/types";
 import { useSession } from "next-auth/react";
 import Head from "next/head";
 import Image from "next/image";
@@ -19,10 +19,13 @@ interface ItemProps {
   authStatus: 'unauthenticated' | 'authenticated' | 'loading';
   showStatus: string,
   removeFromShows: (id: string) => void;
+  episodeCount?: number,
+  episodesWatched?: number,
+  seasonEpisodeCount?: SeasonEpisodeCountType
 }
 
-function Item({ id, image, imageSmall, title, releaseDate, 
-  nextEpisode, lastEpisode, showStatus, authStatus, removeFromShows }: ItemProps) {
+function Item({ id, image, imageSmall, title, releaseDate, episodeCount, episodesWatched,
+  seasonEpisodeCount, nextEpisode, lastEpisode, showStatus, authStatus, removeFromShows }: ItemProps) {
   const [action, setAction] = useState('remove');
   const [disabled, setDisabled] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
@@ -32,11 +35,11 @@ function Item({ id, image, imageSmall, title, releaseDate,
   const saveItem = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     const prevAction = action;
     setDisabled(true);
     setAction('loading');
-    
+
     fetch(`/api/show/save`, {
       method: 'POST',
       headers: {
@@ -64,7 +67,65 @@ function Item({ id, image, imageSmall, title, releaseDate,
       setDisabled(false);
     })
   }
-  
+
+  const WatchedBanner = () => {
+    if (episodeCount == 0 || episodeCount == undefined || episodeCount == null || episodesWatched == undefined || episodesWatched == null) {
+      return <div className="absolute top-[0%] w-full bg-red-600 h-1" />;
+    }
+
+    const getPassedEpisodes = (season: number | undefined) => {
+      if (!season || season == 1 || !seasonEpisodeCount) return 0;
+      let passedEpisodes = 0;
+      for (const [prevSeason, count] of Object.entries(seasonEpisodeCount)) {
+        if (prevSeason == 'total') continue;
+        const prevSeasonInt = parseInt(prevSeason);
+        if (prevSeasonInt < season) {
+          passedEpisodes += count;
+        }
+      }
+
+      return passedEpisodes;
+    }
+
+    const getNextEpisode = () => {
+      if (nextEpisode == null || nextEpisode == undefined) return null;
+
+      const end = nextEpisode.indexOf(' / ');
+      if (end == -1) return null;
+      const seasonAndNumber = nextEpisode.slice(0, end);
+      const [season, number] = seasonAndNumber.split('x').map(v => v.length == 0 ? Number('a') : Number(v));
+      if (number == undefined || isNaN(number) || isNaN(season)) return null;
+
+      const passedEpisodes = getPassedEpisodes(season);
+      return passedEpisodes + number;
+    }
+
+    const nextEpisodeNumber = getNextEpisode();
+    const nextEpisodePosition = nextEpisodeNumber
+      ? ((nextEpisodeNumber - 1) / episodeCount) * 100
+      : 0;
+
+    return (
+      <div className="absolute top-[0%] w-full bg-red-600 h-1">
+        <div
+          className="bg-gradient-to-r z-100 from-green-400 to-green-500 h-1 transition-all duration-500"
+          style={{ width: `${(episodesWatched / episodeCount) * 100}%` }}
+        />
+        {nextEpisodeNumber && nextEpisodeNumber <= episodeCount && (
+          <div
+            className="absolute cursor-default z-50 top-0 bottom-0 bg-blue-500"
+            style={{
+              left: `${nextEpisodePosition}%`,
+              zIndex: 10,
+              width: `max(${1 / episodeCount * 100}%, 0.5rem)`,
+            }}
+            title={`Next: Episode ${nextEpisode}`}
+          />
+        )}
+      </div>
+    )
+  }
+
   return (
     <div className="relative flex h-full flex-col justify-start">
       {authStatus == 'authenticated' && <button
@@ -82,7 +143,7 @@ function Item({ id, image, imageSmall, title, releaseDate,
       </button>}
       {(nextEpisode || lastEpisode) && (
         <div
-        className={`absolute left-[50%] text-center -translate-x-1/2 text-xs 
+        className={`absolute left-[50%] text-center -translate-x-1/2 text-xs
                     py-[3px] px-[5px] w-full ${nextEpisode ? 'bg-green-800' : notEndedAndLast ? 'bg-orange-700' : 'bg-red-800'} rounded-t-md z-100`}>
           {nextEpisode ? nextEpisode : lastEpisode}
         </div>
@@ -101,7 +162,8 @@ function Item({ id, image, imageSmall, title, releaseDate,
             />
           </div>
 
-          <div className="bg-slate-700 p-2 text-center rounded-b-lg flex items-center justify-center text-gray-200 group-hover:text-emerald-400 group-hover:underline">
+          <div className="relative bg-slate-700 p-2 text-center rounded-b-lg flex items-center justify-center text-gray-200 group-hover:text-emerald-400 group-hover:underline">
+            <WatchedBanner />
             {`${title}${year ? ` (${year})` : ''}`}
           </div>
         </div>
@@ -231,12 +293,15 @@ export default function Shows() {
       {sortBy == 'date' ? shows.length > 0 ? (
         <div className="grid items-stretch grid-cols-[repeat(auto-fill,_minmax(170px,_1fr))] gap-4 m-4">
           {shows.map((show) => {
-            return <Item 
+            return <Item
                       key={`show-saved-${show.id}`}
                       authStatus={status} id={show.id}
                       showStatus={show.status}
                       title={show.title}
                       image={show.image}
+                      episodeCount={show.episodeCount}
+                      episodesWatched={show.episodesWatched}
+                      seasonEpisodeCount={show.seasonEpisodeCount}
                       imageSmall={show.imageSmall}
                       nextEpisode={show.nextEpisode}
                       lastEpisode={show.lastEpisode}
@@ -253,12 +318,15 @@ export default function Shows() {
             <h2 className="text-xl mb-2 mx-4 font-bold text-gray-400 flex-1">In Progress</h2>
             <div className="grid items-stretch grid-cols-[repeat(auto-fill,_minmax(170px,_1fr))] gap-4 m-4">
               {shows.filter((show) => show.category == 1).map((show) => {
-                return <Item 
+                return <Item
                           key={`show-in-progress-${show.id}`}
                           authStatus={status} id={show.id}
                           showStatus={show.status}
                           title={show.title}
                           image={show.image}
+                          episodeCount={show.episodeCount}
+                          episodesWatched={show.episodesWatched}
+                          seasonEpisodeCount={show.seasonEpisodeCount}
                           imageSmall={show.imageSmall}
                           nextEpisode={show.nextEpisode}
                           lastEpisode={show.lastEpisode}
@@ -270,12 +338,15 @@ export default function Shows() {
            <h2 className="text-xl mb-2 mx-4 font-bold text-gray-400 flex-1">Completed / Up-To-Date</h2>
             <div className="grid items-stretch grid-cols-[repeat(auto-fill,_minmax(170px,_1fr))] gap-4 m-4">
               {shows.filter((show) => show.category == 2).map((show) => {
-                return <Item 
+                return <Item
                           key={`show-unwatched-${show.id}`}
                           authStatus={status} id={show.id}
                           showStatus={show.status}
                           title={show.title}
                           image={show.image}
+                          episodeCount={show.episodeCount}
+                          episodesWatched={show.episodesWatched}
+                          seasonEpisodeCount={show.seasonEpisodeCount}
                           imageSmall={show.imageSmall}
                           nextEpisode={show.nextEpisode}
                           lastEpisode={show.lastEpisode}
@@ -287,12 +358,15 @@ export default function Shows() {
            <h2 className="text-xl mb-2 mx-4 font-bold text-gray-400 flex-1">Unwatched</h2>
             <div className="grid items-stretch grid-cols-[repeat(auto-fill,_minmax(170px,_1fr))] gap-4 m-4">
               {shows.filter((show) => show.category == 0).map((show) => {
-                return <Item 
+                return <Item
                           key={`show-completed-${show.id}`}
                           authStatus={status} id={show.id}
                           showStatus={show.status}
                           title={show.title}
                           image={show.image}
+                          episodeCount={show.episodeCount}
+                          episodesWatched={show.episodesWatched}
+                          seasonEpisodeCount={show.seasonEpisodeCount}
                           imageSmall={show.imageSmall}
                           nextEpisode={show.nextEpisode}
                           lastEpisode={show.lastEpisode}

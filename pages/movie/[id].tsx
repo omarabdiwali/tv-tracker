@@ -11,7 +11,7 @@ export default function Details() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [movie, setMovie] = useState<MovieProps | null>(null);
-  
+
   useEffect(() => {
     if (id) {
       fetchData(id as string);
@@ -63,7 +63,7 @@ export default function Details() {
       </>
     )
   }
-  
+
   return (
     <>
       <Title />

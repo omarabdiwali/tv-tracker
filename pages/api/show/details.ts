@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]";
 import dbConnect from "@/utils/dbConnect";
 import Users from "@/models/Users";
-import { IUser, EpisodesData, IShow } from "@/utils/types";
+import { IUser, EpisodesData, IShow, SeasonEpisodeCountType } from "@/utils/types";
 import Show from "@/models/Show";
 
 const getEpisodeId = (href: string | undefined | null) => {
@@ -14,12 +14,20 @@ const getEpisodeId = (href: string | undefined | null) => {
   return id;
 }
 
-const countNumberOfEpisodes = (seasons: EpisodesData) => {
-  let episodeCount = 0;
-  for (const season of Object.values(seasons)) {
-    episodeCount += season.length;
+const countNumberOfEpisodes = (seasons: EpisodesData): SeasonEpisodeCountType => {
+  const seasonEpisodeCount: SeasonEpisodeCountType = { 'total': 0 };
+  for (const [season, episodes] of Object.entries(seasons)) {
+    const seasonInt = Number(season);
+    if (isNaN(seasonInt)) continue;
+    if (!(seasonInt in seasonEpisodeCount)) {
+      seasonEpisodeCount[seasonInt] = 0;
+    }
+
+    seasonEpisodeCount[seasonInt] += episodes.length;
+    seasonEpisodeCount.total += episodes.length;
   }
-  return episodeCount;
+
+  return seasonEpisodeCount;
 }
 
 interface ParseEpisodes {
@@ -63,7 +71,7 @@ const parseEpisodes = (episodes: any, nextEpisodeId: string | null, lastEpisodeI
 
     seasons[season].push({ id, title, number, airdate, rating, summary });
   }
-  
+
   return {
     episodes: seasons,
     nextEpisode,
@@ -99,17 +107,18 @@ const queryTVMaze = async (showId: string) => {
     const lastEpisodeId = getEpisodeId(data._links?.previousepisode?.href);
     const nextEpisodeId = getEpisodeId(data._links?.nextepisode?.href);
     const { episodes, nextEpisode, lastEpisode } = parseEpisodes(data._embedded.episodes, nextEpisodeId, lastEpisodeId);
-    const episodeCount = countNumberOfEpisodes(episodes);
+    const seasonEpisodeCount = countNumberOfEpisodes(episodes);
+    const episodeCount = seasonEpisodeCount.total;
 
     let image = data.image?.original;
-    let imageSmall = data.image?.medium;    
-    
+    let imageSmall = data.image?.medium;
+
     if (!image) {
       image = data.image?.medium;
     }
-    
+
     return {
-      title, genres, language, status, homepage, imdbId, image, overview, imageSmall,
+      title, genres, language, status, homepage, imdbId, image, overview, imageSmall, seasonEpisodeCount,
       releaseDate, voteAverage, id, episodes, nextEpisode, lastEpisode, episodeCount
     }
   }).catch(err => {

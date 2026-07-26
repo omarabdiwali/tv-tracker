@@ -43,8 +43,8 @@ export function Header() {
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-2">
           <div className="flex flex-wrap gap-2 justify-center sm:justify-center">
             <Link href={'/'} onClick={eraseSearch}>
-              <button 
-                title={"Home"} 
+              <button
+                title={"Home"}
                 disabled={page == '/'}
                 className={`p-2 sm:p-3 ${page != '/' ? 'cursor-pointer hover:bg-slate-800' : 'opacity-60'} bg-[var(--input-bg)] rounded-lg transition-colors flex-shrink-0`}
               >
@@ -52,9 +52,9 @@ export function Header() {
               </button>
             </Link>
             <Link href={'/movies'} onClick={eraseSearch}>
-              <button 
+              <button
                 title={"Saved Movies"}
-                disabled={page == '/movies'} 
+                disabled={page == '/movies'}
                 className={`p-2 sm:p-3 ${page != '/movies' ? 'cursor-pointer hover:bg-slate-800' : 'opacity-60'} bg-[var(--input-bg)] rounded-lg transition-colors flex-shrink-0`}
               >
                 <BiSolidCameraMovie size={20} />
@@ -70,8 +70,8 @@ export function Header() {
               </button>
             </Link>
             <Link href={'/playing'} onClick={eraseSearch}>
-              <button 
-                title={"Now Playing"} 
+              <button
+                title={"Now Playing"}
                 disabled={page == '/playing'}
                 className={`p-2 sm:p-3 ${page != '/playing' ? 'cursor-pointer hover:bg-slate-800' : 'opacity-60'} bg-[var(--input-bg)] rounded-lg transition-colors flex-shrink-0`}
               >
@@ -79,7 +79,7 @@ export function Header() {
               </button>
             </Link>
           </div>
-          
+
           <form onSubmit={handleSubmit} className="flex flex-1 w-full sm:w-auto min-w-0 gap-2">
             <input
               ref={inputRef}
@@ -88,9 +88,9 @@ export function Header() {
               placeholder="Search..."
               className="flex-1 min-w-0 bg-[var(--input-bg)] text-gray-200 placeholder-gray-400 px-3 py-2 rounded-lg border border-[var(--border-color)] focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all text-sm"
             />
-            <button 
-              type="button" 
-              onClick={handleSignOut} 
+            <button
+              type="button"
+              onClick={handleSignOut}
               className="bg-orange-400 hover:bg-orange-300 text-black px-3 sm:px-4 py-2 cursor-pointer rounded-lg transition-colors font-medium text-sm whitespace-nowrap"
             >
               Sign Out
@@ -104,8 +104,8 @@ export function Header() {
               TV Tracker
             </div>
           </Link>
-          <button 
-            className="px-4 py-2 rounded-lg ml-auto hover:bg-slate-600 bg-slate-500 cursor-pointer transition-colors w-full sm:w-auto" 
+          <button
+            className="px-4 py-2 rounded-lg ml-auto hover:bg-slate-600 bg-slate-500 cursor-pointer transition-colors w-full sm:w-auto"
             onClick={() => signIn("google")}
           >
             Sign in with Google

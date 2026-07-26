@@ -89,6 +89,10 @@ export interface IMovie extends Document {
   releaseDate: string; // Release date
 }
 
+export type SeasonEpisodeCountType = {
+  [key: number | string]: number;
+}
+
 export interface IShow extends Document {
   _id: Types.ObjectId;
   id: string;        // External ID (e.g., TMDB, TVMaze)
@@ -109,6 +113,7 @@ export interface IShow extends Document {
   updatedAt: Date;
   createdAt: Date;
   episodeCount?: number;
+  seasonEpisodeCount?: SeasonEpisodeCountType
 }
 
 export interface ScheduledShows {
@@ -140,7 +145,10 @@ export interface ShowWatchlist {
   nextEpisode: string,
   lastEpisode: string,
   status: string,
-  category: number
+  category: number,
+  episodeCount?: number,
+  episodesWatched?: number,
+  seasonEpisodeCount?: SeasonEpisodeCountType
 }
 
 export interface MovieWatchlist {

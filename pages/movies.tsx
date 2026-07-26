@@ -26,11 +26,11 @@ function Item({ id, image, title, releaseDate, status, removeFromMovies }: ItemP
   const saveItem = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     const prevAction = action;
     setDisabled(true);
     setAction('loading');
-    
+
     fetch(`/api/movie/save`, {
       method: 'POST',
       headers: {
@@ -58,7 +58,7 @@ function Item({ id, image, title, releaseDate, status, removeFromMovies }: ItemP
       setDisabled(false);
     })
   }
-  
+
   return (
     <div className="relative flex h-full flex-col justify-start">
       {status == 'authenticated' && <button
@@ -121,7 +121,7 @@ export default function Movies() {
     }
     fetchSavedMovies();
   }, [status])
-  
+
   const sortMovies = (a: MovieWatchlist, b: MovieWatchlist) => {
     if (!a.releaseDate && !b.releaseDate) return 0;
     if (!a.releaseDate && b.releaseDate) return 1;
@@ -129,7 +129,7 @@ export default function Movies() {
 
     const aRelease = new Date(a.releaseDate).getTime();
     const bRelease = new Date(b.releaseDate).getTime();
-    
+
     return bRelease - aRelease;
   };
 
@@ -202,11 +202,11 @@ export default function Movies() {
       {sortBy == 'date' ? movies.length > 0 ? (
         <div className="grid items-stretch grid-cols-[repeat(auto-fill,_minmax(170px,_1fr))] gap-4 m-4">
           {movies.map((movie) => {
-            return <Item 
-                      key={`movie-saved-${movie.id}`} 
-                      status={status} id={movie.id} 
-                      title={movie.title} 
-                      image={movie.image} 
+            return <Item
+                      key={`movie-saved-${movie.id}`}
+                      status={status} id={movie.id}
+                      title={movie.title}
+                      image={movie.image}
                       releaseDate={movie.releaseDate}
                       removeFromMovies={removeFromMovies}
                     />
@@ -220,11 +220,11 @@ export default function Movies() {
             <h2 className="text-xl mb-2 mx-4 font-bold text-gray-400 flex-1">Unwatched</h2>
             <div className="grid items-stretch grid-cols-[repeat(auto-fill,_minmax(170px,_1fr))] gap-4 m-4">
               {movies.filter(movie => !movie.watched).map((movie) => {
-                return <Item 
-                          key={`movie-saved-${movie.id}`} 
-                          status={status} id={movie.id} 
-                          title={movie.title} 
-                          image={movie.image} 
+                return <Item
+                          key={`movie-saved-${movie.id}`}
+                          status={status} id={movie.id}
+                          title={movie.title}
+                          image={movie.image}
                           releaseDate={movie.releaseDate}
                           removeFromMovies={removeFromMovies}
                         />
@@ -233,11 +233,11 @@ export default function Movies() {
            <h2 className="text-xl mb-2 mx-4 font-bold text-gray-400 flex-1">Watched</h2>
             <div className="grid items-stretch grid-cols-[repeat(auto-fill,_minmax(170px,_1fr))] gap-4 m-4">
               {movies.filter(movie => movie.watched).map((movie) => {
-                return <Item 
-                          key={`movie-saved-${movie.id}`} 
-                          status={status} id={movie.id} 
-                          title={movie.title} 
-                          image={movie.image} 
+                return <Item
+                          key={`movie-saved-${movie.id}`}
+                          status={status} id={movie.id}
+                          title={movie.title}
+                          image={movie.image}
                           releaseDate={movie.releaseDate}
                           removeFromMovies={removeFromMovies}
                         />

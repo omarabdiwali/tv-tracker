@@ -42,6 +42,9 @@ const addCategory = (shows: IShow[], savedShows: ObjType) => {
       nextEpisode: show.nextEpisode,
       lastEpisode: show.lastEpisode,
       status: show.status,
+      episodeCount: show.episodeCount,
+      episodesWatched: info.watchedEpisodes.length,
+      seasonEpisodeCount: show.seasonEpisodeCount,
       category
     });
   }
@@ -50,16 +53,16 @@ const addCategory = (shows: IShow[], savedShows: ObjType) => {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method != "GET") return res.status(200).json({ success: false, message: 'Method not allowed.' });  
+  if (req.method != "GET") return res.status(200).json({ success: false, message: 'Method not allowed.' });
   const session = await getServerSession(req, res, authOptions);
   if (!session) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
-  
+
   await dbConnect();
-  const showFields = 'id image imageSmall title episodeCount releaseDate nextEpisode lastEpisode status'
+  const showFields = 'id image imageSmall title episodeCount releaseDate nextEpisode lastEpisode status seasonEpisodeCount'
   let user: IUser | null = await Users.findOne({ email: session.user?.email });
   let savedShows: IShow[] = [];
   let formatted: ShowWatchlist[] = [];
-  
+
   if (!user) {
     user = await Users.create({ email: session.user?.email, savedShows: [], savedMovies: [] });
   } else {
@@ -68,7 +71,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       acc[show.showId] = show;
       return acc;
     }, {})
-    
+
     savedShows = await Show.find({ id: { $in: showIds } }, showFields);
     formatted = addCategory(savedShows, showObj);
   }

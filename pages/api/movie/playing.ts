@@ -22,7 +22,7 @@ const queryTMDB = async (savedMovies: Set<string>) : Promise<UpcomingMovie[]> =>
       const image = movie.poster_path;
       const title = movie.title;
       const isSaved = savedMovies.has(`${id}`);
-      
+
       let year = null;
 
       if (id == null || id == undefined || !title || !image) continue;
@@ -52,7 +52,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   await dbConnect();
-  
+
   const user: IUser | null = await Users.findOne({ email: session.user?.email });
   if (!user) {
     await Users.create({ email: session.user?.email, savedMovies: [], savedShows: [] })
@@ -60,7 +60,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const info = user.savedMovies.map((movie) => movie.movieId);
     savedMovies = new Set(info);
   }
-  
+
   const movies = await queryTMDB(savedMovies);
   return res.status(200).json({ success: true, movies });
 }

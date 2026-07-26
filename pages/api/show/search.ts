@@ -26,7 +26,7 @@ const getNestedProperty = (data: any, keys: string[], allowUndefined = true) => 
 const queryTVMaze = async (queryString: string, savedShows: Set<string>) => {
   const query = encodeURIComponent(queryString);
   const url = `https://api.tvmaze.com/search/shows?q=${query}`;
-  
+
   return fetch(url).then(res => res.json()).then(data => {
     const items = [];
     for (const show of data) {
@@ -72,7 +72,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   await dbConnect();
-  
+
   const user: IUser | null = await Users.findOne({ email: session.user?.email });
   if (!user) {
     await Users.create({ email: session.user?.email, savedMovies: [], savedShows: [] })
@@ -80,7 +80,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const info = user.savedShows.map((show) => show.showId);
     savedShows = new Set(info);
   }
-  
+
   const shows = await queryTVMaze(q as string, savedShows);
   return res.status(200).json({ success: true, shows });
 }

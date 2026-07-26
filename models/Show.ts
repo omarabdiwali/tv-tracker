@@ -2,11 +2,11 @@ import { IShow } from '@/utils/types';
 import { Schema, model, models } from 'mongoose';
 
 const showSchema = new Schema<IShow>({
-  id: { 
-    type: String, 
-    required: true, 
+  id: {
+    type: String,
+    required: true,
     unique: true,
-    index: true 
+    index: true
   },
   imdbId: { type: String, required: false },
   overview: { type: String, required: true },
@@ -22,7 +22,8 @@ const showSchema = new Schema<IShow>({
   nextEpisode: { type: String, required: false },
   lastEpisode: { type: String, required: false },
   releaseDate: { type: String, required: false },
-  episodeCount: { type: Number, required: false }
+  episodeCount: { type: Number, required: false },
+  seasonEpisodeCount: { type: Object, required: false }
 }, {
   timestamps: true
 });
