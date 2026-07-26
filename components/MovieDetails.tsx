@@ -100,6 +100,7 @@ export default function MovieDetails({ movie }: MovieDetailsProps) {
           <div className="sticky top-6">
             <div className="mx-auto overflow-hidden shadow-2xl transform transition-transform duration-300 hover:scale-105">
               <Image
+                unoptimized
                 alt={`${movie.title} poster`}
                 src={movie.image}
                 width={342}

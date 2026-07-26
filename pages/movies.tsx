@@ -78,6 +78,7 @@ function Item({ id, image, title, releaseDate, status, removeFromMovies }: ItemP
         <div className="relative cursor-pointer flex flex-col h-full group">
           <div className="relative p-4 bg-slate-800 rounded-t-lg flex-1 min-h-[200px]">
             <Image
+              unoptimized
               alt={title}
               src={image}
               fill

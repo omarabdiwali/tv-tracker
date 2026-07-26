@@ -74,6 +74,7 @@ function Item({ id, name, image, year, isSaved, type }: ItemProps) {
         <div className="relative cursor-pointer flex flex-col h-full group">
           <div className="relative p-4 bg-slate-800 rounded-t-lg flex-1 min-h-[200px]">
             <Image
+              unoptimized
               alt={name}
               src={image}
               fill
