@@ -1,4 +1,4 @@
-import { IShow } from "@/utils/types";
+import { ShowWatchlist } from "@/utils/types";
 import { useSession } from "next-auth/react";
 import Head from "next/head";
 import Image from "next/image";
@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { useSnackbar } from "notistack";
 import { useEffect, useState } from "react";
-import { IoIosAdd, IoIosHourglass, IoIosRemove } from "react-icons/io";
+import { IoIosAdd, IoIosCalendar, IoIosHourglass, IoIosCheckmarkCircleOutline, IoIosRemove } from "react-icons/io";
 
 interface ItemProps {
   id: string,
@@ -118,9 +118,10 @@ function Title() {
 export default function Shows() {
   const router = useRouter();
   const { data: _, status } = useSession();
-  const [shows, setShows] = useState<IShow[]>([]);
+  const [shows, setShows] = useState<ShowWatchlist[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [sortBy, setSortBy] = useState('date');
 
   useEffect(() => {
     if (status == 'loading') return;
@@ -131,7 +132,7 @@ export default function Shows() {
     fetchSavedShows();
   }, [status])
 
-  const hasAnyEpisode = (show: IShow) => show.nextEpisode || show.lastEpisode;
+  const hasAnyEpisode = (show: ShowWatchlist) => show.nextEpisode || show.lastEpisode;
 
   const doComparison = (a: string | null | undefined, b: string | null | undefined, value: number = 1) => {
     if (!a && !b) return 0;
@@ -143,7 +144,7 @@ export default function Shows() {
     return (new Date(aDate).getTime() - new Date(bDate).getTime()) * value;
   };
 
-  const sortShows = (a: IShow, b: IShow) => {
+  const sortShows = (a: ShowWatchlist, b: ShowWatchlist) => {
     const aHasAny = hasAnyEpisode(a);
     const bHasAny = hasAnyEpisode(b);
 
@@ -186,6 +187,11 @@ export default function Shows() {
     setShows(showsCopy);
   }
 
+  const handleSort = (sortType: string) => {
+    if (sortBy == sortType) return;
+    setSortBy(sortType);
+  }
+
   if (error) {
     return (
       <>
@@ -206,11 +212,20 @@ export default function Shows() {
     )
   }
 
+  const sortButtonClass = "cursor-pointer disabled:cursor-default disabled:opacity-40";
+
   return (
     <>
       <Title />
-      <h2 className="text-2xl font-bold text-gray-100 mb-2 ml-4">Saved Shows</h2>
-      {shows.length > 0 ? (
+      <div className="flex mb-2 mx-4">
+        <h2 className="text-2xl font-bold text-gray-100 flex-1">Saved Shows</h2>
+        <div className="flex items-center gap-2">
+          <div>Sort By:</div>
+          <button onClick={() => handleSort('date')} disabled={sortBy == 'date'} title='Next Episode' className={sortButtonClass}><IoIosCalendar size={20} /></button>
+          <button onClick={() => handleSort('status')} disabled={sortBy == 'status'} title='Watch Status' className={sortButtonClass}><IoIosCheckmarkCircleOutline size={20} /></button>
+        </div>
+      </div>
+      {sortBy == 'date' ? shows.length > 0 ? (
         <div className="grid items-stretch grid-cols-[repeat(auto-fill,_minmax(170px,_1fr))] gap-4 m-4">
           {shows.map((show) => {
             return <Item 
@@ -226,6 +241,61 @@ export default function Shows() {
                     />
           })}
         </div>) : (
+          <div className="flex flex-1 justify-center items-center">
+            <div className="text-gray-400">There are currently no shows saved.</div>
+          </div>
+        ) : shows.length > 1 ? (
+          <div>
+            <h2 className="text-xl mb-2 mx-4 font-bold text-gray-400 flex-1">In Progress</h2>
+            <div className="grid items-stretch grid-cols-[repeat(auto-fill,_minmax(170px,_1fr))] gap-4 m-4">
+              {shows.filter((show) => show.category == 1).map((show) => {
+                return <Item 
+                          key={`show-in-progress-${show.id}`}
+                          authStatus={status} id={show.id}
+                          showStatus={show.status}
+                          title={show.title}
+                          image={show.image}
+                          nextEpisode={show.nextEpisode}
+                          lastEpisode={show.lastEpisode}
+                          releaseDate={show.releaseDate}
+                          removeFromShows={removeFromShows}
+                        />
+              })}
+           </div>
+           <h2 className="text-xl mb-2 mx-4 font-bold text-gray-400 flex-1">Completed / Up-To-Date</h2>
+            <div className="grid items-stretch grid-cols-[repeat(auto-fill,_minmax(170px,_1fr))] gap-4 m-4">
+              {shows.filter((show) => show.category == 2).map((show) => {
+                return <Item 
+                          key={`show-unwatched-${show.id}`}
+                          authStatus={status} id={show.id}
+                          showStatus={show.status}
+                          title={show.title}
+                          image={show.image}
+                          nextEpisode={show.nextEpisode}
+                          lastEpisode={show.lastEpisode}
+                          releaseDate={show.releaseDate}
+                          removeFromShows={removeFromShows}
+                        />
+              })}
+           </div>
+           <h2 className="text-xl mb-2 mx-4 font-bold text-gray-400 flex-1">Unwatched</h2>
+            <div className="grid items-stretch grid-cols-[repeat(auto-fill,_minmax(170px,_1fr))] gap-4 m-4">
+              {shows.filter((show) => show.category == 0).map((show) => {
+                return <Item 
+                          key={`show-completed-${show.id}`}
+                          authStatus={status} id={show.id}
+                          showStatus={show.status}
+                          title={show.title}
+                          image={show.image}
+                          nextEpisode={show.nextEpisode}
+                          lastEpisode={show.lastEpisode}
+                          releaseDate={show.releaseDate}
+                          removeFromShows={removeFromShows}
+                        />
+              })}
+           </div>
+          </div>
+        ) : (
           <div className="flex flex-1 justify-center items-center">
             <div className="text-gray-400">There are currently no shows saved.</div>
           </div>

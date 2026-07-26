@@ -1,15 +1,21 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import { useSession, signIn, signOut } from "next-auth/react";
 import Link from "next/link";
-import { IoIosCalendar, IoIosFilm, IoIosHome, IoIosTv } from "react-icons/io";
+import { IoIosFilm, IoIosHome, IoIosTv } from "react-icons/io";
 import { BiSolidCameraMovie } from "react-icons/bi";
 
 export function Header() {
   const { data: _, status } = useSession();
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+
+  useEffect(() => {
+    if (!router.isReady) return;
+    setPage(router.pathname)
+  }, [router.isReady, router.pathname])
 
   const handleSignOut = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
     e.preventDefault();
@@ -39,23 +45,26 @@ export function Header() {
             <Link href={'/'} onClick={eraseSearch}>
               <button 
                 title={"Home"} 
-                className="p-2 sm:p-3 cursor-pointer hover:bg-slate-800 bg-[var(--input-bg)] rounded-lg transition-colors flex-shrink-0"
+                disabled={page == '/'}
+                className={`p-2 sm:p-3 ${page != '/' ? 'cursor-pointer hover:bg-slate-800' : 'opacity-60'} bg-[var(--input-bg)] rounded-lg transition-colors flex-shrink-0`}
               >
                 <IoIosHome size={20} />
               </button>
             </Link>
             <Link href={'/movies'} onClick={eraseSearch}>
               <button 
-                title={"Saved Movies"} 
-                className="p-2.5 sm:p-3 cursor-pointer hover:bg-slate-800 bg-[var(--input-bg)] rounded-lg transition-colors flex-shrink-0"
+                title={"Saved Movies"}
+                disabled={page == '/movies'} 
+                className={`p-2 sm:p-3 ${page != '/movies' ? 'cursor-pointer hover:bg-slate-800' : 'opacity-60'} bg-[var(--input-bg)] rounded-lg transition-colors flex-shrink-0`}
               >
                 <BiSolidCameraMovie size={20} />
               </button>
             </Link>
             <Link href={'/shows'} onClick={eraseSearch}>
-              <button 
-                title={"Saved Shows"} 
-                className="p-2.5 sm:p-3 cursor-pointer hover:bg-slate-800 bg-[var(--input-bg)] rounded-lg transition-colors flex-shrink-0"
+              <button
+                title={"Saved Shows"}
+                disabled={page == '/shows'}
+                className={`p-2 sm:p-3 ${page != '/shows' ? 'cursor-pointer hover:bg-slate-800' : 'opacity-60'} bg-[var(--input-bg)] rounded-lg transition-colors flex-shrink-0`}
               >
                 <IoIosTv size={20} />
               </button>
@@ -63,7 +72,8 @@ export function Header() {
             <Link href={'/playing'} onClick={eraseSearch}>
               <button 
                 title={"Now Playing"} 
-                className="p-2.5 sm:p-3 cursor-pointer hover:bg-slate-800 bg-[var(--input-bg)] rounded-lg transition-colors flex-shrink-0"
+                disabled={page == '/playing'}
+                className={`p-2 sm:p-3 ${page != '/playing' ? 'cursor-pointer hover:bg-slate-800' : 'opacity-60'} bg-[var(--input-bg)] rounded-lg transition-colors flex-shrink-0`}
               >
                 <IoIosFilm size={20} />
               </button>

@@ -1,11 +1,11 @@
 import { Document, Types } from "mongoose";
 
-interface SavedMovie {
+export interface SavedMovie {
   movieId: string;
   watched: boolean;
 }
 
-interface SavedShow {
+export interface SavedShow {
   showId: string;
   watchedEpisodes: string[];
 }
@@ -44,6 +44,7 @@ export interface MovieProps {
   homepage?: string;
   video?: string;
   saved?: boolean;
+  watched?: boolean;
 }
 
 export interface ShowProps {
@@ -106,6 +107,7 @@ export interface IShow extends Document {
   lastEpisode: string;
   updatedAt: Date;
   createdAt: Date;
+  episodeCount?: number;
 }
 
 export interface ScheduledShows {
@@ -126,4 +128,23 @@ export interface UpcomingMovie {
   title: string,
   isSaved: boolean,
   year?: string | null,
+}
+
+export interface ShowWatchlist {
+  id: string,
+  image: string,
+  title: string,
+  releaseDate: string,
+  nextEpisode: string,
+  lastEpisode: string,
+  status: string,
+  category: number
+}
+
+export interface MovieWatchlist {
+  id: string,
+  image: string,
+  title: string,
+  releaseDate: string,
+  watched: boolean
 }

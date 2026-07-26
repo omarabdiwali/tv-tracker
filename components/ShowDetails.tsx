@@ -163,6 +163,10 @@ function EpisodeList({ showId, episodes, watched }: EpisodeListProps) {
         enqueueSnackbar(`${season}x${episodeString} ${data.message}`, { variant: 'success', autoHideDuration: 1500 });
         return true;
       } else {
+        if (data.message == "Unauthenticated user.") {
+          window.location.href = '/';
+          return false;
+        }
         enqueueSnackbar(data.message, { variant: 'error', autoHideDuration: 1500 });
         return false;
       }

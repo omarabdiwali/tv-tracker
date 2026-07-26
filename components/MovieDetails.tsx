@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { enqueueSnackbar } from 'notistack';
 import { useState } from 'react';
 import { FaImdb, FaStar } from 'react-icons/fa';
-import { IoIosAddCircleOutline, IoIosCloseCircleOutline, IoIosGlobe, IoIosHourglass, IoIosVideocam, IoMdCalendar } from 'react-icons/io';
+import { IoIosAddCircleOutline, IoIosCheckmarkCircle, IoIosCloseCircleOutline, IoIosGlobe, IoIosHourglass, IoIosVideocam, IoMdCalendar } from 'react-icons/io';
 import { RxClock } from 'react-icons/rx';
 
 const formatNumberOfVotes = (count: string) : string => {
@@ -21,6 +21,40 @@ export default function MovieDetails({ movie }: MovieDetailsProps) {
   const { data: _, status } = useSession();
   const [buttonText, setButtonText] = useState(movie.saved ? "Remove from Watchlist" : "Add to Watchlist");
   const [disabled, setDisabled] = useState(false);
+  const [watchStatus, setWatchStatus] = useState(movie.watched);
+  const [loading, setLoading] = useState(false);
+
+  const handleChange = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+    e.preventDefault();
+    if (!movie.saved) return;
+    setDisabled(true);
+    setLoading(true);
+
+    fetch('/api/movie/status', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ id: movie.id, status: !watchStatus })
+    }).then(res => res.json()).then(data => {
+      if (data.success) {
+        movie.watched = !watchStatus;
+        setWatchStatus(!watchStatus);
+        enqueueSnackbar('Updated watch status!', { variant: 'success', autoHideDuration: 1000 });
+      } else {
+        if (data.message == 'Unauthenticated user.') {
+          window.location.href = '/';
+          return;
+        }
+        enqueueSnackbar(data.message, { variant: 'error', autoHideDuration: 1500 });
+      }
+    }).catch(err => {
+      console.error(err);
+    }).finally(() => {
+      setDisabled(false);
+      setLoading(false);
+    })
+  }
 
   const saveMovie = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
     e.preventDefault();
@@ -39,6 +73,9 @@ export default function MovieDetails({ movie }: MovieDetailsProps) {
     }).then(res => res.json()).then(data => {
       if (data.success) {
         setButtonText(prevText == 'Add to Watchlist' ? "Remove from Watchlist" : "Add to Watchlist");
+        movie.saved = prevText == 'Add to Watchlist';
+        movie.watched = false;
+        setWatchStatus(false);
         enqueueSnackbar(data.message, { variant: 'success', autoHideDuration: 1500 });
       } else {
         if (data.message == 'Unauthenticated user.') {
@@ -186,9 +223,30 @@ export default function MovieDetails({ movie }: MovieDetailsProps) {
               {buttonText == 'Add to Watchlist' ? <IoIosAddCircleOutline size={26} /> : buttonText == 'Loading...' ? <IoIosHourglass size={26} /> : <IoIosCloseCircleOutline size={26} />}
               {buttonText}
             </button> : null}
+
+            {status == 'authenticated' && movie.saved ? 
+            <button disabled={disabled} onClick={handleChange} className={`flex cursor-pointer items-center justify-center gap-2 px-6 py-3 ${watchStatus ? 'bg-green-700 enabled:hover:bg-green-600' : 'bg-gray-700 enabled:hover:bg-gray-600'} text-gray-300 rounded-lg font-semibold transition-all duration-200 transform enabled:hover:scale-105`}>
+              {loading ? <IoIosHourglass size={26} /> : <IoIosCheckmarkCircle size={26} />}
+              {loading ? 'Loading...' : watchStatus ? 'Watched' : 'Mark As Watched'}
+            </button> : null}
           </div>
         </div>
       </div>
     </div>
   );
 }
+
+// For show, or for later on ratings
+/*
+{buttonText == 'Remove from Watchlist' && (
+  <>
+    <div className='flex items-center gap-4 mb-3'>
+      <select onChange={handleChange} value={watchStatus} className='bg-gray-700 px-6 py-3 flex-1 rounded-lg'>
+        <option key='Unwatched'>Unwatched</option>
+        <option key='In Progress'>In Progress</option>
+        <option key='Watched'>Watched</option>
+      </select>
+    </div>
+  </>
+)}
+*/

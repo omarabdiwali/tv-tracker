@@ -20,7 +20,8 @@ const showSchema = new Schema<IShow>({
   status: { type: String, required: false },
   nextEpisode: { type: String, required: false },
   lastEpisode: { type: String, required: false },
-  releaseDate: { type: String, required: false }
+  releaseDate: { type: String, required: false },
+  episodeCount: { type: Number, required: false }
 }, {
   timestamps: true
 });

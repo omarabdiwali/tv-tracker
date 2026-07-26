@@ -87,7 +87,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     savedShows = new Set(mappedList);
   }
   
-  if (!user) return res.status(200).json({ success: false, message: "Error creating user." });
+  if (!user) return res.status(200).json({ success: false, message: "Unauthenticated user." });
   const show: IShow | null = await Show.findOne({ id: id });
   
   if (!show) {

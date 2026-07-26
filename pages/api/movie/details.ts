@@ -52,7 +52,7 @@ const getBestVideo = (videos: any) => {
   return `https://www.youtube.com/watch?v=${currentBest}`;
 }
 
-const queryTMDB = async (movieId: string, saved: boolean) => {
+const queryTMDB = async (movieId: string, saved: boolean, watched: boolean) => {
   const apiKey = process.env.TMDB_API_KEY;
   const url = `https://api.themoviedb.org/3/movie/${movieId}?api_key=${apiKey}&language=en-US&append_to_response=videos`;
 
@@ -73,7 +73,7 @@ const queryTMDB = async (movieId: string, saved: boolean) => {
     
     return {
       title, genres, video, runtime, homepage, imdbId, origin, image,
-      overview, releaseDate, voteCount, voteAverage, saved, id
+      overview, releaseDate, voteCount, voteAverage, saved, id, watched
     }
   }).catch(err => {
     console.error(err);
@@ -88,6 +88,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const session = await getServerSession(req, res, authOptions);
   let saved: boolean = false;
+  let watched: boolean = false;
 
   if (session) {
     await dbConnect();
@@ -95,10 +96,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!user) {
       await Users.create({ email: session.user?.email, savedMovies: [], savedShows: [] });
     } else {
-      saved = user.savedMovies.some((movie) => movie.movieId == `${id}`);
+      const index = user.savedMovies.findIndex((movie) => movie.movieId == `${id}`);
+      saved = index != -1 ? true : false;
+      watched = index != -1 ? user.savedMovies[index].watched : false;
     }
   }
 
-  const info = await queryTMDB(id as string, saved);
+  const info = await queryTMDB(id as string, saved, watched);
   return res.status(200).json({ success: true, movie: info });
 }

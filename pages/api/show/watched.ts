@@ -18,7 +18,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   await dbConnect();
   const user: IUser | null = await Users.findOne({ email: session.user?.email });
   if (!user) {
-    return res.status(200).json({ success: false, message: "Invalid user." });
+    return res.status(200).json({ success: false, message: "Unauthenticated user." });
   }
 
   const index = user.savedShows.findIndex((show) => show.showId == `${showId}`);

@@ -14,6 +14,14 @@ const getEpisodeId = (href: string | undefined | null) => {
   return id;
 }
 
+const countNumberOfEpisodes = (seasons: EpisodesData) => {
+  let episodeCount = 0;
+  for (const season of Object.values(seasons)) {
+    episodeCount += season.length;
+  }
+  return episodeCount;
+}
+
 interface ParseEpisodes {
   episodes: EpisodesData,
   nextEpisode: string | null,
@@ -91,6 +99,7 @@ const queryTVMaze = async (showId: string) => {
     const lastEpisodeId = getEpisodeId(data._links?.previousepisode?.href);
     const nextEpisodeId = getEpisodeId(data._links?.nextepisode?.href);
     const { episodes, nextEpisode, lastEpisode } = parseEpisodes(data._embedded.episodes, nextEpisodeId, lastEpisodeId);
+    const episodeCount = countNumberOfEpisodes(episodes);
     
     let image = data.image?.original;
     if (!image) {
@@ -99,7 +108,7 @@ const queryTVMaze = async (showId: string) => {
     
     return {
       title, genres, language, status, homepage, imdbId, image, overview,
-      releaseDate, voteAverage, id, episodes, nextEpisode, lastEpisode
+      releaseDate, voteAverage, id, episodes, nextEpisode, lastEpisode, episodeCount
     }
   }).catch(err => {
     console.error(err);
@@ -151,20 +160,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         showInfo = show;
       }
     } else {
-      return res.status(200).json({ success: false, message: 'Error creating user.' });
+      return res.status(200).json({ success: false, message: "Unauthenticated user." });
     }
   } else {
-    const keys = 'title genres language status homepage imdbId image overview releaseDate voteAverage id nextEpisode lastEpisode updatedAt';
-    const show: IShow | null = await Show.findOne({ id }, keys);
-    if (!show || timeToRefresh(show.updatedAt, show.status)) {
-      const info = await queryTVMaze(id as string);
-      if (verifyRequiredKeys(info)) {
-        !show ? await Show.create(info) : await Show.findOneAndUpdate({ id }, info);
-      }
-      showInfo = info;
-    } else {
-      showInfo = show;
-    }
+    return res.status(200).json({ success: false, message: "Unauthenticated user." });
   }
 
   return res.status(200).json({ success: true, show: showInfo, saved, watched: watchedList });

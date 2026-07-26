@@ -1,4 +1,4 @@
-import { IMovie } from "@/utils/types";
+import { MovieWatchlist } from "@/utils/types";
 import { useSession } from "next-auth/react";
 import Head from "next/head";
 import Image from "next/image";
@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { useSnackbar } from "notistack";
 import { useEffect, useState } from "react";
-import { IoIosAdd, IoIosHourglass, IoIosRemove } from "react-icons/io";
+import { IoIosAdd, IoIosCalendar, IoIosHourglass, IoIosCheckmarkCircleOutline, IoIosRemove } from "react-icons/io";
 
 interface ItemProps {
   id: string,
@@ -107,9 +107,10 @@ function Title() {
 export default function Movies() {
   const router = useRouter();
   const { data: _, status } = useSession();
-  const [movies, setMovies] = useState<IMovie[]>([]);
+  const [movies, setMovies] = useState<MovieWatchlist[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [sortBy, setSortBy] = useState('date');
 
   useEffect(() => {
     if (status == 'loading') return;
@@ -119,6 +120,17 @@ export default function Movies() {
     }
     fetchSavedMovies();
   }, [status])
+  
+  const sortMovies = (a: MovieWatchlist, b: MovieWatchlist) => {
+    if (!a.releaseDate && !b.releaseDate) return 0;
+    if (!a.releaseDate && b.releaseDate) return 1;
+    if (a.releaseDate && !b.releaseDate) return -1;
+
+    const aRelease = new Date(a.releaseDate).getTime();
+    const bRelease = new Date(b.releaseDate).getTime();
+    
+    return bRelease - aRelease;
+  };
 
   const fetchSavedMovies = async () => {
     setError('');
@@ -126,7 +138,8 @@ export default function Movies() {
 
     fetch(`/api/movie/watchlist`).then(res => res.json()).then(data => {
       if (data.success) {
-        setMovies(data.movies);
+        const sorted = data.movies.sort(sortMovies);
+        setMovies(sorted);
       } else {
         setError(data.message);
       }
@@ -145,6 +158,11 @@ export default function Movies() {
       moviesCopy.splice(index, 1);
     }
     setMovies(moviesCopy);
+  }
+
+  const handleSort = (sortType: string) => {
+    if (sortType == sortBy) return;
+    setSortBy(sortType);
   }
 
   if (error) {
@@ -167,11 +185,20 @@ export default function Movies() {
     )
   }
 
+  const sortButtonClass = "cursor-pointer disabled:cursor-default disabled:opacity-40";
+
   return (
     <>
       <Title />
-      <h2 className="text-2xl font-bold text-gray-100 mb-2 ml-4">Saved Movies</h2>
-      {movies.length > 0 ? (
+      <div className="flex mb-2 mx-4">
+        <h2 className="text-2xl font-bold text-gray-100 flex-1">Saved Movies</h2>
+        <div className="flex items-center gap-2">
+          <div>Sort By:</div>
+          <button onClick={() => handleSort('date')} disabled={sortBy == 'date'} title='Release Date' className={sortButtonClass}><IoIosCalendar size={20} /></button>
+          <button onClick={() => handleSort('status')} disabled={sortBy == 'status'} title='Watch Status' className={sortButtonClass}><IoIosCheckmarkCircleOutline size={20} /></button>
+        </div>
+      </div>
+      {sortBy == 'date' ? movies.length > 0 ? (
         <div className="grid items-stretch grid-cols-[repeat(auto-fill,_minmax(170px,_1fr))] gap-4 m-4">
           {movies.map((movie) => {
             return <Item 
@@ -184,6 +211,39 @@ export default function Movies() {
                     />
           })}
         </div>) : (
+          <div className="flex flex-1 justify-center items-center">
+            <div className="text-gray-400">There are currently no movies saved.</div>
+          </div>
+        ) : movies.length > 0 ? (
+          <div>
+            <h2 className="text-xl mb-2 mx-4 font-bold text-gray-400 flex-1">Unwatched</h2>
+            <div className="grid items-stretch grid-cols-[repeat(auto-fill,_minmax(170px,_1fr))] gap-4 m-4">
+              {movies.filter(movie => !movie.watched).map((movie) => {
+                return <Item 
+                          key={`movie-saved-${movie.id}`} 
+                          status={status} id={movie.id} 
+                          title={movie.title} 
+                          image={movie.image} 
+                          releaseDate={movie.releaseDate}
+                          removeFromMovies={removeFromMovies}
+                        />
+              })}
+           </div>
+           <h2 className="text-xl mb-2 mx-4 font-bold text-gray-400 flex-1">Watched</h2>
+            <div className="grid items-stretch grid-cols-[repeat(auto-fill,_minmax(170px,_1fr))] gap-4 m-4">
+              {movies.filter(movie => movie.watched).map((movie) => {
+                return <Item 
+                          key={`movie-saved-${movie.id}`} 
+                          status={status} id={movie.id} 
+                          title={movie.title} 
+                          image={movie.image} 
+                          releaseDate={movie.releaseDate}
+                          removeFromMovies={removeFromMovies}
+                        />
+              })}
+           </div>
+          </div>
+        ) : (
           <div className="flex flex-1 justify-center items-center">
             <div className="text-gray-400">There are currently no movies saved.</div>
           </div>

@@ -24,6 +24,10 @@ export default function Details() {
         const obj = { ...data.show, saved: data.saved, watched: new Set(data.watched) };
         setShow(obj);
       } else {
+         if (data.message == "Unauthenticated user.") {
+          window.location.href = '/';
+          return;
+        }
         setError(data.message);
       }
     }).catch(err => {
