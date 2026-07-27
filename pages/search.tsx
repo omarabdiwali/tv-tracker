@@ -101,6 +101,7 @@ export default function Search() {
   const [shows, setShows] = useState<ItemProps[] | null>(null);
   const [movies, setMovies] = useState<ItemProps[] | null>(null);
   const [error, setError] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     if (status == "loading") return;
@@ -110,6 +111,7 @@ export default function Search() {
     }
 
     if (query) {
+      setSearchQuery(query as string);
       setMovies(null);
       setShows(null);
       setError("");
@@ -159,13 +161,22 @@ export default function Search() {
     )
   }
 
+  function Loading({ inline = false }) {
+    const className = inline 
+      ? "flex items-center justify-center py-8" 
+      : "fixed inset-0 flex items-center justify-center bg-black/30 z-50";
+    return (
+      <div className={className}>
+        <div className="w-12 h-12 border-4 border-[#001f3f] border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
+
   if (shows == null && movies == null) {
     return (
       <>
         <Title />
-        <div className="fixed inset-0 flex items-center justify-center bg-black/30 z-50">
-          <div className="w-12 h-12 border-4 border-[#001f3f] border-t-transparent rounded-full animate-spin" />
-        </div>
+        <Loading />
       </>
     )
   }
@@ -183,17 +194,18 @@ export default function Search() {
     <>
       <Title />
       <div>
-        {movies && movies.length > 0 && <h2 className="text-2xl font-bold text-gray-100 mb-2 ml-4">Movies</h2>}
+        {searchQuery.length && <h1 className="text-2xl font-bold text-gray-500 text-center mb-4 mt-2">{`Search Result(s) for '${searchQuery}'`}</h1>}
+        <h2 className="text-2xl font-bold text-gray-100 mb-2 ml-4">Movies</h2>
         <div className="grid items-stretch grid-cols-[repeat(auto-fill,_minmax(170px,_1fr))] gap-4 m-4">
-          {movies && movies.map((movie) => {
+          {movies != null ? movies.map((movie) => {
             return <Item key={`movie-item-${movie.id}`} id={movie.id} name={movie.name} image={movie.image} year={movie.year} isSaved={movie.isSaved} type={'movie'} />
-          })}
+          }) : <Loading inline />}
         </div>
-        {shows && shows.length > 0 && <h2 className="text-2xl font-bold text-gray-100 mb-2 ml-4">TV Shows</h2>}
+        <h2 className="text-2xl font-bold text-gray-100 mb-2 ml-4">TV Shows</h2>
         <div className="grid items-stretch grid-cols-[repeat(auto-fill,_minmax(170px,_1fr))] gap-4 m-4">
-          {shows && shows.map((show) => {
+          {shows != null ? shows.map((show) => {
             return <Item key={`show-item-${show.id}`} id={show.id} name={show.name} image={show.image} year={show.year} isSaved={show.isSaved} type={'show'} />
-          })}
+          }) : <Loading inline />}
         </div>
       </div>
     </>
