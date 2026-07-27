@@ -71,19 +71,19 @@ function Item({ id, name, image, type, status, isSaved }: ItemProps) {
       </button>}
       <Link href={`/${type}/${id}`} title={name} className="h-full">
         <div className="relative cursor-pointer flex flex-col h-full group">
-          <div className="relative p-4 bg-slate-800 rounded-t-lg flex-1 min-h-[200px]">
+          <div className="relative p-3 bg-slate-800 rounded-t-lg flex-1 min-h-[200px]">
             <Image
               unoptimized
               alt={name}
               src={image}
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              className="p-4 object-contain"
+              className="p-3 object-contain"
               loading="eager"
             />
           </div>
 
-          <div className="bg-slate-700 p-2 text-center rounded-b-lg flex items-center justify-center text-gray-200 group-hover:text-emerald-400 group-hover:underline">
+          <div className="bg-slate-700 text-sm p-2 text-center rounded-b-lg flex items-center justify-center text-gray-200 group-hover:text-emerald-400 group-hover:underline">
             {name}
           </div>
         </div>

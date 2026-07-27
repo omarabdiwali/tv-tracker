@@ -70,7 +70,7 @@ function Item({ id, image, imageSmall, title, releaseDate, episodeCount, episode
 
   const WatchedProgress = () => {
     if (episodeCount == 0 || episodeCount == undefined || episodeCount == null || episodesWatched == undefined || episodesWatched == null) {
-      return <div className="absolute top-[0%] w-full bg-red-600 h-1" />;
+      return <div className="absolute bottom-[0%] w-full bg-red-600 h-1" />;
     }
 
     const getPassedEpisodes = (season: number | undefined) => {
@@ -106,14 +106,14 @@ function Item({ id, image, imageSmall, title, releaseDate, episodeCount, episode
       : 0;
 
     return (
-      <div className="absolute flex top-0 w-full bg-red-600 h-1">
+      <div className="absolute flex bottom-[0%] w-full bg-red-600 h-1">
         <div
           className="bg-gradient-to-r z-100 from-green-400 to-green-500 h-1 transition-all duration-500"
           style={{ width: `${(episodesWatched / episodeCount) * 100}%` }}
         />
         {nextEpisodeNumber && nextEpisodeNumber > episodesWatched && nextEpisodeNumber <= episodeCount && (
           <div
-            className="absolute top-0 h-full cursor-default z-50 bg-blue-500"
+            className="absolute bottom-[0%] h-full cursor-default z-50 bg-blue-500"
             style={{
               left: `${nextEpisodePosition}%`,
               width: `${1 / episodeCount * 100}%`,
@@ -149,20 +149,20 @@ function Item({ id, image, imageSmall, title, releaseDate, episodeCount, episode
         )}
       <Link href={`/show/${id}`} title={title} className="h-full">
         <div className="relative cursor-pointer flex flex-col h-full group">
-          <div className="relative p-4 bg-slate-800 rounded-t-lg flex-1 min-h-[200px]">
+          <div className="relative bg-slate-800 rounded-t-lg flex-1 min-h-[200px]">
+            <WatchedProgress />
             <Image
               alt={title}
               src={imageSmall ? imageSmall : image}
               unoptimized={imageSmall ? true : false}
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              className="p-4 object-contain"
+              className="p-3 object-contain"
               loading="eager"
             />
           </div>
 
-          <div className="relative bg-slate-700 p-2 text-center rounded-b-lg flex items-center justify-center text-gray-200 group-hover:text-emerald-400 group-hover:underline">
-            <WatchedProgress />
+          <div className="relative text-sm bg-slate-700 p-2 text-center rounded-b-lg flex items-center justify-center text-gray-200 group-hover:text-emerald-400 group-hover:underline">
             {`${title}${year ? ` (${year})` : ''}`}
           </div>
         </div>
