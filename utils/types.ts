@@ -42,7 +42,7 @@ export interface MovieProps {
   origin?: string[];
   runtime?: string;
   homepage?: string;
-  video?: string;
+  trailer?: string;
   saved?: boolean;
   watched?: boolean;
 }
@@ -84,9 +84,20 @@ export interface IMovie extends Document {
   _id: Types.ObjectId;
   id: string;        // External ID (e.g., TMDB, TVMaze)
   image: string;     // Poster/backdrop URL
+  imageSmall: string;
   title: string;     // Movie title
   imdbId: string;    // IMDb ID (e.g., "tt0111161")
   releaseDate: string; // Release date
+  genres: object[];
+  trailer: string;
+  origin: string[];
+  runtime: string;
+  overview: string;
+  voteCount: number;
+  voteAverage: number;
+  homepage: string;
+  updatedAt: Date;
+  createdAt: Date;
 }
 
 export type SeasonEpisodeCountType = {

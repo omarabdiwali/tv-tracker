@@ -2,10 +2,20 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]";
 import Users from "@/models/Users";
-import { IUser } from "@/utils/types";
+import { IMovie, IUser } from "@/utils/types";
 import dbConnect from "@/utils/dbConnect";
+import Movie from "@/models/Movie";
+
+const verifyRequiredKeys = (info: any) => {
+  const { id, image, title } = info;
+  if (id == null || id == undefined) return false;
+  if (image == null || image == undefined) return false;
+  if (title == null || title == undefined) return false;
+  return true;
+}
 
 const buildPosterURL = (path: string, size: string) => {
+  if (!path) return null;
   return `https://image.tmdb.org/t/p/${size}${path}`;
 }
 
@@ -52,7 +62,7 @@ const getBestVideo = (videos: any) => {
   return `https://www.youtube.com/watch?v=${currentBest}`;
 }
 
-const queryTMDB = async (movieId: string, saved: boolean, watched: boolean) => {
+const queryTMDB = async (movieId: string) => {
   const apiKey = process.env.TMDB_API_KEY;
   const url = `https://api.themoviedb.org/3/movie/${movieId}?api_key=${apiKey}&language=en-US&append_to_response=videos`;
 
@@ -69,16 +79,32 @@ const queryTMDB = async (movieId: string, saved: boolean, watched: boolean) => {
     const voteAverage = data.vote_average;
     const runtime = data.runtime ? `${data.runtime} mins` : data.runtime;
     const image = buildPosterURL(data.poster_path, 'w342');
-    const video = getBestVideo(data.videos.results);
+    const imageSmall = buildPosterURL(data.poster_path, 'w185');
+    const trailer = getBestVideo(data.videos.results);
 
     return {
-      title, genres, video, runtime, homepage, imdbId, origin, image,
-      overview, releaseDate, voteCount, voteAverage, saved, id, watched
+      title, genres, trailer, runtime, homepage, imdbId, origin, image,
+      imageSmall, overview, releaseDate, voteCount, voteAverage, id
     }
   }).catch(err => {
     console.error(err);
     return {};
   })
+}
+
+const formatData = (movie: any, saved: boolean, watched: boolean) => {
+  return {
+    title: movie.title, genres: movie.genres, trailer: movie.trailer, runtime: movie.runtime, homepage: movie.homepage,
+    imdbId: movie.imdbId, origin: movie.origin, image: movie.image, overview: movie.overview, releaseDate: movie.releaseDate,
+    voteCount: movie.voteCount, voteAverage: movie.voteAverage, id: movie.id, saved, watched
+  }
+}
+
+const timeToRefresh = (from: Date): boolean => {
+  const refreshTime = 86400000 * 15;
+  const current = new Date().getTime();
+  const fromMs = new Date(from).getTime();
+  return (current - fromMs) >= refreshTime;
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -102,6 +128,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
   }
 
-  const info = await queryTMDB(id as string, saved, watched);
+  let info: any = {};
+  const fields = 'title genres trailer updatedAt runtime homepage imdbId origin image overview releaseDate voteCount voteAverage id';
+  const movie: IMovie | null = await Movie.findOne({ id }, fields);
+  
+  if (!movie || movie.trailer == 'n/a' || timeToRefresh(movie.updatedAt)) {
+    const data = await queryTMDB(id as string);
+    verifyRequiredKeys(data) && (!movie ? await Movie.create(data) : await Movie.findOneAndUpdate({ id }, data));
+    info = formatData(data, saved, watched);
+  } else {
+    info = formatData(movie, saved, watched);
+  }
+  
   return res.status(200).json({ success: true, movie: info });
 }

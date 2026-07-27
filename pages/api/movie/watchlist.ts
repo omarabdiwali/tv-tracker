@@ -19,7 +19,7 @@ const addWatchedStatus = (movies: IMovie[], savedMovies: ObjType) => {
     populated.push({
       id: movie.id,
       title: movie.title,
-      image: movie.image,
+      image: movie.imageSmall,
       releaseDate: movie.releaseDate,
       watched: info.watched
     })
@@ -34,7 +34,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!session) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
 
   await dbConnect();
-  const movieFields = 'id image title releaseDate'
+  const movieFields = 'id imageSmall title releaseDate'
   let user: IUser | null = await Users.findOne({ email: session.user?.email });
   let savedMovies: IMovie[] = [];
   let formatted: MovieWatchlist[] = [];

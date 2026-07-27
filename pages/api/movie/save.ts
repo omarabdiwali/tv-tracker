@@ -7,7 +7,16 @@ import { IUser } from "@/utils/types";
 import Movie from "@/models/Movie";
 
 const buildPosterURL = (path: string, size: string) => {
+  if (!path) return null;
   return `https://image.tmdb.org/t/p/${size}${path}`;
+}
+
+const verifyRequiredKeys = (info: any) => {
+  const { id, image, title } = info;
+  if (id == null || id == undefined) return false;
+  if (image == null || image == undefined) return false;
+  if (title == null || title == undefined) return false;
+  return true;
 }
 
 const queryTMDB = async (movieId: string, targetTitle: string) => {
@@ -17,12 +26,25 @@ const queryTMDB = async (movieId: string, targetTitle: string) => {
   return fetch(url).then(res => res.json()).then(data => {
     const id = data.id;
     const title = data.title;
+    const genres = data.genres;
+    const homepage = data.homepage;
     const imdbId = data.imdb_id;
+    const origin = data.origin_country;
+    const overview = data.overview;
     const releaseDate = data.release_date;
+    const voteCount = data.vote_count;
+    const voteAverage = data.vote_average;
+    const runtime = data.runtime ? `${data.runtime} mins` : data.runtime;
     const image = buildPosterURL(data.poster_path, 'w342');
+    const imageSmall = buildPosterURL(data.poster_path, 'w185');
+    const trailer = "n/a";
 
-    if (!id || !title || title != targetTitle || !image) return {};
-    return { id, title, imdbId, image, releaseDate };
+    if (title && title != targetTitle) return {};
+
+    return {
+      title, genres, trailer, runtime, homepage, imdbId, origin, image,
+      imageSmall, overview, releaseDate, voteCount, voteAverage, id
+    }
   }).catch(err => {
     console.error(err);
     return {};
@@ -56,7 +78,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (!movie) {
     const info = await queryTMDB(id as string, title as string);
-    if (Object.keys(info).length == 0) {
+    if (!verifyRequiredKeys(info)) {
       return res.status(200).json({ success: false, message: "Invalid movie." });
     }
     await Movie.create(info);

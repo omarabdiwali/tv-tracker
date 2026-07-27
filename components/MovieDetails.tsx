@@ -210,8 +210,8 @@ export default function MovieDetails({ movie }: MovieDetailsProps) {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-700">
-            {movie.video &&
-            <Link href={movie.video} target='__blank'>
+            {movie.trailer && movie.trailer != 'n/a' &&
+            <Link href={movie.trailer} target='__blank'>
               <button className="flex items-center justify-center gap-2 px-6 py-3 bg-slate-500 cursor-pointer text-white rounded-lg font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg">
                 <IoIosVideocam size={26} />
                 Watch Trailer
