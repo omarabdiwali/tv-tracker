@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]";
 import dbConnect from "@/utils/dbConnect";
 import Users from "@/models/Users";
-import { IMovie, IUser } from "@/utils/types";
+import { IUser } from "@/utils/types";
 import Movie from "@/models/Movie";
 
 const buildPosterURL = (path: string, size: string) => {
@@ -52,7 +52,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (!user) return res.status(200).json({ success: false, message: "Error creating user." });
-  const movie: IMovie | null = await Movie.findOne({ id: id });
+  const movie = await Movie.exists({ id: id });
 
   if (!movie) {
     const info = await queryTMDB(id as string, title as string);

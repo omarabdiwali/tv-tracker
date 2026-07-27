@@ -68,7 +68,7 @@ function Item({ id, image, imageSmall, title, releaseDate, episodeCount, episode
     })
   }
 
-  const WatchedBanner = () => {
+  const WatchedProgress = () => {
     if (episodeCount == 0 || episodeCount == undefined || episodeCount == null || episodesWatched == undefined || episodesWatched == null) {
       return <div className="absolute top-[0%] w-full bg-red-600 h-1" />;
     }
@@ -106,17 +106,17 @@ function Item({ id, image, imageSmall, title, releaseDate, episodeCount, episode
       : 0;
 
     return (
-      <div className="absolute flex top-[0%] w-full bg-red-600 h-1">
+      <div className="absolute flex top-0 w-full bg-red-600 h-1">
         <div
           className="bg-gradient-to-r z-100 from-green-400 to-green-500 h-1 transition-all duration-500"
           style={{ width: `${(episodesWatched / episodeCount) * 100}%` }}
         />
         {nextEpisodeNumber && nextEpisodeNumber > episodesWatched && nextEpisodeNumber <= episodeCount && (
           <div
-            className="cursor-default z-50 bg-blue-500"
+            className="absolute top-0 h-full cursor-default z-50 bg-blue-500"
             style={{
               left: `${nextEpisodePosition}%`,
-              width: `max(${1 / episodeCount * 100}%, 0.75rem)`,
+              width: `${1 / episodeCount * 100}%`,
             }}
             title={`Next: Episode ${nextEpisode}`}
           />
@@ -162,7 +162,7 @@ function Item({ id, image, imageSmall, title, releaseDate, episodeCount, episode
           </div>
 
           <div className="relative bg-slate-700 p-2 text-center rounded-b-lg flex items-center justify-center text-gray-200 group-hover:text-emerald-400 group-hover:underline">
-            <WatchedBanner />
+            <WatchedProgress />
             {`${title}${year ? ` (${year})` : ''}`}
           </div>
         </div>

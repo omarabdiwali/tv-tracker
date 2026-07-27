@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]";
 import dbConnect from "@/utils/dbConnect";
 import Users from "@/models/Users";
-import { IShow, IUser } from "@/utils/types";
+import { IUser } from "@/utils/types";
 import Show from "@/models/Show";
 
 const verifyRequiredKeys = (info: any) => {
@@ -89,7 +89,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (!user) return res.status(200).json({ success: false, message: "Unauthenticated user." });
-  const show: IShow | null = await Show.findOne({ id: id });
+  const show = await Show.exists({ id: id });
 
   if (!show) {
     const info = await queryTVMaze(id as string, title as string);
