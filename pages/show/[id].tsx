@@ -1,10 +1,12 @@
 import ShowDetails from "@/components/ShowDetails";
 import { ShowProps } from "@/utils/types";
+import { useSession } from "next-auth/react";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 
 export default function Details() {
+  const { data: _, status } = useSession();
   const router = useRouter();
   const { id } = router.query;
 
@@ -43,6 +45,8 @@ export default function Details() {
       </Head>
     )
   }
+
+  if (status != 'authenticated') return null;
 
   if (error) {
     return (

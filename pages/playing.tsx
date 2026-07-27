@@ -149,6 +149,8 @@ export default function Movies() {
     })
   }
 
+  if (status != 'authenticated') return null;
+
   if (error) {
     return (
       <>

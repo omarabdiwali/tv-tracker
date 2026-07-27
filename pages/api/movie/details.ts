@@ -113,19 +113,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!id) return res.status(200).json({ success: false, message: 'Missing parameter.' });
 
   const session = await getServerSession(req, res, authOptions);
+  if (!session) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
   let saved: boolean = false;
   let watched: boolean = false;
 
-  if (session) {
-    await dbConnect();
-    const user: IUser | null = await Users.findOne({ email: session.user?.email });
-    if (!user) {
-      await Users.create({ email: session.user?.email, savedMovies: [], savedShows: [] });
-    } else {
-      const index = user.savedMovies.findIndex((movie) => movie.movieId == `${id}`);
-      saved = index != -1 ? true : false;
-      watched = index != -1 ? user.savedMovies[index].watched : false;
-    }
+  await dbConnect();
+  const user: IUser | null = await Users.findOne({ email: session.user?.email });
+  if (!user) {
+    await Users.create({ email: session.user?.email, savedMovies: [], savedShows: [] });
+  } else {
+    const index = user.savedMovies.findIndex((movie) => movie.movieId == `${id}`);
+    saved = index != -1 ? true : false;
+    watched = index != -1 ? user.savedMovies[index].watched : false;
   }
 
   let info: any = {};

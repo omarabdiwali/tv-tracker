@@ -172,6 +172,8 @@ export default function Search() {
     )
   }
 
+  if (status != 'authenticated') return null;
+
   if (shows == null && movies == null) {
     return (
       <>

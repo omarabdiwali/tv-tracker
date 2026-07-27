@@ -35,7 +35,7 @@ export function Header() {
     inputRef.current?.blur();
   };
 
-  if (status === "loading") return null;
+  if (status != "authenticated") return null;
 
   return (
     <header className="px-0 py-3 mx-4">

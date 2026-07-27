@@ -256,6 +256,8 @@ export default function Shows() {
     setSortBy(sortType);
   }
 
+  if (status != 'authenticated') return null;
+
   if (error) {
     return (
       <>

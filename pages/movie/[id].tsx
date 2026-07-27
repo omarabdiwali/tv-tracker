@@ -1,10 +1,12 @@
 import MovieDetails from "@/components/MovieDetails";
 import { MovieProps } from "@/utils/types";
+import { useSession } from "next-auth/react";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 
 export default function Details() {
+  const { data: _, status } = useSession();
   const router = useRouter();
   const { id } = router.query;
 
@@ -26,6 +28,10 @@ export default function Details() {
       if (data.success) {
         setMovie(data.movie);
       } else {
+        if (data.message == 'Unauthenticated user.') {
+          router.push('/');
+          return;
+        }
         setError(data.message);
       }
     }).catch(err => {
@@ -43,6 +49,8 @@ export default function Details() {
       </Head>
     )
   }
+
+  if (status != 'authenticated') return null;
 
   if (loading) {
     return (

@@ -166,6 +166,8 @@ export default function Movies() {
     setSortBy(sortType);
   }
 
+  if (status != 'authenticated') return null;
+
   if (error) {
     return (
       <>

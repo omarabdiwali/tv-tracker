@@ -1,3 +1,4 @@
+import LandingPage from "@/components/LandingPage";
 import { useSession } from "next-auth/react";
 import Head from "next/head";
 import Image from "next/image";
@@ -101,15 +102,17 @@ function Title() {
 }
 
 export default function Home() {
-  const { data: _, status } = useSession();
+  const { status } = useSession();
   const [trending, setTrending] = useState<ItemProps[]>([]);
   const [trending1, setTrending1] = useState<ItemProps[]>([]);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    fetchTrendingMovies(1);
-    fetchTrendingMovies(2);
-  }, [])
+    if (status === 'authenticated') {
+      fetchTrendingMovies(1);
+      fetchTrendingMovies(2);
+    }
+  }, [status]);
 
   const fetchTrendingMovies = async (page: number) => {
     fetch(`/api/movie/trending?page=${page}`).then(res => res.json()).then(data => {
@@ -143,6 +146,14 @@ export default function Home() {
     return combination;
   }
 
+  if (status === 'unauthenticated') {
+    return (
+      <>
+        <LandingPage />
+      </>
+    );
+  }
+
   if (error) {
     return (
       <>
@@ -152,7 +163,7 @@ export default function Home() {
     )
   }
 
-  if (trending.length == 0 && trending1.length == 0) {
+  if (status === 'loading' || (trending.length == 0 && trending1.length == 0)) {
     return (
       <>
         <Title />
