@@ -6,7 +6,8 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { useSnackbar } from "notistack";
 import { useEffect, useState } from "react";
-import { IoIosAdd, IoIosCalendar, IoIosHourglass, IoIosCheckmarkCircleOutline, IoIosRemove } from "react-icons/io";
+import { FaSortAlphaDown } from "react-icons/fa";
+import { IoIosAdd, IoIosCalendar, IoIosHourglass, IoIosRemove, IoIosEye } from "react-icons/io";
 
 interface ItemProps {
   id: string,
@@ -111,7 +112,14 @@ export default function Movies() {
   const [movies, setMovies] = useState<MovieWatchlist[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [sortBy, setSortBy] = useState('date');
+  const [sortBy, setSortBy] = useState('alpha');
+
+  useEffect(() => {
+    if (!window) return;
+    const validOptions = new Set(['date', 'alpha', 'status']);
+    const sort = window.localStorage.getItem('sortTypeMovies');
+    setSortBy(sort && validOptions.has(sort) ? sort : 'alpha');
+  }, [])
 
   useEffect(() => {
     if (status == 'loading') return;
@@ -164,6 +172,7 @@ export default function Movies() {
   const handleSort = (sortType: string) => {
     if (sortType == sortBy) return;
     setSortBy(sortType);
+    window.localStorage.setItem('sortTypeMovies', sortType);
   }
 
   if (status != 'authenticated') return null;
@@ -197,11 +206,17 @@ export default function Movies() {
         <h2 className="text-2xl font-bold text-gray-100 flex-1">Saved Movies</h2>
         <div className="flex items-center gap-2">
           <div>Sort By:</div>
+          <button onClick={() => handleSort('alpha')} disabled={sortBy == 'alpha'} title='Alphabetically' className={sortButtonClass}><FaSortAlphaDown size={20} /></button>
           <button onClick={() => handleSort('date')} disabled={sortBy == 'date'} title='Release Date' className={sortButtonClass}><IoIosCalendar size={20} /></button>
-          <button onClick={() => handleSort('status')} disabled={sortBy == 'status'} title='Watch Status' className={sortButtonClass}><IoIosCheckmarkCircleOutline size={20} /></button>
+          <button onClick={() => handleSort('status')} disabled={sortBy == 'status'} title='Watch Status' className={sortButtonClass}><IoIosEye size={20} /></button>
         </div>
       </div>
-      {sortBy == 'date' ? movies.length > 0 ? (
+      {movies.length == 0 && (
+          <div className="flex flex-1 justify-center items-center">
+            <div className="text-gray-400">There are currently no movies saved.</div>
+          </div>
+        )}
+      {movies.length > 0 && sortBy == 'date' ? (
         <div className="grid items-stretch grid-cols-[repeat(auto-fill,_minmax(170px,_1fr))] gap-4 m-4">
           {movies.map((movie) => {
             return <Item
@@ -213,11 +228,19 @@ export default function Movies() {
                       removeFromMovies={removeFromMovies}
                     />
           })}
+        </div>) : sortBy == 'alpha' ?  (
+        <div className="grid items-stretch grid-cols-[repeat(auto-fill,_minmax(170px,_1fr))] gap-4 m-4">
+          {movies.toSorted((a, b) => a.title.localeCompare(b.title)).map((movie) => {
+            return <Item
+                      key={`movie-saved-${movie.id}`}
+                      status={status} id={movie.id}
+                      title={movie.title}
+                      image={movie.image}
+                      releaseDate={movie.releaseDate}
+                      removeFromMovies={removeFromMovies}
+                    />
+          })}
         </div>) : (
-          <div className="flex flex-1 justify-center items-center">
-            <div className="text-gray-400">There are currently no movies saved.</div>
-          </div>
-        ) : movies.length > 0 ? (
           <div>
             <h2 className="text-xl mb-2 mx-4 font-bold text-gray-400 flex-1">Unwatched</h2>
             <div className="grid items-stretch grid-cols-[repeat(auto-fill,_minmax(170px,_1fr))] gap-4 m-4">
@@ -245,10 +268,6 @@ export default function Movies() {
                         />
               })}
            </div>
-          </div>
-        ) : (
-          <div className="flex flex-1 justify-center items-center">
-            <div className="text-gray-400">There are currently no movies saved.</div>
           </div>
         )}
     </>

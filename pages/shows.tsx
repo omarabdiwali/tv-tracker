@@ -6,7 +6,8 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { useSnackbar } from "notistack";
 import { useEffect, useState } from "react";
-import { IoIosAdd, IoIosCalendar, IoIosHourglass, IoIosCheckmarkCircleOutline, IoIosRemove } from "react-icons/io";
+import { FaSortAlphaDown } from "react-icons/fa";
+import { IoIosAdd, IoIosCalendar, IoIosHourglass, IoIosRemove, IoIosEye } from "react-icons/io";
 
 interface ItemProps {
   id: string,
@@ -142,8 +143,8 @@ function Item({ id, image, imageSmall, title, releaseDate, episodeCount, episode
       </button>}
       {(nextEpisode || lastEpisode) && (
         <div
-        className={`absolute left-[50%] text-center -translate-x-1/2 text-xs
-                    py-[3px] px-[5px] w-full ${nextEpisode ? 'bg-green-800' : notEndedAndLast ? 'bg-orange-700' : 'bg-red-800'} rounded-t-md z-100`}>
+        className={`absolute left-[50%] text-center -translate-x-1/2 text-xs border-t border-x border-slate-800
+                    py-[3px] px-[5px] w-full bg-black ${nextEpisode ? 'text-green-600' : notEndedAndLast ? 'text-orange-500' : 'text-red-700'} rounded-t-md z-100`}>
           {nextEpisode ? nextEpisode : lastEpisode}
         </div>
         )}
@@ -185,7 +186,14 @@ export default function Shows() {
   const [shows, setShows] = useState<ShowWatchlist[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [sortBy, setSortBy] = useState('date');
+  const [sortBy, setSortBy] = useState('alpha');
+
+  useEffect(() => {
+    if (!window) return;
+    const validOptions = new Set(['date', 'alpha', 'status']);
+    const sort = window.localStorage.getItem('sortTypeShows');
+    setSortBy(sort && validOptions.has(sort) ? sort : 'alpha');
+  }, [])
 
   useEffect(() => {
     if (status == 'loading') return;
@@ -254,6 +262,7 @@ export default function Shows() {
   const handleSort = (sortType: string) => {
     if (sortBy == sortType) return;
     setSortBy(sortType);
+    window.localStorage.setItem('sortTypeShows', sortType);
   }
 
   if (status != 'authenticated') return null;
@@ -287,11 +296,17 @@ export default function Shows() {
         <h2 className="text-2xl font-bold text-gray-100 flex-1">Saved Shows</h2>
         <div className="flex items-center gap-2">
           <div>Sort By:</div>
+          <button onClick={() => handleSort('alpha')} disabled={sortBy == 'alpha'} title='Alphabetically' className={sortButtonClass}><FaSortAlphaDown size={20} /></button>
           <button onClick={() => handleSort('date')} disabled={sortBy == 'date'} title='Next Episode' className={sortButtonClass}><IoIosCalendar size={20} /></button>
-          <button onClick={() => handleSort('status')} disabled={sortBy == 'status'} title='Watch Status' className={sortButtonClass}><IoIosCheckmarkCircleOutline size={20} /></button>
+          <button onClick={() => handleSort('status')} disabled={sortBy == 'status'} title='Watch Status' className={sortButtonClass}><IoIosEye size={20} /></button>
         </div>
       </div>
-      {sortBy == 'date' ? shows.length > 0 ? (
+      {shows.length == 0 && (
+          <div className="flex flex-1 justify-center items-center">
+            <div className="text-gray-400">There are currently no shows saved.</div>
+          </div>
+        )}
+      {shows.length > 0 && sortBy == 'date' ? (
         <div className="grid items-stretch grid-cols-[repeat(auto-fill,_minmax(170px,_1fr))] gap-4 m-4">
           {shows.map((show) => {
             return <Item
@@ -310,11 +325,26 @@ export default function Shows() {
                       removeFromShows={removeFromShows}
                     />
           })}
+        </div>) : sortBy == 'alpha' ?  (
+        <div className="grid items-stretch grid-cols-[repeat(auto-fill,_minmax(170px,_1fr))] gap-4 m-4">
+          {shows.toSorted((a, b) => a.title.localeCompare(b.title)).map((show) => {
+            return <Item
+                      key={`show-saved-${show.id}`}
+                      authStatus={status} id={show.id}
+                      showStatus={show.status}
+                      title={show.title}
+                      image={show.image}
+                      episodeCount={show.episodeCount}
+                      episodesWatched={show.episodesWatched}
+                      seasonEpisodeCount={show.seasonEpisodeCount}
+                      imageSmall={show.imageSmall}
+                      nextEpisode={show.nextEpisode}
+                      lastEpisode={show.lastEpisode}
+                      releaseDate={show.releaseDate}
+                      removeFromShows={removeFromShows}
+                    />
+          })}
         </div>) : (
-          <div className="flex flex-1 justify-center items-center">
-            <div className="text-gray-400">There are currently no shows saved.</div>
-          </div>
-        ) : shows.length > 1 ? (
           <div>
             <h2 className="text-xl mb-2 mx-4 font-bold text-gray-400 flex-1">In Progress</h2>
             <div className="grid items-stretch grid-cols-[repeat(auto-fill,_minmax(170px,_1fr))] gap-4 m-4">
@@ -376,10 +406,6 @@ export default function Shows() {
                         />
               })}
            </div>
-          </div>
-        ) : (
-          <div className="flex flex-1 justify-center items-center">
-            <div className="text-gray-400">There are currently no shows saved.</div>
           </div>
         )}
     </>
