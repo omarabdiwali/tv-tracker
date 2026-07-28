@@ -80,9 +80,8 @@ const parseEpisodes = (episodes: any, nextEpisodeId: string | null, lastEpisodeI
 }
 
 const verifyRequiredKeys = (info: any) => {
-  const { id, overview, image, title } = info;
+  const { id, image, title } = info;
   if (id == null || id == undefined) return false;
-  if (overview == null || overview == undefined) return false;
   if (image == null || image == undefined) return false;
   if (title == null || title == undefined) return false;
 

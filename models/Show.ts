@@ -9,7 +9,7 @@ const showSchema = new Schema<IShow>({
     index: true
   },
   imdbId: { type: String, required: false },
-  overview: { type: String, required: true },
+  overview: { type: String, required: false },
   image: { type: String, required: true },
   imageSmall : { type: String, required: false },
   title: { type: String, required: true },
