@@ -1,9 +1,9 @@
 import { signIn } from "next-auth/react";
-import { 
-  IoIosCheckmarkCircle, 
-  IoIosFilm, 
-  IoIosList, 
-  IoIosStats, 
+import {
+  IoIosCheckmarkCircle,
+  IoIosFilm,
+  IoIosList,
+  IoIosStats,
 } from "react-icons/io";
 
 export default function LandingPage() {

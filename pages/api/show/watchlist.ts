@@ -10,18 +10,61 @@ type ObjType = {
   [id: string] : SavedShow
 }
 
+const nextEpisodeInFuture = (nextEpisode: string) => {
+  const currentTime = new Date().getTime();
+  const startIndex = nextEpisode.indexOf(' / ');
+  const dateString = startIndex != -1 ? nextEpisode.slice(startIndex + 3) : null;
+  if (!dateString) return false;
+  return new Date(dateString as string).getTime() > currentTime;
+}
+
+const checkIfPassed = (show: IShow) => {
+  const nextEpisode = show.nextEpisode;
+  const status = show.status;
+  const refresh = 86400000 / 4;
+  const currentTime = new Date().getTime();
+  const updatedAt = show.nextUpdatedAt;
+
+  if (!status || status == 'Ended') return false;
+  if (nextEpisode && nextEpisodeInFuture(nextEpisode)) return false;
+  if (!updatedAt) return true;
+
+  return (currentTime - new Date(updatedAt).getTime()) >= refresh;
+}
+
+const getNextEpisode = async (showId: string) => {
+  const url = `https://api.tvmaze.com/shows/${showId}?embed=nextepisode`;
+  return fetch(url).then(res => res.json()).then(info => {
+    if (!info._embedded || !info._embedded.nextepisode) return null;
+    const data = info._embedded.nextepisode;
+    const season = data.season;
+    const episode = data.number;
+    const airdate = data.airdate;
+    if (season == undefined || season == null || episode == undefined || episode == null || !airdate) return null;
+    const episodeString = `${episode}`.padStart(2, '0');
+    return `${season}x${episodeString} / ${airdate}`;
+  })
+}
+
 // Categories are as follows:
 // 0 - Unwatched
 // 1 - In Progress
 // 2 - Completed / Up-to-Date
 
-const addCategory = (shows: IShow[], savedShows: ObjType) => {
+const addCategory = async (shows: IShow[], savedShows: ObjType) => {
   const populated: ShowWatchlist[] = [];
 
   for (const show of shows) {
     let category = 0;
     const info = savedShows[show.id];
     if (!info) continue;
+
+    if (checkIfPassed(show)) {
+      const nextEpisode = await getNextEpisode(show.id);
+      show.nextEpisode = nextEpisode ? nextEpisode : show.nextEpisode;
+      show.nextUpdatedAt = new Date();
+      await show.save({ timestamps: false });
+    }
 
     if (info.watchedEpisodes.length == 0) {
       category = 0;
@@ -58,7 +101,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!session) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
 
   await dbConnect();
-  const showFields = 'id image imageSmall title episodeCount releaseDate nextEpisode lastEpisode status seasonEpisodeCount'
+  const showFields = 'id image imageSmall title episodeCount releaseDate nextEpisode lastEpisode nextUpdatedAt status seasonEpisodeCount'
   let user: IUser | null = await Users.findOne({ email: session.user?.email });
   let savedShows: IShow[] = [];
   let formatted: ShowWatchlist[] = [];
@@ -73,7 +116,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }, {})
 
     savedShows = await Show.find({ id: { $in: showIds } }, showFields);
-    formatted = addCategory(savedShows, showObj);
+    formatted = await addCategory(savedShows, showObj);
   }
 
   if (!user) return res.status(200).json({ success: false, message: 'Error creating user.' });

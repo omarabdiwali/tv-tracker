@@ -162,8 +162,8 @@ export default function Search() {
   }
 
   function Loading({ inline = false }) {
-    const className = inline 
-      ? "flex items-center justify-center py-8" 
+    const className = inline
+      ? "flex items-center justify-center py-8"
       : "fixed inset-0 flex items-center justify-center bg-black/30 z-50";
     return (
       <div className={className}>

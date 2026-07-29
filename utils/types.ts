@@ -124,7 +124,8 @@ export interface IShow extends Document {
   updatedAt: Date;
   createdAt: Date;
   episodeCount?: number;
-  seasonEpisodeCount?: SeasonEpisodeCountType
+  seasonEpisodeCount?: SeasonEpisodeCountType;
+  nextUpdatedAt?: Date;
 }
 
 export interface ScheduledShows {

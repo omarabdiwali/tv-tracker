@@ -23,7 +23,8 @@ const showSchema = new Schema<IShow>({
   lastEpisode: { type: String, required: false },
   releaseDate: { type: String, required: false },
   episodeCount: { type: Number, required: false },
-  seasonEpisodeCount: { type: Object, required: false }
+  seasonEpisodeCount: { type: Object, required: false },
+  nextUpdatedAt: { type: Date, required: false }
 }, {
   timestamps: true
 });

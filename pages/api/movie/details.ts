@@ -130,7 +130,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   let info: any = {};
   const fields = 'title genres trailer updatedAt runtime homepage imdbId origin image overview releaseDate voteCount voteAverage id';
   const movie: IMovie | null = await Movie.findOne({ id }, fields);
-  
+
   if (!movie || movie.trailer == 'n/a' || timeToRefresh(movie.updatedAt)) {
     const data = await queryTMDB(id as string);
     verifyRequiredKeys(data) && (!movie ? await Movie.create(data) : await Movie.findOneAndUpdate({ id }, data));
@@ -138,6 +138,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   } else {
     info = formatData(movie, saved, watched);
   }
-  
+
   return res.status(200).json({ success: true, movie: info });
 }
