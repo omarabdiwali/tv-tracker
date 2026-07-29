@@ -189,8 +189,6 @@ function EpisodeList({ showId, episodes, watched }: EpisodeListProps) {
     .then(res => res.json())
     .then(data => {
       if (data.success) {
-        const episodeString = `${episode}`.padStart(2, '0');
-        enqueueSnackbar(`${season}x${episodeString} ${data.message}`, { variant: 'success', autoHideDuration: 1500 });
         return true;
       } else {
         if (data.message == "Unauthenticated user.") {
@@ -225,7 +223,6 @@ function EpisodeList({ showId, episodes, watched }: EpisodeListProps) {
     .then(res => res.json())
     .then(data => {
       if (data.success) {
-        enqueueSnackbar(`S${seasonNumber} marked as ${watchStatus ? 'watched' : 'unwatched'}`, { variant: 'success', autoHideDuration: 1500 });
         return true;
       } else {
         if (data.message == "Unauthenticated user.") {

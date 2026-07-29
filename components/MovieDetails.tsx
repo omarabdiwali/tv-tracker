@@ -40,7 +40,6 @@ export default function MovieDetails({ movie }: MovieDetailsProps) {
       if (data.success) {
         movie.watched = !watchStatus;
         setWatchStatus(!watchStatus);
-        enqueueSnackbar('Updated watch status!', { variant: 'success', autoHideDuration: 1000 });
       } else {
         if (data.message == 'Unauthenticated user.') {
           window.location.href = '/';

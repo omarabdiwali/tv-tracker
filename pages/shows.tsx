@@ -102,22 +102,23 @@ function Item({ id, image, imageSmall, title, releaseDate, episodeCount, episode
     }
 
     const nextEpisodeNumber = getNextEpisode();
+    const totalEpisodeCount = Math.max(nextEpisodeNumber || -1, episodeCount);
     const nextEpisodePosition = nextEpisodeNumber
-      ? ((nextEpisodeNumber - 1) / episodeCount) * 100
+      ? ((nextEpisodeNumber - 1) / totalEpisodeCount) * 100
       : 0;
 
     return (
       <div className="absolute flex bottom-[0%] w-full bg-red-600 h-1">
         <div
           className="bg-gradient-to-r z-100 from-green-400 to-green-500 h-1 transition-all duration-500"
-          style={{ width: `${(episodesWatched / episodeCount) * 100}%` }}
+          style={{ width: `${(episodesWatched / totalEpisodeCount) * 100}%` }}
         />
-        {nextEpisodeNumber && nextEpisodeNumber > episodesWatched && nextEpisodeNumber <= episodeCount && (
+        {nextEpisodeNumber && nextEpisodeNumber > episodesWatched && nextEpisodeNumber <= totalEpisodeCount && (
           <div
             className="absolute bottom-[0%] h-full cursor-default z-50 bg-blue-500"
             style={{
               left: `${nextEpisodePosition}%`,
-              width: `${1 / episodeCount * 100}%`,
+              width: `${1 / totalEpisodeCount * 100}%`,
             }}
             title={`Next: Episode ${nextEpisode}`}
           />
