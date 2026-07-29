@@ -3,16 +3,12 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]";
 import dbConnect from "@/utils/dbConnect";
 import Users from "@/models/Users";
-import { IUser } from "@/utils/types";
+import { hasValue, IUser } from "@/utils/types";
 import Show from "@/models/Show";
 
 const verifyRequiredKeys = (info: any) => {
   const { id, image, title } = info;
-  if (id == null || id == undefined) return false;
-  if (image == null || image == undefined) return false;
-  if (title == null || title == undefined) return false;
-
-  return true;
+  return hasValue(id) && hasValue(image) && hasValue(title);
 }
 
 const fetchEpisodeInfo = async (href: string | undefined) => {
@@ -21,7 +17,7 @@ const fetchEpisodeInfo = async (href: string | undefined) => {
     const season = data.season;
     const episode = data.number;
     const airdate = data.airdate;
-    if (season == undefined || season == null || episode == undefined || episode == null || !airdate) return null;
+    if (!hasValue(season) || !hasValue(episode) || !airdate) return null;
     return `${season}x${episode} / ${airdate}`;
   })
 }
@@ -54,7 +50,7 @@ const queryTVMaze = async (showId: string, targetTitle: string) => {
       image = data.image?.medium;
     }
 
-    if (!id || !title || title != targetTitle || !image) return {};
+    if (!hasValue(id) || !title || title != targetTitle || !image) return {};
     return {
       id, title, image, imdbId, releaseDate, genres, lastEpisode, imageSmall,
       nextEpisode, homepage, language, overview, voteAverage, status
@@ -70,7 +66,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { id, title, save } = req.body;
   const session = await getServerSession(req, res, authOptions);
 
-  if (!session || id == null || id == undefined || !title || save == null || save == undefined) {
+  if (!session || !hasValue(id) || !title || !hasValue(save)) {
     const message = !session ? "Unauthenticated user." : "Missing body parameters.";
     return res.status(200).json({ success: false, message  });
   }
@@ -88,7 +84,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (!user) return res.status(200).json({ success: false, message: "Unauthenticated user." });
-  const show = await Show.exists({ id: id });
+  const show = await Show.exists({ id });
 
   if (!show) {
     const info = await queryTVMaze(id as string, title as string);
@@ -99,16 +95,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
   }
 
-  if (save && savedShows.has(id)) {
+  if (save && savedShows.has(`${id}`)) {
     return res.status(200).json({ success: true, message: `${title} has already been saved to watchlist.` });
-  } else if (!save && !savedShows.has(id)) {
+  } else if (!save && !savedShows.has(`${id}`)) {
     return res.status(200).json({ success: true, message: `${title} has already been removed from watchlist.` });
   }
 
   if (save) {
-    user.savedShows.push({ showId: id, watchedEpisodes: [] });
+    user.savedShows.push({ showId: `${id}`, watchedEpisodes: [] });
   } else {
-    const index = user.savedShows.findIndex((show) => show.showId == id);
+    const index = user.savedShows.findIndex((show) => show.showId == `${id}`);
     user.savedShows.splice(index, 1);
   }
 

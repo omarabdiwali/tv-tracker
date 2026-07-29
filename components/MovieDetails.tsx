@@ -35,7 +35,7 @@ export default function MovieDetails({ movie }: MovieDetailsProps) {
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ id: movie.id, status: !watchStatus })
+      body: JSON.stringify({ id: `${movie.id}`, status: !watchStatus })
     }).then(res => res.json()).then(data => {
       if (data.success) {
         movie.watched = !watchStatus;

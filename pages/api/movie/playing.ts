@@ -3,13 +3,13 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]";
 import dbConnect from "@/utils/dbConnect";
 import Users from "@/models/Users";
-import { IUser, UpcomingMovie } from "@/utils/types";
+import { hasValue, ItemProps, IUser } from "@/utils/types";
 
 const buildPosterURL = (path: string, size: string) => {
   return `https://image.tmdb.org/t/p/${size}${path}`;
 }
 
-const queryTMDB = async (savedMovies: Set<string>) : Promise<UpcomingMovie[]> => {
+const queryTMDB = async (savedMovies: Set<string>) : Promise<ItemProps[]> => {
   const apiKey = process.env.TMDB_API_KEY;
   const url = `https://api.themoviedb.org/3/movie/now_playing?api_key=${apiKey}`;
 
@@ -21,19 +21,10 @@ const queryTMDB = async (savedMovies: Set<string>) : Promise<UpcomingMovie[]> =>
       const releaseDate = movie.release_date;
       const image = movie.poster_path;
       const title = movie.title;
-      const isSaved = savedMovies.has(`${id}`);
+      const saved = savedMovies.has(`${id}`);
 
-      let year = null;
-
-      if (id == null || id == undefined || !title || !image) continue;
-      if (releaseDate) {
-        year = releaseDate.split("-", 1).at(0);
-        if (isNaN(parseInt(year))) {
-          year = null;
-        }
-      }
-
-      items.push({ id, title, image: buildPosterURL(image, 'w185'), year, releaseDate, isSaved });
+      if (!hasValue(id) || !title || !image) continue;
+      items.push({ id, title, image: buildPosterURL(image, 'w185'), releaseDate, saved });
     }
     return items;
   }).catch(err => {

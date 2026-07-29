@@ -3,14 +3,14 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]";
 import dbConnect from "@/utils/dbConnect";
 import Users from "@/models/Users";
-import { IUser } from "@/utils/types";
+import { hasValue, IUser } from "@/utils/types";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method != "POST") return res.status(200).json({ success: false, message: 'Method not allowed.' });
   const { showId, epId, setWatched } = req.body;
   const session = await getServerSession(req, res, authOptions);
 
-  if (!session || !showId || !epId || setWatched == null || setWatched == undefined) {
+  if (!session || !hasValue(showId) || !hasValue(epId) || !hasValue(setWatched)) {
     const message = !session ? "Unauthenticated user." : "Missing body parameters.";
     return res.status(200).json({ success: false, message  });
   }

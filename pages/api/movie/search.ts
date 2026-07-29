@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]";
 import dbConnect from "@/utils/dbConnect";
-import { IUser } from "@/utils/types";
+import { hasValue, IUser } from "@/utils/types";
 import Users from "@/models/Users";
 
 const buildPosterURL = (path: string, size: string) => {
@@ -19,22 +19,13 @@ const queryTMDB = async (queryString: string, savedMovies: Set<string>) => {
 
     for (const movie of data.results) {
       const id = movie.id;
-      const release = movie.release_date;
+      const releaseDate = movie.release_date;
       const image = movie.poster_path;
-      const name = movie.title;
-      const isSaved = savedMovies.has(`${id}`);
+      const title = movie.title;
+      const saved = savedMovies.has(`${id}`);
 
-      let year = null;
-
-      if (id == null || id == undefined || !name || !image) continue;
-      if (release) {
-        year = release.split("-", 1).at(0);
-        if (isNaN(parseInt(year))) {
-          year = null;
-        }
-      }
-
-      items.push({ id, name, image: buildPosterURL(image, 'w185'), year, isSaved });
+      if (!hasValue(id) || !title || !image) continue;
+      items.push({ id, title, image: buildPosterURL(image, 'w185'), releaseDate, saved });
     }
     return items;
   }).catch(err => {

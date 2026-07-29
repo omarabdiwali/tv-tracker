@@ -13,13 +13,13 @@ import { RxClock } from 'react-icons/rx';
 const EpisodeItem = memo(({ episode, watched, onToggleWatched }: {
   episode: Episode;
   watched: Set<string>;
-  onToggleWatched: (id: string | number, watched: boolean, episode: number) => Promise<boolean>
+  onToggleWatched: (id: string | number, watched: boolean) => Promise<boolean>
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const handleClick = useCallback(async () => {
     setIsLoading(true);
     const newWatched = !watched.has(`${episode.id}`);
-    await onToggleWatched(episode.id, newWatched, episode.number);
+    await onToggleWatched(episode.id, newWatched);
     setIsLoading(false);
   }, [episode.id, watched, onToggleWatched]);
 
@@ -74,8 +74,8 @@ const SeasonSection = ({
   seasonNumber: number;
   episodes: Episode[];
   watched: Set<string>;
-  onToggleWatched: (id: string | number, watched: boolean, season: number, episode: number) => Promise<boolean>;
-  onMarkAllWatched: (seasonNumber: number, episodeIds: (string | number)[], watched: boolean) => Promise<boolean>;
+  onToggleWatched: (id: string | number, watched: boolean) => Promise<boolean>;
+  onMarkAllWatched: (episodeIds: (string | number)[], watched: boolean) => Promise<boolean>;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [watched, setWatched] = useState(initialWatched);
@@ -86,8 +86,8 @@ const SeasonSection = ({
     setWatchedCount(episodes.filter(ep => watched.has(`${ep.id}`)).length);
   }, [episodes, watched])
 
-  const handleToggleWatched = useCallback(async (episodeId: string | number, setToWatched: boolean, episode: number) => {
-    const result = await onToggleWatched(episodeId, setToWatched, seasonNumber, episode);
+  const handleToggleWatched = useCallback(async (episodeId: string | number, setToWatched: boolean) => {
+    const result = await onToggleWatched(episodeId, setToWatched);
     if (result) {
       setWatched((prev) => {
         const prevCopy = new Set(prev);
@@ -104,7 +104,7 @@ const SeasonSection = ({
     setLoading(true);
     const episodeIds = episodes.map((ep) => ep.id);
     const watchStatus = watchedCount < episodes.length;
-    const result = await onMarkAllWatched(seasonNumber, episodeIds, watchStatus);
+    const result = await onMarkAllWatched(episodeIds, watchStatus);
 
     if (result) {
       setWatched((prev) => {
@@ -172,10 +172,10 @@ interface EpisodeListProps {
 function EpisodeList({ showId, episodes, watched }: EpisodeListProps) {
   const { enqueueSnackbar } = useSnackbar();
 
-  const handleToggleWatched = useCallback(async (episodeId: string | number, setWatched: boolean, season: number, episode: number) => {
+  const handleToggleWatched = useCallback(async (episodeId: string | number, setWatched: boolean) => {
     const reqBody = {
-      showId,
-      epId: episodeId,
+      showId: `${showId}`,
+      epId: `${episodeId}`,
       setWatched
     };
 
@@ -206,9 +206,9 @@ function EpisodeList({ showId, episodes, watched }: EpisodeListProps) {
     });
   }, [showId, enqueueSnackbar]);
 
-  const handleMarkAllWatched = useCallback(async (seasonNumber: number, episodeIds: (string | number)[], watchStatus: boolean) => {
+  const handleMarkAllWatched = useCallback(async (episodeIds: (string | number)[], watchStatus: boolean) => {
     const reqBody = {
-      showId,
+      showId: `${showId}`,
       episodeIds,
       watched: watchStatus
     };

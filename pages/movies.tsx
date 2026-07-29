@@ -1,102 +1,11 @@
+import Item from "@/components/Item";
 import { MovieWatchlist } from "@/utils/types";
 import { useSession } from "next-auth/react";
 import Head from "next/head";
-import Image from "next/image";
-import Link from "next/link";
 import { useRouter } from "next/router";
-import { useSnackbar } from "notistack";
 import { useEffect, useState } from "react";
 import { FaSortAlphaDown } from "react-icons/fa";
-import { IoIosAdd, IoIosCalendar, IoIosHourglass, IoIosRemove, IoIosEye } from "react-icons/io";
-
-interface ItemProps {
-  id: string,
-  title: string,
-  image: string,
-  releaseDate?: string,
-  status: 'unauthenticated' | 'authenticated' | 'loading';
-  removeFromMovies: (id: string) => void;
-}
-
-function Item({ id, image, title, releaseDate, status, removeFromMovies }: ItemProps) {
-  const [action, setAction] = useState('remove');
-  const [disabled, setDisabled] = useState(false);
-  const { enqueueSnackbar } = useSnackbar();
-  const year = releaseDate ? releaseDate.split('-', 1).at(0) : null;
-
-  const saveItem = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    const prevAction = action;
-    setDisabled(true);
-    setAction('loading');
-
-    fetch(`/api/movie/save`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ id, title, save: prevAction == 'add' })
-    }).then(res => res.json()).then(data => {
-      if (data.success) {
-        setAction(prevAction == 'add' ? 'remove' : 'add');
-        enqueueSnackbar(data.message, { variant: "success", autoHideDuration: 1500 });
-        if (prevAction == 'remove') {
-          removeFromMovies(id);
-        }
-      } else {
-        if (data.message == 'Unauthenticated user.') {
-          window.location.href = '/';
-          return;
-        } else {
-          enqueueSnackbar(data.message, { variant: "error", autoHideDuration: 1500 });
-        }
-      }
-    }).catch(err => {
-      console.error(err);
-    }).finally(() => {
-      setDisabled(false);
-    })
-  }
-
-  return (
-    <div className="relative flex h-full flex-col justify-start">
-      {status == 'authenticated' && <button
-        onClick={saveItem}
-        disabled={disabled}
-        className={`
-          absolute left-[75%] top-[8%] z-10
-          bg-black/80 py-[3px] px-[5px] rounded-md
-          enabled:hover:bg-black ${action == 'add' ? 'hover:text-green-400' : action == 'remove' ? 'hover:text-red-400' : ''}
-          cursor-pointer
-        `}
-      >
-        {action == 'add' ? <IoIosAdd className="my-[0.5]" /> : action == 'remove' ?
-         <IoIosRemove className="my-[0.5]" /> : <IoIosHourglass className="my-[0.5]" />}
-      </button>}
-      <Link href={`/movie/${id}`} title={title} className="h-full">
-        <div className="relative cursor-pointer flex flex-col h-full group">
-          <div className="relative p-3 bg-slate-800 rounded-t-lg flex-1 min-h-[200px]">
-            <Image
-              unoptimized
-              alt={title}
-              src={image}
-              fill
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              className="p-3 object-contain"
-              loading="eager"
-            />
-          </div>
-
-          <div className="bg-slate-700 text-sm p-2 text-center rounded-b-lg flex items-center justify-center text-gray-200 group-hover:text-emerald-400 group-hover:underline">
-            {`${title}${year ? ` (${year})` : ''}`}
-          </div>
-        </div>
-      </Link>
-    </div>
-  );
-}
+import { IoIosCalendar, IoIosEye } from "react-icons/io";
 
 function Title() {
   return (
@@ -221,11 +130,13 @@ export default function Movies() {
           {movies.map((movie) => {
             return <Item
                       key={`movie-saved-${movie.id}`}
-                      status={status} id={movie.id}
+                      id={movie.id}
                       title={movie.title}
                       image={movie.image}
                       releaseDate={movie.releaseDate}
                       removeFromMovies={removeFromMovies}
+                      saved={true}
+                      type={'movie'}
                     />
           })}
         </div>) : sortBy == 'alpha' ?  (
@@ -233,11 +144,13 @@ export default function Movies() {
           {movies.toSorted((a, b) => a.title.localeCompare(b.title)).map((movie) => {
             return <Item
                       key={`movie-saved-${movie.id}`}
-                      status={status} id={movie.id}
+                      id={movie.id}
                       title={movie.title}
                       image={movie.image}
                       releaseDate={movie.releaseDate}
                       removeFromMovies={removeFromMovies}
+                      saved={true}
+                      type={'movie'}
                     />
           })}
         </div>) : (
@@ -247,11 +160,13 @@ export default function Movies() {
               {movies.filter(movie => !movie.watched).map((movie) => {
                 return <Item
                           key={`movie-saved-${movie.id}`}
-                          status={status} id={movie.id}
+                          id={movie.id}
                           title={movie.title}
                           image={movie.image}
                           releaseDate={movie.releaseDate}
                           removeFromMovies={removeFromMovies}
+                          saved={true}
+                          type={'movie'}
                         />
               })}
            </div>
@@ -260,11 +175,13 @@ export default function Movies() {
               {movies.filter(movie => movie.watched).map((movie) => {
                 return <Item
                           key={`movie-saved-${movie.id}`}
-                          status={status} id={movie.id}
+                          id={movie.id}
                           title={movie.title}
                           image={movie.image}
                           releaseDate={movie.releaseDate}
                           removeFromMovies={removeFromMovies}
+                          saved={true}
+                          type={'movie'}
                         />
               })}
            </div>

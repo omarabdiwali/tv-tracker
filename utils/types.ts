@@ -1,5 +1,16 @@
 import { Document, Types } from "mongoose";
 
+export interface ItemProps {
+  id: string,
+  title: string,
+  image: string,
+  saved: boolean,
+  releaseDate?: string,
+  type?: string,
+  showReleaseDate?: boolean,
+  removeFromMovies?: (id: string) => void
+}
+
 export interface SavedMovie {
   movieId: string;
   watched: boolean;
@@ -169,4 +180,8 @@ export interface MovieWatchlist {
   title: string,
   releaseDate: string,
   watched: boolean
+}
+
+export const hasValue = (val: any) => {
+  return val != undefined && val != null;
 }

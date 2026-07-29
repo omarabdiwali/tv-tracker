@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]";
 import dbConnect from "@/utils/dbConnect";
 import Users from "@/models/Users";
-import { IUser } from "@/utils/types";
+import { hasValue, IUser } from "@/utils/types";
 
 const getNestedProperty = (data: any, keys: string[], allowUndefined = true) => {
   let current = data;
@@ -31,26 +31,18 @@ const queryTVMaze = async (queryString: string, savedShows: Set<string>) => {
     const items = [];
     for (const show of data) {
       const id = getNestedProperty(show, ['show', 'id']);
-      const release = getNestedProperty(show, ['show', 'premiered']);
-      const name = getNestedProperty(show, ['show', 'name']);
-      const isSaved = savedShows.has(`${id}`);
+      const releaseDate = getNestedProperty(show, ['show', 'premiered']);
+      const title = getNestedProperty(show, ['show', 'name']);
+      const saved = savedShows.has(`${id}`);
 
       let image = getNestedProperty(show, ['show', 'image', 'medium']);
-      let year = null;
 
       if (!image) {
         image = getNestedProperty(show, ['show', 'image', 'original']);
       }
 
-      if (id == null || id == undefined || !name || !image) continue;
-      if (release) {
-        year = release.split("-", 1).at(0);
-        if (isNaN(parseInt(year))) {
-          year = null;
-        }
-      }
-
-      items.push({ id, name, image, year, isSaved });
+      if (!hasValue(id) || !title || !image) continue;
+      items.push({ id, title, image, releaseDate, saved });
     }
 
     return items;

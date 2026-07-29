@@ -17,7 +17,6 @@ interface ItemProps {
   nextEpisode: string | undefined | null,
   lastEpisode: string | undefined | null,
   releaseDate?: string,
-  authStatus: 'unauthenticated' | 'authenticated' | 'loading';
   showStatus: string,
   removeFromShows: (id: string) => void;
   episodeCount?: number,
@@ -26,7 +25,7 @@ interface ItemProps {
 }
 
 function Item({ id, image, imageSmall, title, releaseDate, episodeCount, episodesWatched,
-  seasonEpisodeCount, nextEpisode, lastEpisode, showStatus, authStatus, removeFromShows }: ItemProps) {
+  seasonEpisodeCount, nextEpisode, lastEpisode, showStatus, removeFromShows }: ItemProps) {
   const [action, setAction] = useState('remove');
   const [disabled, setDisabled] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
@@ -46,7 +45,7 @@ function Item({ id, image, imageSmall, title, releaseDate, episodeCount, episode
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ id, title, save: prevAction == 'add' })
+      body: JSON.stringify({ id: `${id}`, title, save: prevAction == 'add' })
     }).then(res => res.json()).then(data => {
       if (data.success) {
         setAction(prevAction == 'add' ? 'remove' : 'add');
@@ -129,7 +128,7 @@ function Item({ id, image, imageSmall, title, releaseDate, episodeCount, episode
 
   return (
     <div className="relative flex h-full flex-col justify-start">
-      {authStatus == 'authenticated' && <button
+      <button
         onClick={saveItem}
         disabled={disabled}
         className={`
@@ -141,7 +140,7 @@ function Item({ id, image, imageSmall, title, releaseDate, episodeCount, episode
       >
         {action == 'add' ? <IoIosAdd className="my-[0.5]" /> : action == 'remove' ?
          <IoIosRemove className="my-[0.5]" /> : <IoIosHourglass className="my-[0.5]" />}
-      </button>}
+      </button>
       {(nextEpisode || lastEpisode) && (
         <div
         className={`absolute left-[50%] text-center -translate-x-1/2 text-xs border-t border-x border-slate-800
@@ -312,7 +311,7 @@ export default function Shows() {
           {shows.map((show) => {
             return <Item
                       key={`show-saved-${show.id}`}
-                      authStatus={status} id={show.id}
+                      id={show.id}
                       showStatus={show.status}
                       title={show.title}
                       image={show.image}
@@ -331,7 +330,7 @@ export default function Shows() {
           {shows.toSorted((a, b) => a.title.localeCompare(b.title)).map((show) => {
             return <Item
                       key={`show-saved-${show.id}`}
-                      authStatus={status} id={show.id}
+                      id={show.id}
                       showStatus={show.status}
                       title={show.title}
                       image={show.image}
@@ -352,7 +351,7 @@ export default function Shows() {
               {shows.filter((show) => show.category == 1).map((show) => {
                 return <Item
                           key={`show-in-progress-${show.id}`}
-                          authStatus={status} id={show.id}
+                          id={show.id}
                           showStatus={show.status}
                           title={show.title}
                           image={show.image}
@@ -372,7 +371,7 @@ export default function Shows() {
               {shows.filter((show) => show.category == 2).map((show) => {
                 return <Item
                           key={`show-unwatched-${show.id}`}
-                          authStatus={status} id={show.id}
+                          id={show.id}
                           showStatus={show.status}
                           title={show.title}
                           image={show.image}
@@ -392,7 +391,7 @@ export default function Shows() {
               {shows.filter((show) => show.category == 0).map((show) => {
                 return <Item
                           key={`show-completed-${show.id}`}
-                          authStatus={status} id={show.id}
+                          id={show.id}
                           showStatus={show.status}
                           title={show.title}
                           image={show.image}

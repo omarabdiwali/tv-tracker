@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]";
 import dbConnect from "@/utils/dbConnect";
 import Users from "@/models/Users";
-import { IUser, EpisodesData, IShow, SeasonEpisodeCountType } from "@/utils/types";
+import { IUser, EpisodesData, IShow, SeasonEpisodeCountType, hasValue } from "@/utils/types";
 import Show from "@/models/Show";
 
 const getEpisodeId = (href: string | undefined | null) => {
@@ -81,11 +81,7 @@ const parseEpisodes = (episodes: any, nextEpisodeId: string | null, lastEpisodeI
 
 const verifyRequiredKeys = (info: any) => {
   const { id, image, title } = info;
-  if (id == null || id == undefined) return false;
-  if (image == null || image == undefined) return false;
-  if (title == null || title == undefined) return false;
-
-  return true;
+  return hasValue(id) && hasValue(image) && hasValue(title);
 }
 
 const queryTVMaze = async (showId: string) => {

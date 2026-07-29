@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]";
 import dbConnect from "@/utils/dbConnect";
 import Users from "@/models/Users";
-import { IUser } from "@/utils/types";
+import { hasValue, IUser } from "@/utils/types";
 import Movie from "@/models/Movie";
 
 const buildPosterURL = (path: string, size: string) => {
@@ -13,10 +13,7 @@ const buildPosterURL = (path: string, size: string) => {
 
 const verifyRequiredKeys = (info: any) => {
   const { id, image, title } = info;
-  if (id == null || id == undefined) return false;
-  if (image == null || image == undefined) return false;
-  if (title == null || title == undefined) return false;
-  return true;
+  return hasValue(id) && hasValue(image) && hasValue(title);
 }
 
 const queryTMDB = async (movieId: string, targetTitle: string) => {
@@ -56,7 +53,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { id, title, save } = req.body;
   const session = await getServerSession(req, res, authOptions);
 
-  if (!session || id == null || id == undefined || !title || save == null || save == undefined) {
+  if (!session || !hasValue(id) || !title || !hasValue(save)) {
     const message = !session ? "Unauthenticated user." : "Missing body parameters.";
     return res.status(200).json({ success: false, message  });
   }
@@ -74,7 +71,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (!user) return res.status(200).json({ success: false, message: "Error creating user." });
-  const movie = await Movie.exists({ id: id });
+  const movie = await Movie.exists({ id });
 
   if (!movie) {
     const info = await queryTMDB(id as string, title as string);
@@ -84,16 +81,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     await Movie.create(info);
   }
 
-  if (save && savedMovies.has(id)) {
+  if (save && savedMovies.has(`${id}`)) {
     return res.status(200).json({ success: true, message: `${title} has already been saved to watchlist.` });
-  } else if (!save && !savedMovies.has(id)) {
+  } else if (!save && !savedMovies.has(`${id}`)) {
     return res.status(200).json({ success: true, message: `${title} has already been removed from watchlist.` });
   }
 
   if (save) {
-    user.savedMovies.push({ movieId: id, watched: false });
+    user.savedMovies.push({ movieId: `${id}`, watched: false });
   } else {
-    const index = user.savedMovies.findIndex((movie) => movie.movieId == id);
+    const index = user.savedMovies.findIndex((movie) => movie.movieId == `${id}`);
     user.savedMovies.splice(index, 1);
   }
 
