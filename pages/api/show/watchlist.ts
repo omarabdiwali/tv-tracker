@@ -11,11 +11,14 @@ type ObjType = {
 }
 
 const nextEpisodeInFuture = (nextEpisode: string) => {
-  const currentTime = new Date().getTime();
+  const dayOld = new Date();
+  dayOld.setDate(dayOld.getDate() - 1);
+  const dayOldTime = dayOld.getTime();
+  
   const startIndex = nextEpisode.indexOf(' / ');
   const dateString = startIndex != -1 ? nextEpisode.slice(startIndex + 3) : null;
   if (!dateString) return false;
-  return new Date(dateString as string).getTime() > currentTime;
+  return new Date(dateString as string).getTime() > dayOldTime;
 }
 
 const checkIfPassed = (show: IShow) => {
