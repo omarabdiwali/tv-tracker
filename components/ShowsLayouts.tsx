@@ -187,7 +187,7 @@ function Item({ id, image, imageSmall, title, releaseDate, episodeCount, episode
             />
           </div>
 
-          <div className="relative text-sm bg-slate-700 p-2 text-center rounded-b-lg flex items-center justify-center text-gray-200 group-hover:text-emerald-400 group-hover:underline">
+          <div className="relative text-sm wrap-anywhere bg-slate-700 p-2 text-center rounded-b-lg flex items-center justify-center text-gray-200 group-hover:text-emerald-400 group-hover:underline">
             {`${title}${year ? ` (${year})` : ''}`}
           </div>
         </div>

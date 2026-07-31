@@ -90,7 +90,7 @@ export default function Item({ id, image, title, releaseDate, type, saved, remov
             />
           </div>
 
-          <div className="bg-slate-700 text-sm p-2 text-center rounded-b-lg flex items-center justify-center text-gray-200 group-hover:text-emerald-400 group-hover:underline">
+          <div className="bg-slate-700 text-sm p-2 wrap-anywhere text-center rounded-b-lg flex items-center justify-center text-gray-200 group-hover:text-emerald-400 group-hover:underline">
             {`${title}${year ? ` (${year})` : ''}`}
           </div>
         </div>
