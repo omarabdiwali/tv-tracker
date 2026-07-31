@@ -134,6 +134,7 @@ export default function Movies() {
                       title={movie.title}
                       image={movie.image}
                       releaseDate={movie.releaseDate}
+                      showReleaseDate
                       removeFromMovies={removeFromMovies}
                       saved={true}
                       type={'movie'}
