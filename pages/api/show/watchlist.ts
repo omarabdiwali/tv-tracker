@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]";
 import Users from '@/models/Users'
-import { IShow, IUser, SavedShow, ShowWatchlist } from "@/utils/types";
+import { hasValue, IShow, IUser, SavedShow, ShowWatchlist } from "@/utils/types";
 import dbConnect from "@/utils/dbConnect";
 import Show from "@/models/Show";
 
@@ -35,17 +35,24 @@ const checkIfPassed = (show: IShow) => {
   return (currentTime - new Date(updatedAt).getTime()) >= refresh;
 }
 
-const getNextEpisode = async (showId: string) => {
+const getNextEpisodeAndImage = async (showId: string) => {
   const url = `https://api.tvmaze.com/shows/${showId}?embed=nextepisode`;
   return fetch(url).then(res => res.json()).then(info => {
-    if (!info._embedded || !info._embedded.nextepisode) return null;
-    const data = info._embedded.nextepisode;
+    const image = info.image?.original || info.image?.medium || 'https://static.tvmaze.com/images/no-img/no-img-portrait-text.png';
+    const imageSmall = info.image?.medium;
+
+    if (!info._embedded || !info._embedded.nextepisode) return { nextEpisode: null, image, imageSmall };
+    const data = info?._embedded?.nextepisode;
     const season = data.season;
     const episode = data.number;
     const airdate = data.airdate;
-    if (season == undefined || season == null || episode == undefined || episode == null || !airdate) return null;
+
+    if (!hasValue(season) || !hasValue(episode) || !airdate) return { nextEpisode: null, image, imageSmall };
     const episodeString = `${episode}`.padStart(2, '0');
-    return `${season}x${episodeString} / ${airdate}`;
+    return {
+      nextEpisode: `${season}x${episodeString} / ${airdate}`,
+      image, imageSmall
+    };
   })
 }
 
@@ -63,8 +70,10 @@ const addCategory = async (shows: IShow[], savedShows: ObjType) => {
     if (!info) continue;
 
     if (checkIfPassed(show)) {
-      const nextEpisode = await getNextEpisode(show.id);
-      show.nextEpisode = nextEpisode ? nextEpisode : show.nextEpisode;
+      const { nextEpisode, image, imageSmall } = await getNextEpisodeAndImage(show.id);
+      show.nextEpisode = nextEpisode || show.nextEpisode;
+      show.image = image || show.image;
+      show.imageSmall = imageSmall || show.imageSmall;
       show.nextUpdatedAt = new Date();
       await show.save({ timestamps: false });
     }
