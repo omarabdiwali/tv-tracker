@@ -40,6 +40,7 @@ const queryTVMaze = async (showId: string, targetTitle: string) => {
     const nextEpisodeHref = data._links?.nextepisode?.href;
     const lastEpisode = await fetchEpisodeInfo(lastEpisodeHref);
     const nextEpisode = await fetchEpisodeInfo(nextEpisodeHref);
+    const nextUpdatedAt = new Date();
 
     const voteAverage = data.rating?.average;
     const status = data.status;
@@ -49,7 +50,7 @@ const queryTVMaze = async (showId: string, targetTitle: string) => {
     if (!hasValue(id) || !title || title != targetTitle || !image) return {};
     return {
       id, title, image, imdbId, releaseDate, genres, lastEpisode, imageSmall,
-      nextEpisode, homepage, language, overview, voteAverage, status
+      nextEpisode, homepage, language, overview, voteAverage, status, nextUpdatedAt
     };
   }).catch(err => {
     console.error(err);

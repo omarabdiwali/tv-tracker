@@ -99,17 +99,20 @@ const queryTVMaze = async (showId: string) => {
     const releaseDate = data.premiered;
     const voteAverage = data.rating?.average;
     const status = data.status;
+    
     const lastEpisodeId = getEpisodeId(data._links?.previousepisode?.href);
     const nextEpisodeId = getEpisodeId(data._links?.nextepisode?.href);
     const { episodes, nextEpisode, lastEpisode } = parseEpisodes(data._embedded.episodes, nextEpisodeId, lastEpisodeId);
     const seasonEpisodeCount = countNumberOfEpisodes(episodes);
+    
     const episodeCount = seasonEpisodeCount.total;
     const image = data.image?.original || data.image?.medium || 'https://static.tvmaze.com/images/no-img/no-img-portrait-text.png';
     const imageSmall = data.image?.medium;
+    const nextUpdatedAt = new Date();
 
     return {
       title, genres, language, status, homepage, imdbId, image, overview, imageSmall, seasonEpisodeCount,
-      releaseDate, voteAverage, id, episodes, nextEpisode, lastEpisode, episodeCount
+      releaseDate, voteAverage, id, episodes, nextEpisode, lastEpisode, episodeCount, nextUpdatedAt
     }
   }).catch(err => {
     console.error(err);
