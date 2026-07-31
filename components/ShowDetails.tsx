@@ -465,9 +465,14 @@ export default function ShowDetails({ show }: ShowDetailsProps) {
 
           {status == 'authenticated' && show.episodes && Object.keys(show.episodes).length > 0 && (
             <div className="space-y-4">
-              <h2 className="text-2xl font-bold text-white">
-                Episodes
-              </h2>
+              <div className='flex items-center'>
+                <h2 className="flex-1 text-2xl font-bold text-white">
+                  Episodes
+                </h2>
+                {show.episodeCount && <div className='text-md font-bold text-gray-400'>
+                  {`${show.episodeCount} ${show.episodeCount > 1 ? 'Episodes' : 'Episode'}`}
+                </div>}
+              </div>
               <EpisodeList
                 showId={show.id}
                 episodes={show.episodes}

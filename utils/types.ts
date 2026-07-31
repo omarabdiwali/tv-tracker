@@ -75,6 +75,7 @@ export interface ShowProps {
   nextEpisode?: string | null;
   lastEpisode?: string | null;
   watched: Set<string>;
+  episodeCount?: number;
 }
 
 export interface MovieDetailsProps {

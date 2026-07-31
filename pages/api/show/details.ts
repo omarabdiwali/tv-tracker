@@ -137,7 +137,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   let watched: Set<string> = new Set();
   let watchedList: Array<string> = [];
   let showInfo = {};
-  const showKeys = 'title genres language status homepage imdbId image overview releaseDate voteAverage id episodes nextEpisode lastEpisode updatedAt';
+  const showKeys = 'title genres language status homepage imdbId image overview releaseDate voteAverage id episodes episodeCount nextEpisode lastEpisode updatedAt';
 
   if (session) {
     await dbConnect();
