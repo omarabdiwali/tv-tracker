@@ -104,13 +104,8 @@ const queryTVMaze = async (showId: string) => {
     const { episodes, nextEpisode, lastEpisode } = parseEpisodes(data._embedded.episodes, nextEpisodeId, lastEpisodeId);
     const seasonEpisodeCount = countNumberOfEpisodes(episodes);
     const episodeCount = seasonEpisodeCount.total;
-
-    let image = data.image?.original;
-    let imageSmall = data.image?.medium;
-
-    if (!image) {
-      image = data.image?.medium;
-    }
+    const image = data.image?.original || data.image?.medium || 'https://static.tvmaze.com/images/no-img/no-img-portrait-text.png';
+    const imageSmall = data.image?.medium;
 
     return {
       title, genres, language, status, homepage, imdbId, image, overview, imageSmall, seasonEpisodeCount,

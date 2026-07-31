@@ -19,12 +19,12 @@ const queryTMDB = async (page: string, savedMovies: Set<string>) => {
     for (const movie of data.results) {
       const id = movie.id;
       const releaseDate = movie.release_date;
-      const image = movie.poster_path;
+      const image = buildPosterURL(movie.poster_path, 'w185');
       const title = movie.title;
       const saved = savedMovies.has(`${id}`);
 
       if (!hasValue(id) || !title || !image) continue;
-      items.push({ id, title, image: buildPosterURL(image, 'w185'), releaseDate, saved });
+      items.push({ id, title, image, releaseDate, saved });
     }
     return items;
   }).catch(err => {

@@ -317,6 +317,7 @@ export default function ShowDetails({ show }: ShowDetailsProps) {
   const { data: _, status } = useSession();
   const [buttonText, setButtonText] = useState(show.saved ? "Remove from Watchlist" : "Add to Watchlist");
   const [disabled, setDisabled] = useState(false);
+  const [imgSrc, setImgSrc] = useState(show.image || 'https://static.tvmaze.com/images/no-img/no-img-portrait-text.png');
 
   const saveShow = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
     e.preventDefault();
@@ -359,12 +360,14 @@ export default function ShowDetails({ show }: ShowDetailsProps) {
           <div className="sticky top-6">
             <div className="mx-auto overflow-hidden shadow-2xl transform transition-transform duration-300 hover:scale-105">
               <Image
+                unoptimized={imgSrc == 'https://static.tvmaze.com/images/no-img/no-img-portrait-text.png' ? true : false}
                 alt={`${show.title} poster`}
-                src={show.image}
+                src={imgSrc}
                 width={342}
                 height={513}
                 preload={true}
                 className='rounded-2xl mx-auto'
+                onError={() => setImgSrc('https://static.tvmaze.com/images/no-img/no-img-portrait-text.png')}
               />
             </div>
 

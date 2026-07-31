@@ -49,6 +49,8 @@ function Item({ id, image, imageSmall, title, releaseDate, episodeCount, episode
   seasonEpisodeCount, nextEpisode, lastEpisode, showStatus, removeFromShows }: ItemProps) {
   const [action, setAction] = useState('remove');
   const [disabled, setDisabled] = useState(false);
+  const [imgSrc, setImgSrc] = useState(imageSmall || image || 'https://static.tvmaze.com/images/no-img/no-img-portrait-text.png');
+
   const { enqueueSnackbar } = useSnackbar();
   const year = releaseDate ? releaseDate.split('-', 1).at(0) : null;
   const notEndedAndLast = showStatus != 'Ended' && !nextEpisode && lastEpisode;
@@ -175,12 +177,13 @@ function Item({ id, image, imageSmall, title, releaseDate, episodeCount, episode
             <WatchedProgress />
             <Image
               alt={title}
-              src={imageSmall ? imageSmall : image}
-              unoptimized={imageSmall ? true : false}
+              src={imgSrc}
+              unoptimized={imageSmall || imgSrc == 'https://static.tvmaze.com/images/no-img/no-img-portrait-text.png' ? true : false}
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               className="p-3 object-contain"
               loading="eager"
+              onError={() => setImgSrc('https://static.tvmaze.com/images/no-img/no-img-portrait-text.png')}
             />
           </div>
 

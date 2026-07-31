@@ -75,8 +75,8 @@ const queryTMDB = async (movieId: string) => {
     const voteCount = data.vote_count;
     const voteAverage = data.vote_average;
     const runtime = data.runtime ? `${data.runtime} mins` : data.runtime;
-    const image = buildPosterURL(data.poster_path, 'w342');
-    const imageSmall = buildPosterURL(data.poster_path, 'w185');
+    const image = data.poster_path ? buildPosterURL(data.poster_path, 'w342') : 'https://static.tvmaze.com/images/no-img/no-img-portrait-text.png';
+    const imageSmall = data.poster_path ? buildPosterURL(data.poster_path, 'w185') : 'https://static.tvmaze.com/images/no-img/no-img-portrait-text.png';
     const trailer = getBestVideo(data.videos.results);
 
     return {

@@ -18,6 +18,7 @@ const getYear = (releaseDate: string | undefined | null) => {
 export default function Item({ id, image, title, releaseDate, type, saved, removeFromMovies, showReleaseDate=false }: ItemProps) {
   const [action, setAction] = useState(saved ? 'remove' : 'add');
   const [disabled, setDisabled] = useState(false);
+  const [imgSrc, setImgSrc] = useState(image || 'https://static.tvmaze.com/images/no-img/no-img-portrait-text.png');
   const { enqueueSnackbar } = useSnackbar();
   const year = getYear(releaseDate);
 
@@ -80,11 +81,12 @@ export default function Item({ id, image, title, releaseDate, type, saved, remov
             <Image
               unoptimized
               alt={title}
-              src={image}
+              src={imgSrc}
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               className="p-3 object-contain"
               loading="eager"
+              onError={() => setImgSrc('https://static.tvmaze.com/images/no-img/no-img-portrait-text.png')}
             />
           </div>
 

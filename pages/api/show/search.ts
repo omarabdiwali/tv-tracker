@@ -23,29 +23,40 @@ const getNestedProperty = (data: any, keys: string[], allowUndefined = true) => 
   return current;
 }
 
+const getYear = (str: string) => {
+  return str.split('-', 1).at(0);
+}
+
 const queryTVMaze = async (queryString: string, savedShows: Set<string>) => {
   const query = encodeURIComponent(queryString);
   const url = `https://api.tvmaze.com/search/shows?q=${query}`;
 
   return fetch(url).then(res => res.json()).then(data => {
     const items = [];
+    const noImageItems = [];
+
     for (const show of data) {
       const id = getNestedProperty(show, ['show', 'id']);
       const releaseDate = getNestedProperty(show, ['show', 'premiered']);
       const title = getNestedProperty(show, ['show', 'name']);
       const saved = savedShows.has(`${id}`);
-
       let image = getNestedProperty(show, ['show', 'image', 'medium']);
 
       if (!image) {
         image = getNestedProperty(show, ['show', 'image', 'original']);
+        image = image || 'https://static.tvmaze.com/images/no-img/no-img-portrait-text.png';
       }
 
       if (!hasValue(id) || !title || !image) continue;
-      items.push({ id, title, image, releaseDate, saved });
+      if (image == 'https://static.tvmaze.com/images/no-img/no-img-portrait-text.png') {
+        if (!releaseDate || Number(getYear(releaseDate)) < 1970) continue;
+        noImageItems.push({ id, title, image, releaseDate, saved });
+      } else {
+        items.push({ id, title, image, releaseDate, saved });
+      }
     }
 
-    return items;
+    return items.concat(noImageItems);
   }).catch(err => {
     console.error(err);
     return [];

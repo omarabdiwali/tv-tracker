@@ -23,6 +23,7 @@ export default function MovieDetails({ movie }: MovieDetailsProps) {
   const [disabled, setDisabled] = useState(false);
   const [watchStatus, setWatchStatus] = useState(movie.watched);
   const [loading, setLoading] = useState(false);
+  const [imgSrc, setImgSrc] = useState(movie.image || 'https://static.tvmaze.com/images/no-img/no-img-portrait-text.png');
 
   const handleChange = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
     e.preventDefault();
@@ -101,11 +102,12 @@ export default function MovieDetails({ movie }: MovieDetailsProps) {
               <Image
                 unoptimized
                 alt={`${movie.title} poster`}
-                src={movie.image}
+                src={imgSrc}
                 width={342}
                 height={513}
                 priority={true}
                 className='rounded-2xl mx-auto'
+                onError={() => setImgSrc('https://static.tvmaze.com/images/no-img/no-img-portrait-text.png')}
               />
             </div>
 

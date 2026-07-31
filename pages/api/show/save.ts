@@ -43,12 +43,8 @@ const queryTVMaze = async (showId: string, targetTitle: string) => {
 
     const voteAverage = data.rating?.average;
     const status = data.status;
-
-    let image = data.image?.original;
-    let imageSmall = data.image?.medium;
-    if (!image) {
-      image = data.image?.medium;
-    }
+    const image = data.image?.original || data.image?.medium || 'https://static.tvmaze.com/images/no-img/no-img-portrait-text.png';
+    const imageSmall = data.image?.medium;
 
     if (!hasValue(id) || !title || title != targetTitle || !image) return {};
     return {

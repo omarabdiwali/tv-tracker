@@ -9,6 +9,10 @@ const buildPosterURL = (path: string, size: string) => {
   return `https://image.tmdb.org/t/p/${size}${path}`;
 }
 
+const getYear = (str: string) => {
+  return str.split('-', 1).at(0);
+}
+
 const queryTMDB = async (queryString: string, savedMovies: Set<string>) => {
   const apiKey = process.env.TMDB_API_KEY;
   const query = encodeURIComponent(queryString);
@@ -16,18 +20,24 @@ const queryTMDB = async (queryString: string, savedMovies: Set<string>) => {
 
   return fetch(url).then(res => res.json()).then(data => {
     const items = [];
+    const noImageItems = [];
 
     for (const movie of data.results) {
       const id = movie.id;
       const releaseDate = movie.release_date;
-      const image = movie.poster_path;
+      const image = movie.poster_path ? buildPosterURL(movie.poster_path, 'w185') : 'https://static.tvmaze.com/images/no-img/no-img-portrait-text.png';
       const title = movie.title;
       const saved = savedMovies.has(`${id}`);
 
       if (!hasValue(id) || !title || !image) continue;
-      items.push({ id, title, image: buildPosterURL(image, 'w185'), releaseDate, saved });
+      if (image == 'https://static.tvmaze.com/images/no-img/no-img-portrait-text.png') {
+        if (!releaseDate || Number(getYear(releaseDate)) < 1970) continue;
+        noImageItems.push({ id, title, image, releaseDate, saved });
+      } else {
+        items.push({ id, title, image, releaseDate, saved });
+      }
     }
-    return items;
+    return items.concat(noImageItems);
   }).catch(err => {
     console.error(err);
     return [];
