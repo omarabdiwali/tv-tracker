@@ -11,19 +11,19 @@ const verifyRequiredKeys = (info: any) => {
   return hasValue(id) && hasValue(image) && hasValue(title);
 }
 
-const fetchEpisodeInfo = async (href: string | undefined) => {
-  if (!href) return null;
-  return fetch(href).then(res => res.json()).then(data => {
-    const season = data.season;
-    const episode = data.number;
-    const airdate = data.airdate;
-    if (!hasValue(season) || !hasValue(episode) || !airdate) return null;
-    return `${season}x${episode} / ${airdate}`;
-  })
+const parseEpisodeInfo = (data: any) => {
+  if (!data) return null;
+  const season = data.season;
+  const episode = data.number;
+  const airdate = data.airdate;
+  if (!hasValue(season) || !hasValue(episode) || !hasValue(airdate)) return null;
+
+  const episodeString = `${episode}`.padStart(2, '0');
+  return `${season}x${episodeString} / ${airdate}`
 }
 
 const queryTVMaze = async (showId: string, targetTitle: string) => {
-  const url = `https://api.tvmaze.com/shows/${showId}`;
+  const url = `https://api.tvmaze.com/shows/${showId}?embed[]=nextepisode&embed[]=previousepisode`;
 
   return fetch(url).then(res => res.json()).then(async (data) => {
     const id = data.id;
@@ -36,10 +36,8 @@ const queryTVMaze = async (showId: string, targetTitle: string) => {
     const overview = data.summary;
     const releaseDate = data.premiered;
 
-    const lastEpisodeHref = data._links?.previousepisode?.href;
-    const nextEpisodeHref = data._links?.nextepisode?.href;
-    const lastEpisode = await fetchEpisodeInfo(lastEpisodeHref);
-    const nextEpisode = await fetchEpisodeInfo(nextEpisodeHref);
+    const lastEpisode = parseEpisodeInfo(data._embedded?.previousepisode);
+    const nextEpisode = parseEpisodeInfo(data._embedded?.nextepisode);
     const nextUpdatedAt = new Date();
 
     const voteAverage = data.rating?.average;

@@ -35,24 +35,25 @@ const checkIfPassed = (show: IShow) => {
   return (currentTime - new Date(updatedAt).getTime()) >= refresh;
 }
 
-const getNextEpisodeAndImage = async (showId: string) => {
-  const url = `https://api.tvmaze.com/shows/${showId}?embed=nextepisode`;
-  return fetch(url).then(res => res.json()).then(info => {
-    const image = info.image?.original || info.image?.medium || 'https://static.tvmaze.com/images/no-img/no-img-portrait-text.png';
-    const imageSmall = info.image?.medium;
+const parseEpisodeInfo = (data: any) => {
+  if (!data) return null;
+  const season = data.season;
+  const episode = data.number;
+  const airdate = data.airdate;
+  if (!hasValue(season) || !hasValue(episode) || !hasValue(airdate)) return null;
 
-    if (!info._embedded || !info._embedded.nextepisode) return { nextEpisode: null, image, imageSmall };
-    const data = info?._embedded?.nextepisode;
-    const season = data.season;
-    const episode = data.number;
-    const airdate = data.airdate;
+  const episodeString = `${episode}`.padStart(2, '0');
+  return `${season}x${episodeString} / ${airdate}`
+}
 
-    if (!hasValue(season) || !hasValue(episode) || !airdate) return { nextEpisode: null, image, imageSmall };
-    const episodeString = `${episode}`.padStart(2, '0');
-    return {
-      nextEpisode: `${season}x${episodeString} / ${airdate}`,
-      image, imageSmall
-    };
+const getEpisodesAndImage = async (showId: string) => {
+  const url = `https://api.tvmaze.com/shows/${showId}?embed[]=nextepisode&embed[]=previousepisode`;
+  return fetch(url).then(res => res.json()).then(data => {
+    const image = data.image?.original || data.image?.medium || 'https://static.tvmaze.com/images/no-img/no-img-portrait-text.png';
+    const imageSmall = data.image?.medium;
+    const lastEpisode = parseEpisodeInfo(data._embedded?.previousepisode);
+    const nextEpisode = parseEpisodeInfo(data._embedded?.nextepisode);
+    return { lastEpisode, nextEpisode, image, imageSmall };
   })
 }
 
@@ -70,8 +71,9 @@ const addCategory = async (shows: IShow[], savedShows: ObjType) => {
     if (!info) continue;
 
     if (checkIfPassed(show)) {
-      const { nextEpisode, image, imageSmall } = await getNextEpisodeAndImage(show.id);
+      const { lastEpisode, nextEpisode, image, imageSmall } = await getEpisodesAndImage(show.id);
       show.nextEpisode = nextEpisode || show.nextEpisode;
+      show.lastEpisode = lastEpisode || show.lastEpisode;
       show.image = image || show.image;
       show.imageSmall = imageSmall || show.imageSmall;
       show.nextUpdatedAt = new Date();

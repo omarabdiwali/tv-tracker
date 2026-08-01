@@ -49,12 +49,14 @@ const parseEpisodes = (episodes: any, nextEpisodeId: string | null, lastEpisodeI
   const seasons: any = {};
   for (const episode of episodes) {
     const id = episode.id;
-    const title = episode.name;
+    const title = episode.name || "Untitled";
     const season: number = episode.season;
     const number = episode.number;
     const airdate = episode.airdate;
-    const rating = episode.rating.average;
+    const rating = episode.rating?.average;
     const summary = episode.summary;
+
+    if (!hasValue(id) || !hasValue(number) || !hasValue(airdate) || !hasValue(season)) continue;
 
     if (nextEpisode == null && `${id}` == nextEpisodeId) {
       const episodeString = `${number}`.padStart(2, '0');
@@ -64,12 +66,7 @@ const parseEpisodes = (episodes: any, nextEpisodeId: string | null, lastEpisodeI
       lastEpisode = `${season}x${episodeString} / ${airdate}`;
     }
 
-    if (!id || !title || !number || !airdate || !season) continue;
-    if (!(season in seasons)) {
-      seasons[season] = [];
-    }
-
-    seasons[season].push({ id, title, number, airdate, rating, summary });
+    (seasons[season] ??= []).push({ id, title, number, airdate, rating, summary });
   }
 
   return {
