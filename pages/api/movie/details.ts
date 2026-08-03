@@ -29,7 +29,6 @@ const getBestVideo = (videos: any) => {
   for (const video of videos) {
     if (currentBest == null || publishedAt == null) {
       [currentBest, isOfficial, publishedAt, videoType] = replaceValues(video);
-      continue;
     }
     else if (video.type == 'Trailer') {
       if (videoType != 'Trailer') {
@@ -98,7 +97,7 @@ const formatData = (movie: any, saved: boolean, watched: boolean) => {
 }
 
 const timeToRefresh = (from: Date): boolean => {
-  const refreshTime = 86400000 * 15;
+  const refreshTime = 86400000 * 7;
   const current = new Date().getTime();
   const fromMs = new Date(from).getTime();
   return (current - fromMs) >= refreshTime;

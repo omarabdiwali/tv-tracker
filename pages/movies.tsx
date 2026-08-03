@@ -134,9 +134,9 @@ export default function Movies() {
                       title={movie.title}
                       image={movie.image}
                       releaseDate={movie.releaseDate}
-                      showReleaseDate
                       removeFromMovies={removeFromMovies}
                       saved={true}
+                      showReleaseDate
                       type={'movie'}
                     />
           })}
@@ -151,6 +151,7 @@ export default function Movies() {
                       releaseDate={movie.releaseDate}
                       removeFromMovies={removeFromMovies}
                       saved={true}
+                      showReleaseDate
                       type={'movie'}
                     />
           })}
@@ -167,6 +168,7 @@ export default function Movies() {
                           releaseDate={movie.releaseDate}
                           removeFromMovies={removeFromMovies}
                           saved={true}
+                          showReleaseDate
                           type={'movie'}
                         />
               })}
@@ -182,6 +184,7 @@ export default function Movies() {
                           releaseDate={movie.releaseDate}
                           removeFromMovies={removeFromMovies}
                           saved={true}
+                          showReleaseDate
                           type={'movie'}
                         />
               })}

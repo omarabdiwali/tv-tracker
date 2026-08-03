@@ -36,16 +36,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (setWatched) {
-    watchedEpisodesList.push(`${epId}`);
+    watchedEpisodes.add(`${epId}`);
   } else {
-    const epIndex = watchedEpisodesList.findIndex((ep) => ep == `${epId}`);
-    if (epIndex == -1) {
-      return res.status(200).json({ success: true, message: "has already not been watched." });
-    }
-    watchedEpisodesList.splice(epIndex, 1);
+    watchedEpisodes.delete(`${epId}`);
   }
 
-  user.savedShows[index].watchedEpisodes = [...watchedEpisodesList];
+  user.savedShows[index].watchedEpisodes = [...watchedEpisodes];
   user.save();
   return res.status(200).json({ success: true, message: `has been set to${setWatched ? '' : ' not'} watched!` });
 }
