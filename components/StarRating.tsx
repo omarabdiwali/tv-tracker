@@ -1,3 +1,4 @@
+import { useSnackbar } from 'notistack';
 import { useState } from 'react';
 
 interface StarRatingProps {
@@ -91,6 +92,7 @@ export default function StarRating({ rating = 0, type, id }: StarRatingProps) {
   const [filled, setFilled] = useState(rating);
   const [loading, setLoading] = useState(false);
   const display = hoverFilled || filled;
+  const { enqueueSnackbar } = useSnackbar();
 
   const handleHover = (index: number) => {
     if (loading) return;
@@ -118,7 +120,7 @@ export default function StarRating({ rating = 0, type, id }: StarRatingProps) {
           window.location.href = '/';
           return;
         } else {
-          alert(data.message);
+          enqueueSnackbar(data.message, { variant: 'error', autoHideDuration: 1500 });
           setFilled(prevRating);
         }
       }
