@@ -39,7 +39,7 @@ export function Header() {
 
   return (
     <header className="px-0 py-3 mx-4">
-      {status === "authenticated" ? (
+      {status === "authenticated" && (
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-2">
           <div className="flex flex-wrap gap-2 justify-center sm:justify-center">
             <Link href={'/'} onClick={eraseSearch}>
@@ -80,38 +80,23 @@ export function Header() {
             </Link>
           </div>
 
-          <form onSubmit={handleSubmit} className="flex flex-1 w-full sm:w-auto min-w-0 gap-2">
-            <input
-              ref={inputRef}
-              onChange={(e) => setSearch(e.target.value)}
-              value={search}
-              placeholder="Search..."
-              className="flex-1 min-w-0 bg-[var(--input-bg)] text-gray-200 placeholder-gray-400 px-3 py-2 rounded-lg border border-[var(--border-color)] focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all text-sm"
-            />
-            <button
-              type="button"
-              onClick={handleSignOut}
-              className="bg-orange-400 hover:bg-orange-300 text-black px-3 sm:px-4 py-2 cursor-pointer rounded-lg transition-colors font-medium text-sm whitespace-nowrap"
-            >
-              Sign Out
-            </button>
-          </form>
-        </div>
-      ) : (
-        <div className="flex flex-col mx-2 sm:flex-row gap-3 sm:gap-0 items-center">
-          <Link href={'/'}>
-            <div className="text-xl sm:text-2xl cursor-pointer hover:text-gray-400 transition-colors">
-              TV Tracker
-            </div>
-          </Link>
+        <form onSubmit={handleSubmit} className="flex flex-1 w-full sm:w-auto min-w-0 gap-2">
+          <input
+            ref={inputRef}
+            onChange={(e) => setSearch(e.target.value)}
+            value={search}
+            placeholder="Search..."
+            className="flex-1 min-w-0 bg-[var(--input-bg)] text-gray-200 placeholder-gray-400 px-3 py-2 rounded-lg border border-[var(--border-color)] focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all text-sm"
+          />
           <button
-            className="px-4 py-2 rounded-lg ml-auto hover:bg-slate-600 bg-slate-500 cursor-pointer transition-colors w-full sm:w-auto"
-            onClick={() => signIn("google")}
+            type="button"
+            onClick={handleSignOut}
+            className="bg-orange-400 hover:bg-orange-300 text-black px-3 sm:px-4 py-2 cursor-pointer rounded-lg transition-colors font-medium text-sm whitespace-nowrap"
           >
-            Sign in with Google
+            Sign Out
           </button>
-        </div>
-      )}
+        </form>
+      </div>)}
     </header>
   );
 }

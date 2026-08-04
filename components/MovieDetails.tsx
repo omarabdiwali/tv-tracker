@@ -2,11 +2,13 @@ import { MovieGenre, MovieDetailsProps } from '@/utils/types';
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { enqueueSnackbar } from 'notistack';
 import { useState } from 'react';
 import { FaImdb, FaStar } from 'react-icons/fa';
 import { IoIosAddCircleOutline, IoIosCheckmarkCircle, IoIosCloseCircleOutline, IoIosGlobe, IoIosHourglass, IoIosVideocam, IoMdCalendar } from 'react-icons/io';
 import { RxClock } from 'react-icons/rx';
+import StarRating from './StarRating';
+import { useRouter } from 'next/router';
+import { useSnackbar } from 'notistack';
 
 const formatNumberOfVotes = (count: string) : string => {
   const parsedCount = parseInt(count);
@@ -24,9 +26,19 @@ export default function MovieDetails({ movie }: MovieDetailsProps) {
   const [watchStatus, setWatchStatus] = useState(movie.watched);
   const [loading, setLoading] = useState(false);
   const [imgSrc, setImgSrc] = useState(movie.image || 'https://static.tvmaze.com/images/no-img/no-img-portrait-text.png');
+  const router = useRouter();
+  const { enqueueSnackbar } = useSnackbar();
 
   const handleChange = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
     e.preventDefault();
+    
+    if (status == 'unauthenticated') {
+      router.push('/');
+      return;
+    } else if (disabled) {
+      return;
+    }
+
     if (!movie.saved) return;
     setDisabled(true);
     setLoading(true);
@@ -43,7 +55,7 @@ export default function MovieDetails({ movie }: MovieDetailsProps) {
         setWatchStatus(!watchStatus);
       } else {
         if (data.message == 'Unauthenticated user.') {
-          window.location.href = '/';
+          router.push('/');
           return;
         }
         enqueueSnackbar(data.message, { variant: 'error', autoHideDuration: 1500 });
@@ -58,7 +70,11 @@ export default function MovieDetails({ movie }: MovieDetailsProps) {
 
   const saveMovie = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
     e.preventDefault();
-    if (status != 'authenticated') return;
+    
+    if (status == 'unauthenticated') {
+      router.push('/');
+      return;
+    } else if (disabled) return;
 
     const prevText = buttonText;
     setDisabled(true);
@@ -79,7 +95,7 @@ export default function MovieDetails({ movie }: MovieDetailsProps) {
         enqueueSnackbar(data.message, { variant: 'success', autoHideDuration: 1500 });
       } else {
         if (data.message == 'Unauthenticated user.') {
-          window.location.href = '/';
+          router.push('/');
           return;
         } else {
           setButtonText(prevText);
@@ -92,6 +108,8 @@ export default function MovieDetails({ movie }: MovieDetailsProps) {
       setDisabled(false);
     })
   }
+
+  if (status != 'authenticated') return null;
 
   return (
     <div className="flex h-full w-full mx-auto p-4 sm:p-6 lg:p-8">
@@ -210,45 +228,37 @@ export default function MovieDetails({ movie }: MovieDetailsProps) {
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-700">
+          <div className={`flex flex-col sm:flex-row gap-4 py-6 border-y border-gray-700`}>
             {movie.trailer && movie.trailer != 'n/a' &&
             <Link href={movie.trailer} target='__blank'>
-              <button className="flex items-center justify-center gap-2 px-6 py-3 bg-slate-500 cursor-pointer text-white rounded-lg font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg">
+              <button className="flex items-center w-[100%] justify-center gap-2 px-6 py-3 bg-slate-500 cursor-pointer text-white rounded-lg font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg">
                 <IoIosVideocam size={26} />
                 Watch Trailer
               </button>
             </Link>
             }
 
-            {status == 'authenticated' ?
             <button disabled={disabled} onClick={saveMovie} className="flex cursor-pointer items-center justify-center gap-2 px-6 py-3 bg-gray-700 text-gray-300 rounded-lg font-semibold enabled:hover:bg-gray-600 transition-all duration-200 transform enabled:hover:scale-105">
               {buttonText == 'Add to Watchlist' ? <IoIosAddCircleOutline size={26} /> : buttonText == 'Loading...' ? <IoIosHourglass size={26} /> : <IoIosCloseCircleOutline size={26} />}
               {buttonText}
-            </button> : null}
+            </button>
 
-            {status == 'authenticated' && movie.saved ?
+            {movie.saved &&
             <button disabled={disabled} onClick={handleChange} className={`flex cursor-pointer items-center justify-center gap-2 px-6 py-3 ${watchStatus ? 'bg-green-700 enabled:hover:bg-green-600' : 'bg-gray-700 enabled:hover:bg-gray-600'} text-gray-300 rounded-lg font-semibold transition-all duration-200 transform enabled:hover:scale-105`}>
               {loading ? <IoIosHourglass size={26} /> : <IoIosCheckmarkCircle size={26} />}
               {loading ? 'Loading...' : watchStatus ? 'Watched' : 'Mark As Watched'}
-            </button> : null}
+            </button>}
           </div>
+          
+          {movie.saved && 
+          <StarRating 
+            rating={movie.rating || 0}
+            id={`${movie.id}`}
+            type={'movie'}
+          />}
+
         </div>
       </div>
     </div>
   );
 }
-
-// For show, or for later on ratings
-/*
-{buttonText == 'Remove from Watchlist' && (
-  <>
-    <div className='flex items-center gap-4 mb-3'>
-      <select onChange={handleChange} value={watchStatus} className='bg-gray-700 px-6 py-3 flex-1 rounded-lg'>
-        <option key='Unwatched'>Unwatched</option>
-        <option key='In Progress'>In Progress</option>
-        <option key='Watched'>Watched</option>
-      </select>
-    </div>
-  </>
-)}
-*/

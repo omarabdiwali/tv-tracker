@@ -3,9 +3,61 @@ import { MovieWatchlist } from "@/utils/types";
 import { useSession } from "next-auth/react";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
-import { FaSortAlphaDown } from "react-icons/fa";
+import { Fragment, useEffect, useMemo, useState } from "react";
+import { FaSortAlphaDown, FaStar } from "react-icons/fa";
 import { IoIosCalendar, IoIosEye } from "react-icons/io";
+
+const ratingsSections = [
+  { key: 10, label: '5 Stars ☆' },
+  { key: 9, label: '4.5 Stars ☆' },
+  { key: 8, label: '4 Stars ☆' },
+  { key: 7, label: '3.5 Stars ☆' },
+  { key: 6, label: '3 Stars ☆' },
+  { key: 5, label: '2.5 Stars ☆' },
+  { key: 4, label: '2 Stars ☆' },
+  { key: 3, label: '1.5 Stars ☆' },
+  { key: 2, label: '1 Stars ☆' },
+  { key: 1, label: '0.5 Stars ☆' },
+  { key: 0, label: 'Unrated' },
+]
+
+function groupByRatings(movies: MovieWatchlist[]) {
+  return movies.reduce((acc: Record<string, MovieWatchlist[]>, movie) => {
+    const rating = (movie.rating || 0) * 2;
+    (acc[rating] ??= []).push(movie);
+    return acc;
+  }, {});
+}
+
+function RatingsLayout({ groups, removeFromMovies } : 
+  { groups: Record<string, MovieWatchlist[]>, removeFromMovies: (id: string) => void }) {
+  return(
+    <div>
+      {ratingsSections.map(({ key, label }) => (
+        groups[key]?.length && (
+          <Fragment key={key}>
+            <h2 className="text-xl mb-2 mx-4 font-bold text-gray-400">{label}</h2>
+            <div className="grid items-stretch grid-cols-[repeat(auto-fill,_minmax(170px,_1fr))] gap-4 m-4">
+              {groups[key].map((movie: MovieWatchlist) => (
+                <Item
+                  key={`movie-saved-${movie.id}`}
+                  id={movie.id}
+                  title={movie.title}
+                  image={movie.image}
+                  releaseDate={movie.releaseDate}
+                  removeFromMovies={removeFromMovies}
+                  saved={true}
+                  showReleaseDate
+                  type={'movie'}
+                />
+              ))}
+            </div>
+          </Fragment>
+        )
+      ))}
+    </div>
+  )
+}
 
 function Title() {
   return (
@@ -23,9 +75,11 @@ export default function Movies() {
   const [error, setError] = useState("");
   const [sortBy, setSortBy] = useState('alpha');
 
+  const ratingGropus = useMemo(() => groupByRatings(movies), [movies]);
+
   useEffect(() => {
     if (!window) return;
-    const validOptions = new Set(['date', 'alpha', 'status']);
+    const validOptions = new Set(['date', 'alpha', 'status', 'ratings']);
     const sort = window.localStorage.getItem('sortTypeMovies');
     setSortBy(sort && validOptions.has(sort) ? sort : 'alpha');
   }, [])
@@ -118,6 +172,7 @@ export default function Movies() {
           <button onClick={() => handleSort('alpha')} disabled={sortBy == 'alpha'} title='Alphabetically' className={sortButtonClass}><FaSortAlphaDown size={20} /></button>
           <button onClick={() => handleSort('date')} disabled={sortBy == 'date'} title='Release Date' className={sortButtonClass}><IoIosCalendar size={20} /></button>
           <button onClick={() => handleSort('status')} disabled={sortBy == 'status'} title='Watch Status' className={sortButtonClass}><IoIosEye size={20} /></button>
+          <button onClick={() => handleSort('ratings')} disabled={sortBy == 'ratings'} title='Ratings' className={sortButtonClass}><FaStar size={20} /></button>
         </div>
       </div>
       {movies.length == 0 && (
@@ -155,7 +210,9 @@ export default function Movies() {
                       type={'movie'}
                     />
           })}
-        </div>) : (
+        </div>) : sortBy == 'ratings' ? (
+          <RatingsLayout groups={ratingGropus} removeFromMovies={removeFromMovies} />
+        ) : (
           <div>
             <h2 className="text-xl mb-2 mx-4 font-bold text-gray-400 flex-1">Unwatched</h2>
             <div className="grid items-stretch grid-cols-[repeat(auto-fill,_minmax(170px,_1fr))] gap-4 m-4">

@@ -16,6 +16,11 @@ const userSchema = new Schema<IUser>({
     watched: {
       type: Boolean,
       default: false
+    },
+    rating: {
+      type: Number,
+      required: false,
+      default: 0
     }
   }],
   savedShows: [{
@@ -26,7 +31,12 @@ const userSchema = new Schema<IUser>({
     },
     watchedEpisodes: [{
       type: String
-    }]
+    }],
+    rating: {
+      type: Number,
+      required: false,
+      default: 0
+    }
   }]
 });
 

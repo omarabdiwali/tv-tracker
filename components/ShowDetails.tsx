@@ -1,14 +1,15 @@
 import { ShowDetailsProps, Episode, EpisodesData } from '@/utils/types';
-import DOMPurify from 'isomorphic-dompurify'
+import sanitizeHtml from 'sanitize-html';
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { enqueueSnackbar, useSnackbar } from 'notistack';
+import { useSnackbar } from 'notistack';
 import { useState, useCallback, memo, useEffect } from 'react';
 import { FaImdb, FaStar } from 'react-icons/fa';
 import { HiOutlineStatusOnline } from 'react-icons/hi';
 import { IoIosAddCircleOutline, IoIosCloseCircleOutline, IoIosHourglass, IoMdArrowDropdown, IoMdArrowDropup, IoMdCalendar } from 'react-icons/io';
 import { RxClock } from 'react-icons/rx';
+import StarRating from './StarRating';
 
 const EpisodeItem = memo(({ episode, watched, onToggleWatched }: {
   episode: Episode;
@@ -38,7 +39,7 @@ const EpisodeItem = memo(({ episode, watched, onToggleWatched }: {
           {episode.airdate || 'N/A'}
         </div>
         {episode.summary && (
-          <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(episode.summary || 'No summary')}} className="text-xs text-gray-300" />
+          <div dangerouslySetInnerHTML={{ __html: sanitizeHtml((episode.summary || 'No summary.'))}} className="text-xs text-gray-300" />
         )}
       </div>
 
@@ -318,6 +319,7 @@ export default function ShowDetails({ show }: ShowDetailsProps) {
   const [buttonText, setButtonText] = useState(show.saved ? "Remove from Watchlist" : "Add to Watchlist");
   const [disabled, setDisabled] = useState(false);
   const [imgSrc, setImgSrc] = useState(show.image || 'https://static.tvmaze.com/images/no-img/no-img-portrait-text.png');
+  const { enqueueSnackbar } = useSnackbar();
 
   const saveShow = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
     e.preventDefault();
@@ -446,7 +448,7 @@ export default function ShowDetails({ show }: ShowDetailsProps) {
               Overview
             </h2>
 
-            {show.overview ? <div className="max-w-none whitespace-pre-line text-gray-300 text-lg space-y-3" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(show.overview) }} /> : (
+            {show.overview ? <div className="max-w-none whitespace-pre-line text-gray-300 text-lg space-y-3" dangerouslySetInnerHTML={{ __html: sanitizeHtml(show.overview) }} /> : (
               <div className="max-w-none">
                 <p className="text-gray-300 whitespace-pre-line text-lg">
                   No overview available.
@@ -455,12 +457,12 @@ export default function ShowDetails({ show }: ShowDetailsProps) {
             )}
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 pb-6 border-b border-gray-700">
-            {status == 'authenticated' ?
+          <div className="flex flex-col items-center sm:flex-row gap-4 pb-6 border-b border-gray-700">
             <button disabled={disabled} onClick={saveShow} className="flex cursor-pointer items-center justify-center gap-2 px-6 py-3 bg-gray-700 text-gray-300 rounded-lg font-semibold enabled:hover:bg-gray-600 transition-all duration-200 transform enabled:hover:scale-105">
               {buttonText == 'Add to Watchlist' ? <IoIosAddCircleOutline size={26} /> : buttonText == 'Loading...' ? <IoIosHourglass size={26} /> : <IoIosCloseCircleOutline size={26} />}
               {buttonText}
-            </button> : null}
+            </button>
+            { buttonText == 'Remove from Watchlist' && <StarRating rating={show.rating || 0} id={`${show.id}`} type={'show'} /> }
           </div>
 
           {status == 'authenticated' && show.episodes && Object.keys(show.episodes).length > 0 && (

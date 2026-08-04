@@ -14,11 +14,13 @@ export interface ItemProps {
 export interface SavedMovie {
   movieId: string;
   watched: boolean;
+  rating?: number;
 }
 
 export interface SavedShow {
   showId: string;
   watchedEpisodes: string[];
+  rating?: number;
 }
 
 export type EpisodesData = {
@@ -56,6 +58,7 @@ export interface MovieProps {
   trailer?: string;
   saved?: boolean;
   watched?: boolean;
+  rating?: number;
 }
 
 export interface ShowProps {
@@ -76,6 +79,7 @@ export interface ShowProps {
   lastEpisode?: string | null;
   watched: Set<string>;
   episodeCount?: number;
+  rating?: number;
 }
 
 export interface MovieDetailsProps {
@@ -172,7 +176,8 @@ export interface ShowWatchlist {
   category: number,
   episodeCount?: number,
   episodesWatched?: number,
-  seasonEpisodeCount?: SeasonEpisodeCountType
+  seasonEpisodeCount?: SeasonEpisodeCountType,
+  rating?: number
 }
 
 export interface MovieWatchlist {
@@ -180,7 +185,8 @@ export interface MovieWatchlist {
   image: string,
   title: string,
   releaseDate: string,
-  watched: boolean
+  watched: boolean,
+  rating?: number
 }
 
 export const hasValue = (val: any) => {

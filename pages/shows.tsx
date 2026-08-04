@@ -1,11 +1,11 @@
-import { AlphaLayout, DateLayout, groupByDate, groupByStatus, sortByAlpha, StatusLayout } from "@/components/ShowsLayouts";
+import { AlphaLayout, DateLayout, groupByDate, groupByRatings, groupByStatus, RatingsLayout, sortByAlpha, StatusLayout } from "@/components/ShowsLayouts";
 import { ShowWatchlist } from "@/utils/types";
 import { useSession } from "next-auth/react";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { useEffect, useMemo, useState } from "react";
-import { FaSortAlphaDown } from "react-icons/fa";
-import { IoIosCalendar, IoIosEye } from "react-icons/io";
+import { FaSortAlphaDown, FaStar } from "react-icons/fa";
+import { IoIosCalendar, IoIosEye, IoIosStar } from "react-icons/io";
 
 const sortButtonClass = "cursor-pointer disabled:cursor-default disabled:opacity-40";
 
@@ -28,10 +28,11 @@ export default function Shows() {
   const dateGroups = useMemo(() => groupByDate(shows), [shows]);
   const alphaSorted = useMemo(() => sortByAlpha(shows), [shows]);
   const statusGroups = useMemo(() => groupByStatus(shows), [shows]);
+  const ratingGropus = useMemo(() => groupByRatings(shows), [shows]);
 
   useEffect(() => {
     if (!window) return;
-    const validOptions = new Set(['date', 'alpha', 'status']);
+    const validOptions = new Set(['date', 'alpha', 'status', 'ratings']);
     const sort = window.localStorage.getItem('sortTypeShows');
     setSortBy(sort && validOptions.has(sort) ? sort : 'alpha');
   }, [])
@@ -138,6 +139,7 @@ export default function Shows() {
           <button onClick={() => handleSort('alpha')} disabled={sortBy == 'alpha'} title='Alphabetically' className={sortButtonClass}><FaSortAlphaDown size={20} /></button>
           <button onClick={() => handleSort('date')} disabled={sortBy == 'date'} title='Next Episode' className={sortButtonClass}><IoIosCalendar size={20} /></button>
           <button onClick={() => handleSort('status')} disabled={sortBy == 'status'} title='Watch Status' className={sortButtonClass}><IoIosEye size={20} /></button>
+          <button onClick={() => handleSort('ratings')} disabled={sortBy == 'ratings'} title='Ratings' className={sortButtonClass}><FaStar size={20} /></button>
         </div>
       </div>
       {shows.length == 0 && (
@@ -149,8 +151,10 @@ export default function Shows() {
           <DateLayout groups={dateGroups} removeFromShows={removeFromShows} />
         ) : sortBy == 'alpha' ?  (
           <AlphaLayout shows={alphaSorted} removeFromShows={removeFromShows} />
-        ) : (
+        ) : sortBy == 'status' ? (
           <StatusLayout groups={statusGroups} removeFromShows={removeFromShows} />
+        ) : (
+          <RatingsLayout groups={ratingGropus} removeFromShows={removeFromShows} />
         )}
     </>
   );

@@ -21,7 +21,8 @@ const addWatchedStatus = (movies: IMovie[], savedMovies: ObjType) => {
       title: movie.title,
       image: movie.imageSmall,
       releaseDate: movie.releaseDate,
-      watched: info.watched
+      watched: info.watched,
+      rating: info.rating
     })
   }
 

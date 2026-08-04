@@ -23,6 +23,20 @@ const statusSections = [
   { key: 0, label: 'Unwatched' }
 ] as const;
 
+const ratingsSections = [
+  { key: 10, label: '5 Stars ☆' },
+  { key: 9, label: '4.5 Stars ☆' },
+  { key: 8, label: '4 Stars ☆' },
+  { key: 7, label: '3.5 Stars ☆' },
+  { key: 6, label: '3 Stars ☆' },
+  { key: 5, label: '2.5 Stars ☆' },
+  { key: 4, label: '2 Stars ☆' },
+  { key: 3, label: '1.5 Stars ☆' },
+  { key: 2, label: '1 Stars ☆' },
+  { key: 1, label: '0.5 Stars ☆' },
+  { key: 0, label: 'Unrated' },
+]
+
 const parseAirDate = (str: string | null | undefined) => {
   if (!str) return null;
   const strd = str.slice(str.indexOf('/') + 2)
@@ -287,6 +301,40 @@ export function StatusLayout({ groups, removeFromShows } :
   )
 }
 
+export function RatingsLayout({ groups, removeFromShows } : 
+  { groups: Record<string, ShowWatchlist[]>, removeFromShows: (id: string) => void }) {
+  return(
+    <div>
+      {ratingsSections.map(({ key, label }) => (
+        groups[key]?.length && (
+          <Fragment key={key}>
+            <h2 className="text-xl mb-2 mx-4 font-bold text-gray-400">{label}</h2>
+            <div className="grid items-stretch grid-cols-[repeat(auto-fill,_minmax(170px,_1fr))] gap-4 m-4">
+              {groups[key].map((show: ShowWatchlist) => (
+                <Item
+                  key={show.id}
+                  id={show.id}
+                  showStatus={show.status}
+                  title={show.title}
+                  image={show.image}
+                  episodeCount={show.episodeCount}
+                  episodesWatched={show.episodesWatched}
+                  seasonEpisodeCount={show.seasonEpisodeCount}
+                  imageSmall={show.imageSmall}
+                  nextEpisode={show.nextEpisode}
+                  lastEpisode={show.lastEpisode}
+                  releaseDate={show.releaseDate}
+                  removeFromShows={removeFromShows}
+                />
+              ))}
+            </div>
+          </Fragment>
+        )
+      ))}
+    </div>
+  )
+}
+
 export function groupByDate(shows: ShowWatchlist[]) {
   return shows.reduce((acc: Record<string, ShowWatchlist[]>, show) => {
     const airdate = parseAirDate(show.nextEpisode);
@@ -308,6 +356,14 @@ export function sortByAlpha(shows: ShowWatchlist[]) {
 export function groupByStatus(shows: ShowWatchlist[]) {
   return shows.reduce((acc: Record<string, ShowWatchlist[]>, show) => {
     (acc[show.category] ??= []).push(show);
+    return acc;
+  }, {});
+}
+
+export function groupByRatings(shows: ShowWatchlist[]) {
+  return shows.reduce((acc: Record<string, ShowWatchlist[]>, show) => {
+    const rating = (show.rating || 0) * 2;
+    (acc[rating] ??= []).push(show);
     return acc;
   }, {});
 }

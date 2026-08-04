@@ -4,7 +4,7 @@ A modern web application for tracking TV shows and movies built with Next.js. Tr
 
 ### The project is hosted at: https://tracktvshows.vercel.app
 
-![Saved Shows](https://i.imgur.com/BwFsnTR.png)
+![Show Details](https://i.imgur.com/QQv8xWh.png)
 
 ## Features
 
@@ -32,6 +32,7 @@ A modern web application for tracking TV shows and movies built with Next.js. Tr
 - **Real-time Notifications** - Toast notifications for all actions via Notistack
 - **Responsive Design** - Mobile-first approach with Tailwind CSS
 - **Optimized Images** - Next.js Image component with proper sizing
+- **Personal Ratings** - Ability to rate saved movies and shows out of 5 stars
 
 ![Search Page](https://i.imgur.com/ZWZbONh.png)
 
@@ -71,6 +72,8 @@ A modern web application for tracking TV shows and movies built with Next.js. Tr
 - **Green-800 (bg-green-800)**: Next episode is airing soon (active)
 - **Orange-700 (bg-orange-700)**: Ongoing show without next episode yet (in progress / to be determined)
 - **Red-800 (bg-red-800)**: Show has ended or no episodes available (completed/ended)
+
+![Saved Shows](https://i.imgur.com/BwFsnTR.png)
 
 These colors were chosen for visibility:
 - Green gradients for positive/progress states

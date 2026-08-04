@@ -88,11 +88,11 @@ const queryTMDB = async (movieId: string) => {
   })
 }
 
-const formatData = (movie: any, saved: boolean, watched: boolean) => {
+const formatData = (movie: any, saved: boolean, watched: boolean, rating: number) => {
   return {
     title: movie.title, genres: movie.genres, trailer: movie.trailer, runtime: movie.runtime, homepage: movie.homepage,
     imdbId: movie.imdbId, origin: movie.origin, image: movie.image, overview: movie.overview, releaseDate: movie.releaseDate,
-    voteCount: movie.voteCount, voteAverage: movie.voteAverage, id: movie.id, saved, watched
+    voteCount: movie.voteCount, voteAverage: movie.voteAverage, id: movie.id, saved, watched, rating
   }
 }
 
@@ -112,16 +112,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!session) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
   let saved: boolean = false;
   let watched: boolean = false;
+  let rating: number = 0;
 
   await dbConnect();
   const user: IUser | null = await Users.findOne({ email: session.user?.email });
+
   if (!user) {
     await Users.create({ email: session.user?.email, savedMovies: [], savedShows: [] });
   } else {
     const index = user.savedMovies.findIndex((movie) => movie.movieId == `${id}`);
     saved = index != -1 ? true : false;
     watched = index != -1 ? user.savedMovies[index].watched : false;
+    rating = index != -1 ? (user.savedMovies[index].rating || 0) : 0;
   }
+
+  if (!user) return res.status(200).json({ success: false, message: "Unauthenticated user." });
 
   let info: any = {};
   const fields = 'title genres trailer updatedAt runtime homepage imdbId origin image overview releaseDate voteCount voteAverage id';
@@ -130,9 +135,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!movie || movie.trailer == 'n/a' || timeToRefresh(movie.updatedAt)) {
     const data = await queryTMDB(id as string);
     verifyRequiredKeys(data) && (!movie ? await Movie.create(data) : await Movie.findOneAndUpdate({ id }, data));
-    info = formatData(data, saved, watched);
+    info = formatData(data, saved, watched, rating);
   } else {
-    info = formatData(movie, saved, watched);
+    info = formatData(movie, saved, watched, rating);
   }
 
   return res.status(200).json({ success: true, movie: info });

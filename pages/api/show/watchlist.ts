@@ -102,6 +102,7 @@ const addCategory = async (shows: IShow[], savedShows: ObjType) => {
       episodeCount: show.episodeCount,
       episodesWatched: info.watchedEpisodes.length,
       seasonEpisodeCount: show.seasonEpisodeCount,
+      rating: info.rating,
       category
     });
   }
