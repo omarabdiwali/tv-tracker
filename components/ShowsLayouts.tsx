@@ -11,8 +11,8 @@ const inAWeek = new Date().setDate(now.getDate() + 8);
 const inAMonth = new Date().setMonth(now.getMonth() + 1) + 86400000;
 
 const dateSections = [
-  { key: 'week', label: 'Next Week' },
-  { key: 'month', label: 'Next Month' },
+  { key: 'week', label: 'This Week' },
+  { key: 'month', label: 'This Month' },
   { key: 'future', label: 'Future' },
   { key: 'others', label: 'Others' },
 ] as const;

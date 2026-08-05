@@ -64,16 +64,16 @@ A modern web application for tracking TV shows and movies built with Next.js. Tr
 ## Color Legend
 
 ### Progress Bar
-- **Red background (bg-red-600)**: Indicates a show with episodes (shows the container)
-- **Green gradient (from-green-400 to-green-500)**: Represents watched episode progress
-- **Blue marker (bg-blue-500)**: Shows the position of the next episode to watch
+- **Red background**: Indicates a show with episodes (shows the container)
+- **Green gradient**: Represents watched episode progress
+- **Blue marker**: Shows the position of the next episode to watch
 
-### Header Status
-- **Green-800 (bg-green-800)**: Next episode is airing soon (active)
-- **Orange-700 (bg-orange-700)**: Ongoing show without next episode yet (in progress / to be determined)
-- **Red-800 (bg-red-800)**: Show has ended or no episodes available (completed/ended)
+### Text Color Status
+- **Green**: Next episode is airing soon (active)
+- **Orange**: Ongoing show without next episode yet (in progress / to be determined)
+- **Red**: Show has ended or no episodes available (completed/ended)
 
-![Saved Shows](https://i.imgur.com/BwFsnTR.png)
+![Saved Shows](https://i.imgur.com/JPn9L0s.png)
 
 These colors were chosen for visibility:
 - Green gradients for positive/progress states

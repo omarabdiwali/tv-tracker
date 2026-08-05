@@ -180,7 +180,7 @@ export default function Movies() {
             <div className="text-gray-400">There are currently no movies saved.</div>
           </div>
         )}
-      {movies.length > 0 && sortBy == 'date' ? (
+      {movies.length > 0 ? sortBy == 'date' ? (
         <div className="grid items-stretch grid-cols-[repeat(auto-fill,_minmax(170px,_1fr))] gap-4 m-4">
           {movies.map((movie) => {
             return <Item
@@ -247,7 +247,7 @@ export default function Movies() {
               })}
            </div>
           </div>
-        )}
+        ) : <></>}
     </>
   );
 }

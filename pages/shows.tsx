@@ -147,7 +147,7 @@ export default function Shows() {
             <div className="text-gray-400">There are currently no shows saved.</div>
           </div>
         )}
-      {shows.length > 0 && sortBy == 'date' ? (
+      {shows.length > 0 ? sortBy == 'date' ? (
           <DateLayout groups={dateGroups} removeFromShows={removeFromShows} />
         ) : sortBy == 'alpha' ?  (
           <AlphaLayout shows={alphaSorted} removeFromShows={removeFromShows} />
@@ -155,7 +155,7 @@ export default function Shows() {
           <StatusLayout groups={statusGroups} removeFromShows={removeFromShows} />
         ) : (
           <RatingsLayout groups={ratingGropus} removeFromShows={removeFromShows} />
-        )}
+        ) : <></>}
     </>
   );
 }
