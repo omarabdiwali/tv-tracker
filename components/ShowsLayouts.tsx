@@ -142,6 +142,7 @@ function Item({ id, image, imageSmall, title, releaseDate, episodeCount, episode
     const nextEpisodePosition = nextEpisodeNumber
       ? ((nextEpisodeNumber - 1) / totalEpisodeCount) * 100
       : 0;
+    const isLastEpisode = nextEpisodePosition + (1 / totalEpisodeCount * 100) == 100;
 
     return (
       <div className="absolute flex bottom-[0%] w-full bg-red-600 h-1">
@@ -154,7 +155,7 @@ function Item({ id, image, imageSmall, title, releaseDate, episodeCount, episode
             className="absolute bottom-[0%] h-full cursor-default z-50 bg-blue-500"
             style={{
               left: `${nextEpisodePosition}%`,
-              width: `${1 / totalEpisodeCount * 100}%`,
+              width: `${!isLastEpisode ? `${1 / totalEpisodeCount * 100}%` : 'stretch'}`,
             }}
             title={`Next: Episode ${nextEpisode}`}
           />
