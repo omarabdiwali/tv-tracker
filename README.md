@@ -90,7 +90,6 @@ These colors were chosen for visibility:
 | **Authentication** | NextAuth.js |
 | **Notifications** | Notistack |
 | **Icons** | React Icons (FontAwesome, Ionicons, Heroicons, Remix Icons) |
-| **Sanitization** | isomorphic-dompurify |
 | **API** | TMDB (The Movie Database), TVMaze |
 
 ## Project Structure

@@ -156,13 +156,13 @@ export default function LandingPage() {
             Ready to organize your watch history?
           </h2>
           <p className="text-slate-400 mb-8 text-lg">
-            Join now to start building your personal library. No credit card required.
+            Join now to start building your personal library!
           </p>
           <button
             onClick={() => signIn("google")}
             className="px-8 py-4 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-lg transition-all shadow-[0_0_20px_-5px_rgba(16,185,129,0.5)] cursor-pointer"
           >
-            Start Tracking Free
+            Start Tracking
           </button>
         </div>
         
