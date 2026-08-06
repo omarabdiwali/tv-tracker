@@ -100,9 +100,10 @@ export default function StarRating({ rating = 0, type, id }: StarRatingProps) {
   }
   
   const handleClick = (index: number) => {
-    if (loading) return;
     const newRating = index + 0.5;
     const prevRating = filled;
+    if (loading || newRating == prevRating) return;
+    
     setLoading(true);
     setFilled(newRating);
     
