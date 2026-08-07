@@ -61,13 +61,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   await dbConnect();
 
   let user : IUser | null = await Users.findOne({ email: session.user?.email });
-  let savedMovies = new Set();
+  let index = -1;
 
   if (!user) {
-    user = await Users.create({ email: session.user?.email, savedMovies: [], savedShows: [] });
+    user = await Users.create({ email: session.user?.email, movies: [], shows: [] });
   } else {
-    const mappedList = user.savedMovies.map((movie) => movie.movieId);
-    savedMovies = new Set(mappedList);
+    index = user.movies.findIndex((movie) => movie.movieId == `${id}`);
   }
 
   if (!user) return res.status(200).json({ success: false, message: "Error creating user." });
@@ -81,17 +80,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     await Movie.create(info);
   }
 
-  if (save && savedMovies.has(`${id}`)) {
-    return res.status(200).json({ success: true, message: `${title} has already been saved to watchlist.` });
-  } else if (!save && !savedMovies.has(`${id}`)) {
-    return res.status(200).json({ success: true, message: `${title} has already been removed from watchlist.` });
+  if (index != -1) {
+    const movieObj = user.movies[index];
+    if (save == movieObj.saved) {
+      return res.status(200).json({ success: true, message: `${title} has already been ${save ? 'saved to' : 'removed from'} watchlist.` });
+    }
   }
-
-  if (save) {
-    user.savedMovies.push({ movieId: `${id}`, watched: false });
+  
+  if (index != -1) {
+    user.movies[index].saved = save;
   } else {
-    const index = user.savedMovies.findIndex((movie) => movie.movieId == `${id}`);
-    user.savedMovies.splice(index, 1);
+    const movieObj = { movieId: `${id}`, saved: save, watched: false, rating: 0 };
+    user.movies.push(movieObj);
   }
 
   user.save();

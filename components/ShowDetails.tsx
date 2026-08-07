@@ -7,9 +7,10 @@ import { useSnackbar } from 'notistack';
 import { useState, useCallback, memo, useEffect } from 'react';
 import { FaImdb, FaStar } from 'react-icons/fa';
 import { HiOutlineStatusOnline } from 'react-icons/hi';
-import { IoIosAddCircleOutline, IoIosCloseCircleOutline, IoIosHourglass, IoMdArrowDropdown, IoMdArrowDropup, IoMdCalendar } from 'react-icons/io';
+import { IoIosAddCircleOutline, IoIosCheckmarkCircle, IoIosCloseCircleOutline, IoIosHourglass, IoMdArrowDropdown, IoMdArrowDropup, IoMdCalendar } from 'react-icons/io';
 import { RxClock } from 'react-icons/rx';
 import StarRating from './StarRating';
+import { useRouter } from 'next/router';
 
 const EpisodeItem = memo(({ episode, watched, onToggleWatched }: {
   episode: Episode;
@@ -318,8 +319,49 @@ export default function ShowDetails({ show }: ShowDetailsProps) {
   const { data: _, status } = useSession();
   const [buttonText, setButtonText] = useState(show.saved ? "Remove from Watchlist" : "Add to Watchlist");
   const [disabled, setDisabled] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [completed, setCompleted] = useState(!!show.completed);
   const [imgSrc, setImgSrc] = useState(show.image || 'https://static.tvmaze.com/images/no-img/no-img-portrait-text.png');
   const { enqueueSnackbar } = useSnackbar();
+  const router = useRouter();
+
+  const handleChange = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+    e.preventDefault();
+    
+    if (status == 'unauthenticated') {
+      router.push('/');
+      return;
+    } else if (disabled) {
+      return;
+    }
+
+    setDisabled(true);
+    setLoading(true);
+
+    fetch('/api/show/completed', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ id: `${show.id}`, completed: !completed })
+    }).then(res => res.json()).then(data => {
+      if (data.success) {
+        show.completed = !completed;
+        setCompleted(!completed);
+      } else {
+        if (data.message == 'Unauthenticated user.') {
+          router.push('/');
+          return;
+        }
+        enqueueSnackbar(data.message, { variant: 'error', autoHideDuration: 1500 });
+      }
+    }).catch(err => {
+      console.error(err);
+    }).finally(() => {
+      setDisabled(false);
+      setLoading(false);
+    })
+  }
 
   const saveShow = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
     e.preventDefault();
@@ -462,7 +504,11 @@ export default function ShowDetails({ show }: ShowDetailsProps) {
               {buttonText == 'Add to Watchlist' ? <IoIosAddCircleOutline size={26} /> : buttonText == 'Loading...' ? <IoIosHourglass size={26} /> : <IoIosCloseCircleOutline size={26} />}
               {buttonText}
             </button>
-            { buttonText == 'Remove from Watchlist' && <StarRating rating={show.rating || 0} id={`${show.id}`} type={'show'} /> }
+            <button disabled={disabled} onClick={handleChange} className={`flex cursor-pointer items-center justify-center gap-2 px-6 py-3 ${completed ? 'bg-green-700 enabled:hover:bg-green-600' : 'bg-gray-700 enabled:hover:bg-gray-600'} text-gray-300 rounded-lg font-semibold transition-all duration-200 transform enabled:hover:scale-105`}>
+              {loading ? <IoIosHourglass size={26} /> : <IoIosCheckmarkCircle size={26} />}
+              {loading ? 'Loading...' : completed ? 'Completed' : 'Mark As Completed'}
+            </button>
+            <StarRating rating={show.rating || 0} id={`${show.id}`} type={'show'} />
           </div>
 
           {status == 'authenticated' && show.episodes && Object.keys(show.episodes).length > 0 && (

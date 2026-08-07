@@ -131,10 +131,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const session = await getServerSession(req, res, authOptions);
   if (!session) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
+  
   let saved = false;
   let watched: Set<string> = new Set();
   let watchedList: string[] = [];
   let rating: number = 0;
+  let completed: boolean = false;
+  
   let showInfo = {};
   const showKeys = 'title genres language status homepage imdbId image overview releaseDate voteAverage id episodes episodeCount nextEpisode lastEpisode updatedAt';
 
@@ -142,13 +145,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   let user: IUser | null = await Users.findOne({ email: session.user?.email });
 
   if (!user) {
-    user = await Users.create({ email: session.user?.email, savedMovies: [], savedShows: [] });
+    user = await Users.create({ email: session.user?.email, movies: [], shows: [] });
   } else {
-    const index = user.savedShows.findIndex((show) => show.showId == `${id}`);
-    saved = index != -1;
-    watched = saved ? new Set(user.savedShows[index].watchedEpisodes) : watched;
-    watchedList = saved ? user.savedShows[index].watchedEpisodes : watchedList;
-    rating = saved ? (user.savedShows[index].rating || 0) : 0;
+    const index = user.shows.findIndex((show) => show.showId == `${id}`);
+    saved = index != -1 ? !!user.shows[index].saved : false;
+    watched = index != -1 ? new Set(user.shows[index].watchedEpisodes) : watched;
+    watchedList = index != -1 ? user.shows[index].watchedEpisodes : watchedList;
+    rating = index != -1 ? (user.shows[index].rating || 0) : 0;
+    completed = index != -1 ? !!user.shows[index].completed : false;
   }
 
   if (!user) return res.status(200).json({ success: false, message: "Unauthenticated user." });
@@ -164,5 +168,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     showInfo = show;
   }
 
-  return res.status(200).json({ success: true, show: showInfo, saved, watched: watchedList, rating });
+  return res.status(200).json({ success: true, show: showInfo, saved, watched: watchedList, completed, rating });
 }

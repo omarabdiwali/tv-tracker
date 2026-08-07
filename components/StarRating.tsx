@@ -1,5 +1,6 @@
 import { useSnackbar } from 'notistack';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
+import { BiTrash } from 'react-icons/bi';
 
 interface StarRatingProps {
   rating?: number;
@@ -40,11 +41,9 @@ export default function StarRating({ rating = 0, type, id }: StarRatingProps) {
   }
   
   const handleClick = (newRating: number) => {
-    if (loading || newRating == filled) return;
-    
+    if (loading || newRating == filled) return;    
     const prevRating = filled;
     setLoading(true);
-    setFilled(newRating);
     
     fetch(`/api/${type}/rating`, {
       method: 'POST',
@@ -71,8 +70,38 @@ export default function StarRating({ rating = 0, type, id }: StarRatingProps) {
     setHoverFilled(0);
   }
 
+  const resetRating = () => {
+    if (loading || filled == 0) return;
+    const prevRating = filled;
+    const newRating = 0;
+    setLoading(true);
+
+    fetch(`/api/${type}/rating`, {
+      method: 'POST',
+      body: JSON.stringify({ id, rating: newRating }),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    }).then(res => res.json()).then(data => {
+      if (data.success) {
+        setFilled(newRating);
+      } else {
+        if (data.message == 'Unauthenticated user.') {
+          window.location.href = '/';
+          return;
+        } else {
+          enqueueSnackbar(data.message, { variant: 'error', autoHideDuration: 1500 });
+          setFilled(prevRating);
+        }
+      }
+    }).finally(() => setLoading(false))
+  }
+
   return (
     <div className="flex items-center justify-center gap-2">
+      <button disabled={loading || filled == 0} onClick={resetRating} title='Clear Rating' className={`enabled:cursor-pointer disabled:text-gray-800 enabled:hover:text-gray-400`}>
+        <BiTrash size={20} />
+      </button>
       <div onPointerLeave={handleLeave} className="flex">
         {[0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5].map((val, key) => {
           const isLeft = key % 2 === 0;

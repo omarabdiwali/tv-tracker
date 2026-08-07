@@ -21,21 +21,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(200).json({ success: false, message: "Unauthenticated user." });
   }
 
-  const index = user.savedShows.findIndex((show) => show.showId == `${showId}`);
+  const index = user.shows.findIndex((show) => show.showId == `${showId}`);
+  
   if (index == -1) {
-    return res.status(200).json({ success: false, message: "Show has to be on watchlist." });
+    const watchedEpisodes = episodeIds.map((id: string | number) => `${id}`);
+    const showObj = { showId: `${showId}`, saved: false, watchedEpisodes: watched ? watchedEpisodes : [], rating: 0 };
+    user.shows.push(showObj);
+  } 
+  else {
+    const watchedEpisodesList = user.shows[index].watchedEpisodes;
+    const watchedEpisodes = new Set(watchedEpisodesList);
+
+    if (watched) {
+      episodeIds.forEach((id: string | number) => watchedEpisodes.add(`${id}`));
+    } else {
+      episodeIds.forEach((id: string | number) => watchedEpisodes.delete(`${id}`));
+    }
+
+    user.shows[index].watchedEpisodes = [...watchedEpisodes];
   }
 
-  const watchedEpisodesList = user.savedShows[index].watchedEpisodes;
-  const watchedEpisodes = new Set(watchedEpisodesList);
-
-  if (watched) {
-    episodeIds.forEach((id: string | number) => watchedEpisodes.add(`${id}`));
-  } else {
-    episodeIds.forEach((id: string | number) => watchedEpisodes.delete(`${id}`));
-  }
-
-  user.savedShows[index].watchedEpisodes = [...watchedEpisodes];
   user.save();
   return res.status(200).json({ success: true, message: `Success.` });
 }

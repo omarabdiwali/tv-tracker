@@ -23,7 +23,13 @@ export default function Details() {
   const fetchDetails = async (showId: string) => {
     fetch(`/api/show/details?id=${showId}`).then(res => res.json()).then(data => {
       if (data.success) {
-        const obj = { ...data.show, saved: data.saved, watched: new Set(data.watched), rating: data.rating };
+        const obj = {
+          ...data.show, 
+          saved: data.saved, 
+          watched: new Set(data.watched), 
+          rating: data.rating, 
+          completed: data.completed 
+        };
         setShow(obj);
       } else {
          if (data.message == "Unauthenticated user.") {

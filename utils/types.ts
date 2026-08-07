@@ -1,26 +1,31 @@
 import { Document, Types } from "mongoose";
+import { Dispatch, SetStateAction } from "react";
 
 export interface ItemProps {
+  movie?: MovieWatchlist,
   id: string,
   title: string,
   image: string,
-  saved: boolean,
+  saved?: boolean,
   releaseDate?: string,
   type?: string,
   showReleaseDate?: boolean,
-  removeFromMovies?: (id: string) => void
+  updateShows?: Dispatch<SetStateAction<number>>
 }
 
-export interface SavedMovie {
+export interface UserMovie {
   movieId: string;
   watched: boolean;
+  saved?: boolean;
   rating?: number;
 }
 
-export interface SavedShow {
+export interface UserShow {
   showId: string;
   watchedEpisodes: string[];
+  saved?: boolean;
   rating?: number;
+  completed?: boolean;
 }
 
 export type EpisodesData = {
@@ -80,6 +85,7 @@ export interface ShowProps {
   watched: Set<string>;
   episodeCount?: number;
   rating?: number;
+  completed?: boolean;
 }
 
 export interface MovieDetailsProps {
@@ -92,8 +98,8 @@ export interface ShowDetailsProps {
 
 export interface IUser extends Document {
   email: string;
-  savedMovies: SavedMovie[];
-  savedShows: SavedShow[];
+  movies: UserMovie[];
+  shows: UserShow[];
 }
 
 export interface IMovie extends Document {
@@ -177,7 +183,9 @@ export interface ShowWatchlist {
   episodeCount?: number,
   episodesWatched?: number,
   seasonEpisodeCount?: SeasonEpisodeCountType,
-  rating?: number
+  rating?: number,
+  saved?: boolean,
+  completed?: boolean
 }
 
 export interface MovieWatchlist {
@@ -186,7 +194,8 @@ export interface MovieWatchlist {
   title: string,
   releaseDate: string,
   watched: boolean,
-  rating?: number
+  rating?: number,
+  saved?: boolean
 }
 
 export const hasValue = (val: any) => {

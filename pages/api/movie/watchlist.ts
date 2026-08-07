@@ -2,19 +2,19 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]";
 import Users from '@/models/Users'
-import { IMovie, IUser, MovieWatchlist, SavedMovie } from "@/utils/types";
+import { IMovie, IUser, MovieWatchlist, UserMovie } from "@/utils/types";
 import dbConnect from "@/utils/dbConnect";
 import Movie from "@/models/Movie";
 
 type ObjType = {
-  [id: string] : SavedMovie
+  [id: string] : UserMovie
 }
 
-const addWatchedStatus = (movies: IMovie[], savedMovies: ObjType) => {
+const addWatchedStatus = (movies: IMovie[], userMovies: ObjType) => {
   const populated: MovieWatchlist[] = [];
 
   for (const movie of movies) {
-    const info = savedMovies[movie.id];
+    const info = userMovies[movie.id];
     if (!info) continue;
     populated.push({
       id: movie.id,
@@ -22,7 +22,8 @@ const addWatchedStatus = (movies: IMovie[], savedMovies: ObjType) => {
       image: movie.imageSmall,
       releaseDate: movie.releaseDate,
       watched: info.watched,
-      rating: info.rating
+      rating: info.rating,
+      saved: info.saved
     })
   }
 
@@ -41,10 +42,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   let formatted: MovieWatchlist[] = [];
 
   if (!user) {
-    user = await Users.create({ email: session.user?.email, savedMovies: [], savedShows: [] });
+    user = await Users.create({ email: session.user?.email, movies: [], shows: [] });
   } else {
-    const movieIds = user.savedMovies.map((movie) => movie.movieId);
-    const movieObj: ObjType = user.savedMovies.reduce((acc: ObjType, movie) => {
+    const movieIds = user.movies.map((movie) => movie.movieId);
+    const movieObj: ObjType = user.movies.reduce((acc: ObjType, movie) => {
       acc[movie.movieId] = movie;
       return acc;
     }, {})

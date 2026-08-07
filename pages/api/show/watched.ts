@@ -21,27 +21,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(200).json({ success: false, message: "Unauthenticated user." });
   }
 
-  const index = user.savedShows.findIndex((show) => show.showId == `${showId}`);
+  const index = user.shows.findIndex((show) => show.showId == `${showId}`);
+  
   if (index == -1) {
-    return res.status(200).json({ success: false, message: "Show has to be on watchlist." });
-  }
-
-  const watchedEpisodesList = user.savedShows[index].watchedEpisodes;
-  const watchedEpisodes = new Set(watchedEpisodesList);
-
-  if (setWatched && watchedEpisodes.has(`${epId}`)) {
-    return res.status(200).json({ success: true, message: "has already been watched." });
-  } else if (!setWatched && !watchedEpisodes.has(`${epId}`)) {
-    return res.status(200).json({ success: true, message: "has already not been watched." });
-  }
-
-  if (setWatched) {
-    watchedEpisodes.add(`${epId}`);
+    const showObj = { showId: `${showId}`, saved: false, watchedEpisodes: setWatched ? [`${epId}`] : [], rating: 0 };
+    user.shows.push(showObj);
   } else {
-    watchedEpisodes.delete(`${epId}`);
+    const watchedEpisodesList = user.shows[index].watchedEpisodes;
+    const watchedEpisodes = new Set(watchedEpisodesList);
+
+    if (setWatched && watchedEpisodes.has(`${epId}`)) {
+      return res.status(200).json({ success: true, message: "has already been watched." });
+    } else if (!setWatched && !watchedEpisodes.has(`${epId}`)) {
+      return res.status(200).json({ success: true, message: "has already not been watched." });
+    }
+
+    if (setWatched) {
+      watchedEpisodes.add(`${epId}`);
+    } else {
+      watchedEpisodes.delete(`${epId}`);
+    }
+
+    user.shows[index].watchedEpisodes = [...watchedEpisodes];
   }
 
-  user.savedShows[index].watchedEpisodes = [...watchedEpisodes];
   user.save();
-  return res.status(200).json({ success: true, message: `has been set to${setWatched ? '' : ' not'} watched!` });
+  return res.status(200).json({ success: true, message: `has been set ${setWatched ? 'to' : 'to not'} watched!` });
 }

@@ -15,7 +15,7 @@ const getYear = (releaseDate: string | undefined | null) => {
   return year;
 }
 
-export default function Item({ id, image, title, releaseDate, type, saved, removeFromMovies, showReleaseDate=false }: ItemProps) {
+export default function Item({ movie, id, image, title, releaseDate, type, saved, updateShows, showReleaseDate=false }: ItemProps) {
   const [action, setAction] = useState(saved ? 'remove' : 'add');
   const [disabled, setDisabled] = useState(false);
   const [imgSrc, setImgSrc] = useState(image || 'https://static.tvmaze.com/images/no-img/no-img-portrait-text.png');
@@ -40,8 +40,9 @@ export default function Item({ id, image, title, releaseDate, type, saved, remov
       if (data.success) {
         setAction(prevAction == 'add' ? 'remove' : 'add');
         enqueueSnackbar(data.message, { variant: "success", autoHideDuration: 1500 });
-        if (removeFromMovies && prevAction == 'remove') {
-          removeFromMovies(id);
+        if (updateShows && movie) {
+          movie.saved = prevAction == 'add';
+          updateShows(prev => prev ? 0 : 1);
         }
       } else {
         if (data.message == 'Unauthenticated user.') {

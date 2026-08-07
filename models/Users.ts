@@ -7,7 +7,7 @@ const userSchema = new Schema<IUser>({
     unique: true,
     required: true
   },
-  savedMovies: [{
+  movies: [{
     movieId: {
       type: String,
       ref: 'Movie',
@@ -21,9 +21,14 @@ const userSchema = new Schema<IUser>({
       type: Number,
       required: false,
       default: 0
+    },
+    saved: {
+      type: Boolean,
+      required: false,
+      default: false
     }
   }],
-  savedShows: [{
+  shows: [{
     showId: {
       type: String,
       ref: 'Show',
@@ -36,6 +41,16 @@ const userSchema = new Schema<IUser>({
       type: Number,
       required: false,
       default: 0
+    },
+    saved: {
+      type: Boolean,
+      required: false,
+      default: false
+    },
+    completed: {
+      type: Boolean,
+      required: false,
+      default: false
     }
   }]
 });

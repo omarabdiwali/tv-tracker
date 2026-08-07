@@ -2,12 +2,12 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]";
 import Users from '@/models/Users'
-import { hasValue, IShow, IUser, SavedShow, ShowWatchlist } from "@/utils/types";
+import { hasValue, IShow, IUser, UserShow, ShowWatchlist } from "@/utils/types";
 import dbConnect from "@/utils/dbConnect";
 import Show from "@/models/Show";
 
 type ObjType = {
-  [id: string] : SavedShow
+  [id: string] : UserShow
 }
 
 const nextEpisodeInFuture = (nextEpisode: string) => {
@@ -62,13 +62,14 @@ const getEpisodesAndImage = async (showId: string) => {
 // 1 - In Progress
 // 2 - Completed / Up-to-Date
 
-const addCategory = async (shows: IShow[], savedShows: ObjType) => {
+const addCategory = async (shows: IShow[], userShows: ObjType) => {
   const populated: ShowWatchlist[] = [];
 
   for (const show of shows) {
     let category = 0;
-    const info = savedShows[show.id];
+    const info = userShows[show.id];
     if (!info) continue;
+    if (!info.saved && !info.completed) continue;
 
     if (checkIfPassed(show)) {
       const { lastEpisode, nextEpisode, image, imageSmall } = await getEpisodesAndImage(show.id);
@@ -103,6 +104,8 @@ const addCategory = async (shows: IShow[], savedShows: ObjType) => {
       episodesWatched: info.watchedEpisodes.length,
       seasonEpisodeCount: show.seasonEpisodeCount,
       rating: info.rating,
+      saved: info.saved,
+      completed: info.completed,
       category
     });
   }
@@ -118,20 +121,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   await dbConnect();
   const showFields = 'id image imageSmall title episodeCount releaseDate nextEpisode lastEpisode nextUpdatedAt status seasonEpisodeCount'
   let user: IUser | null = await Users.findOne({ email: session.user?.email });
-  let savedShows: IShow[] = [];
+  let userShows: IShow[] = [];
   let formatted: ShowWatchlist[] = [];
 
   if (!user) {
-    user = await Users.create({ email: session.user?.email, savedShows: [], savedMovies: [] });
+    user = await Users.create({ email: session.user?.email, shows: [], movies: [] });
   } else {
-    const showIds = user.savedShows.map((show) => show.showId);
-    const showObj: ObjType = user.savedShows.reduce((acc: ObjType, show) => {
+    const showIds = user.shows.map((show) => show.showId);
+    const showObj: ObjType = user.shows.reduce((acc: ObjType, show) => {
       acc[show.showId] = show;
       return acc;
     }, {})
 
-    savedShows = await Show.find({ id: { $in: showIds } }, showFields);
-    formatted = await addCategory(savedShows, showObj);
+    userShows = await Show.find({ id: { $in: showIds } }, showFields);
+    formatted = await addCategory(userShows, showObj);
   }
 
   if (!user) return res.status(200).json({ success: false, message: 'Error creating user.' });

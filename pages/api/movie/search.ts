@@ -59,9 +59,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const user: IUser | null = await Users.findOne({ email: session.user?.email });
   if (!user) {
-    await Users.create({ email: session.user?.email, savedMovies: [], savedShows: [] })
+    await Users.create({ email: session.user?.email, movies: [], shows: [] })
   } else {
-    const info = user.savedMovies.map((movie) => movie.movieId);
+    const info = user.movies.filter((movie) => movie.saved).map((movie) => movie.movieId);
     savedMovies = new Set(info);
   }
 

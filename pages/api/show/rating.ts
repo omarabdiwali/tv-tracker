@@ -19,10 +19,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const user: IUser | null = await Users.findOne({ email: session.user?.email });
   if (!user) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
-  const showIndex = user.savedShows.findIndex((show) => show.showId == `${id}`);
-  if (showIndex == -1) return res.status(200).json({ success: false, message: 'Show is not saved.' });
+  
+  const showIndex = user.shows.findIndex((show) => show.showId == `${id}`);
+  const noWatchedEpisodes = user.shows[showIndex].watchedEpisodes.length == 0;
 
-  user.savedShows[showIndex].rating = rating;
+  if (showIndex == -1 || (noWatchedEpisodes && rating != 0)) {
+    return res.status(200).json({ success: false, message: 'Show has not been started/watched.' });
+  }
+
+  user.shows[showIndex].rating = rating;
   user.save();
   return res.status(200).json({ success: true });
 }

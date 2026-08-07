@@ -3,7 +3,7 @@ import { MovieWatchlist } from "@/utils/types";
 import { useSession } from "next-auth/react";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Dispatch, Fragment, SetStateAction, useEffect, useMemo, useState } from "react";
 import { FaSortAlphaDown, FaStar } from "react-icons/fa";
 import { IoIosCalendar, IoIosEye } from "react-icons/io";
 
@@ -29,8 +29,8 @@ function groupByRatings(movies: MovieWatchlist[]) {
   }, {});
 }
 
-function RatingsLayout({ groups, removeFromMovies } : 
-  { groups: Record<string, MovieWatchlist[]>, removeFromMovies: (id: string) => void }) {
+function RatingsLayout({ groups, updateShows } : 
+  { groups: Record<string, MovieWatchlist[]>, updateShows: Dispatch<SetStateAction<number>> }) {
   return(
     <div>
       {ratingsSections.map(({ key, label }) => (
@@ -42,11 +42,12 @@ function RatingsLayout({ groups, removeFromMovies } :
                 <Item
                   key={`movie-saved-${movie.id}`}
                   id={movie.id}
+                  movie={movie}
                   title={movie.title}
                   image={movie.image}
                   releaseDate={movie.releaseDate}
-                  removeFromMovies={removeFromMovies}
-                  saved={true}
+                  updateShows={updateShows}
+                  saved={movie.saved}
                   showReleaseDate
                   type={'movie'}
                 />
@@ -73,15 +74,25 @@ export default function Movies() {
   const [movies, setMovies] = useState<MovieWatchlist[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [sortBy, setSortBy] = useState('alpha');
+  const [savedSortBy, setSavedSortBy] = useState('alpha');
+  const [watchedSortBy, setWatchedSortBy] = useState('ratings');
+  const [sortBy, setSortBy] = useState('alpha');  
+  const [filter, setFilter] = useState('saved');
+  const [update, setUpdate] = useState(0);
 
-  const ratingGropus = useMemo(() => groupByRatings(movies), [movies]);
+  const savedMovies = useMemo(() => movies.filter(movie => movie.saved), [movies, update]);
+  const watchedMovies = useMemo(() => movies.filter(movie => movie.watched), [movies, update]);
+  const activeMovies = filter == 'saved' ? savedMovies : watchedMovies;
+  const ratingGropus = useMemo(() => groupByRatings(activeMovies), [activeMovies]);
 
   useEffect(() => {
     if (!window) return;
-    const validOptions = new Set(['date', 'alpha', 'status', 'ratings']);
-    const sort = window.localStorage.getItem('sortTypeMovies');
-    setSortBy(sort && validOptions.has(sort) ? sort : 'alpha');
+    const validOptions = new Set(['date', 'alpha', 'ratings']);
+    const savedSort = window.localStorage.getItem('savedSortTypeMovies');
+    const watchedSort = window.localStorage.getItem('watchedSortTypeMovies');
+    setSavedSortBy(savedSort && validOptions.has(savedSort) ? savedSort : 'alpha');
+    setWatchedSortBy(watchedSort && validOptions.has(watchedSort) ? watchedSort : 'ratings');
+    setSortBy(savedSort && validOptions.has(savedSort) ? savedSort : 'alpha');
   }, [])
 
   useEffect(() => {
@@ -135,7 +146,22 @@ export default function Movies() {
   const handleSort = (sortType: string) => {
     if (sortType == sortBy) return;
     setSortBy(sortType);
-    window.localStorage.setItem('sortTypeMovies', sortType);
+    if (filter == 'saved') {
+      window.localStorage.setItem('savedSortTypeMovies', sortType); 
+      setSavedSortBy(sortType);
+    } else {
+      window.localStorage.setItem('watchedSortTypeMovies', sortType);
+      setWatchedSortBy(sortType);
+    }
+  }
+
+  const changeFilter = (filterVal: string) => {
+    if (filterVal == 'saved') {
+      setSortBy(savedSortBy);
+    } else {
+      setSortBy(watchedSortBy);
+    }
+    setFilter(filterVal);
   }
 
   if (status != 'authenticated') return null;
@@ -161,70 +187,88 @@ export default function Movies() {
   }
 
   const sortButtonClass = "cursor-pointer disabled:cursor-default disabled:opacity-40";
+  const filterButtonClass = "sm:text-2xl md:text-2xl text-md font-bold disabled:text-gray-100 enabled:cursor-pointer text-gray-500";
 
   return (
     <>
       <Title />
       <div className="flex mb-2 mx-4">
-        <h2 className="text-2xl font-bold text-gray-100 flex-1">Saved Movies</h2>
+        <div className="flex-1 flex items-center gap-2">
+          <button disabled={filter == 'saved'} onClick={() => changeFilter('saved')} className={`${filterButtonClass} hidden sm:block`}>
+            Saved Movies
+          </button>
+          <button disabled={filter == 'saved'} onClick={() => changeFilter('saved')} className={`${filterButtonClass} block sm:hidden`}>
+            Saved
+          </button>
+          <div className="text-2xl font-black text-gray-600">/</div>
+          <button disabled={filter == 'watched'} onClick={() => changeFilter('watched')} className={`${filterButtonClass} hidden sm:block`}>
+            Watched Movies
+          </button>
+          <button disabled={filter == 'watched'} onClick={() => changeFilter('watched')} className={`${filterButtonClass} block sm:hidden`}>
+            Watched
+          </button>
+        </div>
+        {/* <h2 className="text-2xl font-bold text-gray-100 flex-1">Saved Movies</h2> */}
         <div className="flex items-center gap-2">
           <div>Sort By:</div>
           <button onClick={() => handleSort('alpha')} disabled={sortBy == 'alpha'} title='Alphabetically' className={sortButtonClass}><FaSortAlphaDown size={20} /></button>
           <button onClick={() => handleSort('date')} disabled={sortBy == 'date'} title='Release Date' className={sortButtonClass}><IoIosCalendar size={20} /></button>
-          <button onClick={() => handleSort('status')} disabled={sortBy == 'status'} title='Watch Status' className={sortButtonClass}><IoIosEye size={20} /></button>
           <button onClick={() => handleSort('ratings')} disabled={sortBy == 'ratings'} title='Ratings' className={sortButtonClass}><FaStar size={20} /></button>
         </div>
       </div>
-      {movies.length == 0 && (
+      {activeMovies.length == 0 && (
           <div className="flex flex-1 justify-center items-center">
             <div className="text-gray-400">There are currently no movies saved.</div>
           </div>
         )}
-      {movies.length > 0 ? sortBy == 'date' ? (
+      {activeMovies.length > 0 ? sortBy == 'date' ? (
         <div className="grid items-stretch grid-cols-[repeat(auto-fill,_minmax(170px,_1fr))] gap-4 m-4">
-          {movies.map((movie) => {
+          {activeMovies.map((movie) => {
             return <Item
                       key={`movie-saved-${movie.id}`}
                       id={movie.id}
+                      movie={movie}
                       title={movie.title}
                       image={movie.image}
                       releaseDate={movie.releaseDate}
-                      removeFromMovies={removeFromMovies}
-                      saved={true}
+                      updateShows={setUpdate}
+                      saved={movie.saved}
                       showReleaseDate
                       type={'movie'}
                     />
           })}
         </div>) : sortBy == 'alpha' ?  (
         <div className="grid items-stretch grid-cols-[repeat(auto-fill,_minmax(170px,_1fr))] gap-4 m-4">
-          {movies.toSorted((a, b) => a.title.localeCompare(b.title)).map((movie) => {
+          {activeMovies.toSorted((a, b) => a.title.localeCompare(b.title)).map((movie) => {
             return <Item
                       key={`movie-saved-${movie.id}`}
                       id={movie.id}
+                      movie={movie}
                       title={movie.title}
                       image={movie.image}
                       releaseDate={movie.releaseDate}
-                      removeFromMovies={removeFromMovies}
-                      saved={true}
+                      updateShows={setUpdate}
+                      saved={movie.saved}
                       showReleaseDate
                       type={'movie'}
                     />
           })}
         </div>) : sortBy == 'ratings' ? (
-          <RatingsLayout groups={ratingGropus} removeFromMovies={removeFromMovies} />
+          <RatingsLayout groups={ratingGropus} updateShows={setUpdate} />
         ) : (
           <div>
             <h2 className="text-xl mb-2 mx-4 font-bold text-gray-400 flex-1">Unwatched</h2>
             <div className="grid items-stretch grid-cols-[repeat(auto-fill,_minmax(170px,_1fr))] gap-4 m-4">
-              {movies.filter(movie => !movie.watched).map((movie) => {
+              {activeMovies.filter(movie => !movie.watched).map((movie) => {
                 return <Item
                           key={`movie-saved-${movie.id}`}
                           id={movie.id}
+                          movie={movie}
                           title={movie.title}
                           image={movie.image}
                           releaseDate={movie.releaseDate}
-                          removeFromMovies={removeFromMovies}
-                          saved={true}
+                          updateShows={setUpdate}
+                          saved={movie.saved}
                           showReleaseDate
                           type={'movie'}
                         />
@@ -232,15 +276,16 @@ export default function Movies() {
            </div>
            <h2 className="text-xl mb-2 mx-4 font-bold text-gray-400 flex-1">Watched</h2>
             <div className="grid items-stretch grid-cols-[repeat(auto-fill,_minmax(170px,_1fr))] gap-4 m-4">
-              {movies.filter(movie => movie.watched).map((movie) => {
+              {activeMovies.filter(movie => movie.watched).map((movie) => {
                 return <Item
                           key={`movie-saved-${movie.id}`}
                           id={movie.id}
+                          movie={movie}
                           title={movie.title}
                           image={movie.image}
                           releaseDate={movie.releaseDate}
-                          removeFromMovies={removeFromMovies}
-                          saved={true}
+                          updateShows={setUpdate}
+                          saved={movie.saved}
                           showReleaseDate
                           type={'movie'}
                         />

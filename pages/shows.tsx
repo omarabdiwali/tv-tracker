@@ -5,7 +5,7 @@ import Head from "next/head";
 import { useRouter } from "next/router";
 import { useEffect, useMemo, useState } from "react";
 import { FaSortAlphaDown, FaStar } from "react-icons/fa";
-import { IoIosCalendar, IoIosEye, IoIosStar } from "react-icons/io";
+import { IoIosCalendar, IoIosEye } from "react-icons/io";
 
 const sortButtonClass = "cursor-pointer disabled:cursor-default disabled:opacity-40";
 
@@ -23,18 +23,29 @@ export default function Shows() {
   const [shows, setShows] = useState<ShowWatchlist[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [savedSortBy, setSavedSortBy] = useState('alpha');
+  const [watchedSortBy, setWatchedSortBy] = useState('ratings');
   const [sortBy, setSortBy] = useState('alpha');
+  const [filter, setFilter] = useState('saved');
+  const [update, setUpdate] = useState(0);
 
-  const dateGroups = useMemo(() => groupByDate(shows), [shows]);
-  const alphaSorted = useMemo(() => sortByAlpha(shows), [shows]);
-  const statusGroups = useMemo(() => groupByStatus(shows), [shows]);
-  const ratingGropus = useMemo(() => groupByRatings(shows), [shows]);
+  const savedShows = useMemo(() => shows.filter(show => show.saved), [shows, update]);
+  const watchedShows = useMemo(() => shows.filter(show => show.completed), [shows, update]);
+  const activeShows = filter == 'saved' ? savedShows : watchedShows;
+  
+  const dateGroups = useMemo(() => groupByDate(activeShows), [activeShows]);
+  const alphaSorted = useMemo(() => sortByAlpha(activeShows), [activeShows]);
+  const statusGroups = useMemo(() => groupByStatus(activeShows), [activeShows]);
+  const ratingGropus = useMemo(() => groupByRatings(activeShows), [activeShows]);
 
   useEffect(() => {
     if (!window) return;
     const validOptions = new Set(['date', 'alpha', 'status', 'ratings']);
-    const sort = window.localStorage.getItem('sortTypeShows');
-    setSortBy(sort && validOptions.has(sort) ? sort : 'alpha');
+    const savedSort = window.localStorage.getItem('savedSortTypeShows');
+    const watchedSort = window.localStorage.getItem('watchedSortTypeShows');
+    setSavedSortBy(savedSort && validOptions.has(savedSort) ? savedSort : 'alpha');
+    setWatchedSortBy(watchedSort && validOptions.has(watchedSort) ? watchedSort : 'ratings');
+    setSortBy(savedSort && validOptions.has(savedSort) ? savedSort : 'alpha');
   }, [])
 
   useEffect(() => {
@@ -102,9 +113,24 @@ export default function Shows() {
   }
 
   const handleSort = (sortType: string) => {
-    if (sortBy == sortType) return;
+    if (sortType == sortBy) return;
     setSortBy(sortType);
-    window.localStorage.setItem('sortTypeShows', sortType);
+    if (filter == 'saved') {
+      window.localStorage.setItem('savedSortTypeShows', sortType); 
+      setSavedSortBy(sortType);
+    } else {
+      window.localStorage.setItem('watchedSortTypeShows', sortType);
+      setWatchedSortBy(sortType);
+    }
+  }
+
+  const changeFilter = (filterVal: string) => {
+    if (filterVal == 'saved') {
+      setSortBy(savedSortBy);
+    } else {
+      setSortBy(watchedSortBy);
+    }
+    setFilter(filterVal);
   }
 
   if (status != 'authenticated') return null;
@@ -129,11 +155,28 @@ export default function Shows() {
     )
   }
 
+  const filterButtonClass = "sm:text-2xl md:text-2xl text-md font-bold disabled:text-gray-100 enabled:cursor-pointer text-gray-500";
+
   return (
     <>
       <Title />
       <div className="flex mb-2 mx-4">
-        <h2 className="text-2xl font-bold text-gray-100 flex-1">Saved Shows</h2>
+        <div className="flex-1 flex items-center gap-2">
+          <button disabled={filter == 'saved'} onClick={() => changeFilter('saved')} className={`${filterButtonClass} hidden sm:block`}>
+            Saved Shows
+          </button>
+          <button disabled={filter == 'saved'} onClick={() => changeFilter('saved')} className={`${filterButtonClass} block sm:hidden`}>
+            Saved
+          </button>
+          <div className="text-2xl font-black text-gray-600">/</div>
+          <button disabled={filter == 'watched'} onClick={() => changeFilter('watched')} className={`${filterButtonClass} hidden sm:block`}>
+            Watched Shows
+          </button>
+          <button disabled={filter == 'watched'} onClick={() => changeFilter('watched')} className={`${filterButtonClass} block sm:hidden`}>
+            Watched
+          </button>
+        </div>
+        {/* <h2 className="text-2xl font-bold text-gray-100 flex-1">Saved Shows</h2> */}
         <div className="flex items-center gap-2">
           <div>Sort By:</div>
           <button onClick={() => handleSort('alpha')} disabled={sortBy == 'alpha'} title='Alphabetically' className={sortButtonClass}><FaSortAlphaDown size={20} /></button>
@@ -142,19 +185,19 @@ export default function Shows() {
           <button onClick={() => handleSort('ratings')} disabled={sortBy == 'ratings'} title='Ratings' className={sortButtonClass}><FaStar size={20} /></button>
         </div>
       </div>
-      {shows.length == 0 && (
+      {activeShows.length == 0 && (
           <div className="flex flex-1 justify-center items-center">
-            <div className="text-gray-400">There are currently no shows saved.</div>
+            <div className="text-gray-400">{`There are currently no shows ${filter}.`}</div>
           </div>
         )}
-      {shows.length > 0 ? sortBy == 'date' ? (
-          <DateLayout groups={dateGroups} removeFromShows={removeFromShows} />
+      {activeShows.length > 0 ? sortBy == 'date' ? (
+          <DateLayout groups={dateGroups} setUpdate={setUpdate} />
         ) : sortBy == 'alpha' ?  (
-          <AlphaLayout shows={alphaSorted} removeFromShows={removeFromShows} />
+          <AlphaLayout shows={alphaSorted} setUpdate={setUpdate} />
         ) : sortBy == 'status' ? (
-          <StatusLayout groups={statusGroups} removeFromShows={removeFromShows} />
+          <StatusLayout groups={statusGroups} setUpdate={setUpdate} />
         ) : (
-          <RatingsLayout groups={ratingGropus} removeFromShows={removeFromShows} />
+          <RatingsLayout groups={ratingGropus} setUpdate={setUpdate} />
         ) : <></>}
     </>
   );

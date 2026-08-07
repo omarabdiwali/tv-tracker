@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]";
 import dbConnect from "@/utils/dbConnect";
 import Users from "@/models/Users";
-import { hasValue, IUser } from "@/utils/types";
+import { hasValue, IUser, UserShow } from "@/utils/types";
 import Show from "@/models/Show";
 
 const verifyRequiredKeys = (info: any) => {
@@ -69,13 +69,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   await dbConnect();
 
   let user : IUser | null = await Users.findOne({ email: session.user?.email });
-  let savedShows = new Set();
+  let index = -1;
 
   if (!user) {
-    user = await Users.create({ email: session.user?.email, savedShows: [], savedMovies: [] });
+    user = await Users.create({ email: session.user?.email, shows: [], movies: [] });
   } else {
-    const mappedList = user.savedShows.map((show) => show.showId);
-    savedShows = new Set(mappedList);
+    index = user.shows.findIndex(show => show.showId == `${id}`);
   }
 
   if (!user) return res.status(200).json({ success: false, message: "Unauthenticated user." });
@@ -90,17 +89,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
   }
 
-  if (save && savedShows.has(`${id}`)) {
-    return res.status(200).json({ success: true, message: `${title} has already been saved to watchlist.` });
-  } else if (!save && !savedShows.has(`${id}`)) {
-    return res.status(200).json({ success: true, message: `${title} has already been removed from watchlist.` });
+  if (index != -1) {
+    const showObj = user.shows[index];
+    if (save == showObj.saved) {
+      return res.status(200).json({ success: true, message: `${title} has already been ${save ? 'saved to' : 'removed from'} watchlist.` });
+    }
   }
 
-  if (save) {
-    user.savedShows.push({ showId: `${id}`, watchedEpisodes: [] });
+  if (index != -1) {
+    user.shows[index].saved = save;
   } else {
-    const index = user.savedShows.findIndex((show) => show.showId == `${id}`);
-    user.savedShows.splice(index, 1);
+    const showObj = { showId: `${id}`, saved: save, watchedEpisodes: [], rating: 0 };
+    user.shows.push(showObj);
   }
 
   user.save();

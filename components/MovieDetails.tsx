@@ -39,7 +39,6 @@ export default function MovieDetails({ movie }: MovieDetailsProps) {
       return;
     }
 
-    if (!movie.saved) return;
     setDisabled(true);
     setLoading(true);
 
@@ -243,19 +242,17 @@ export default function MovieDetails({ movie }: MovieDetailsProps) {
               {buttonText}
             </button>
 
-            {movie.saved &&
             <button disabled={disabled} onClick={handleChange} className={`flex cursor-pointer items-center justify-center gap-2 px-6 py-3 ${watchStatus ? 'bg-green-700 enabled:hover:bg-green-600' : 'bg-gray-700 enabled:hover:bg-gray-600'} text-gray-300 rounded-lg font-semibold transition-all duration-200 transform enabled:hover:scale-105`}>
               {loading ? <IoIosHourglass size={26} /> : <IoIosCheckmarkCircle size={26} />}
               {loading ? 'Loading...' : watchStatus ? 'Watched' : 'Mark As Watched'}
-            </button>}
+            </button>
           </div>
           
-          {movie.saved && 
           <StarRating 
             rating={movie.rating || 0}
             id={`${movie.id}`}
             type={'movie'}
-          />}
+          />
 
         </div>
       </div>

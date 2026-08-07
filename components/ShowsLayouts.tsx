@@ -2,7 +2,7 @@ import { SeasonEpisodeCountType, ShowWatchlist } from "@/utils/types";
 import Image from "next/image";
 import Link from "next/link";
 import { useSnackbar } from "notistack";
-import { useState } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 import { IoIosAdd, IoIosHourglass, IoIosRemove } from "react-icons/io";
 import { Fragment } from "react/jsx-runtime";
 
@@ -45,6 +45,7 @@ const parseAirDate = (str: string | null | undefined) => {
 }
 
 interface ItemProps {
+  show: ShowWatchlist,
   id: string,
   title: string,
   image: string,
@@ -53,15 +54,16 @@ interface ItemProps {
   lastEpisode: string | undefined | null,
   releaseDate?: string,
   showStatus: string,
-  removeFromShows: (id: string) => void;
+  updateShows: Dispatch<SetStateAction<number>>;
+  saved?: boolean;
   episodeCount?: number,
   episodesWatched?: number,
   seasonEpisodeCount?: SeasonEpisodeCountType
 }
 
-function Item({ id, image, imageSmall, title, releaseDate, episodeCount, episodesWatched,
-  seasonEpisodeCount, nextEpisode, lastEpisode, showStatus, removeFromShows }: ItemProps) {
-  const [action, setAction] = useState('remove');
+function Item({ show, id, image, imageSmall, title, releaseDate, episodeCount, episodesWatched,
+  saved, seasonEpisodeCount, nextEpisode, lastEpisode, showStatus, updateShows }: ItemProps) {
+  const [action, setAction] = useState(saved ? 'remove' : 'add');
   const [disabled, setDisabled] = useState(false);
   const [imgSrc, setImgSrc] = useState(imageSmall || image || 'https://static.tvmaze.com/images/no-img/no-img-portrait-text.png');
 
@@ -87,9 +89,8 @@ function Item({ id, image, imageSmall, title, releaseDate, episodeCount, episode
       if (data.success) {
         setAction(prevAction == 'add' ? 'remove' : 'add');
         enqueueSnackbar(data.message, { variant: "success", autoHideDuration: 1500 });
-        if (prevAction == 'remove') {
-          removeFromShows(id);
-        }
+        show.saved = prevAction == 'add';
+        updateShows(prev => prev ? 0 : 1);
       } else {
         if (data.message == 'Unauthenticated user.') {
           window.location.href = '/';
@@ -211,7 +212,8 @@ function Item({ id, image, imageSmall, title, releaseDate, episodeCount, episode
   );
 }
 
-export function DateLayout({ groups, removeFromShows } : { groups: Record<string, ShowWatchlist[]>, removeFromShows: (id: string) => void }) {
+export function DateLayout({ groups, setUpdate } :
+  { groups: Record<string, ShowWatchlist[]>, setUpdate: Dispatch<SetStateAction<number>> }) {
   return(
     <div>
       {dateSections.map(({ key, label }) => (
@@ -222,6 +224,7 @@ export function DateLayout({ groups, removeFromShows } : { groups: Record<string
               {groups[key].map((show: ShowWatchlist) => (
                 <Item
                   key={show.id}
+                  show={show}
                   id={show.id}
                   showStatus={show.status}
                   title={show.title}
@@ -233,7 +236,8 @@ export function DateLayout({ groups, removeFromShows } : { groups: Record<string
                   nextEpisode={show.nextEpisode}
                   lastEpisode={show.lastEpisode}
                   releaseDate={show.releaseDate}
-                  removeFromShows={removeFromShows}
+                  updateShows={setUpdate}
+                  saved={show.saved}
                 />
               ))}
             </div>
@@ -244,12 +248,14 @@ export function DateLayout({ groups, removeFromShows } : { groups: Record<string
   )
 }
 
-export function AlphaLayout({ shows, removeFromShows } : { shows: ShowWatchlist[], removeFromShows: (id: string) => void }) {
+export function AlphaLayout({ shows, setUpdate } :
+  { shows: ShowWatchlist[], setUpdate: Dispatch<SetStateAction<number>> }) {
   return (
     <div className="grid items-stretch grid-cols-[repeat(auto-fill,_minmax(170px,_1fr))] gap-4 m-4">
       {shows.map((show) => {
         return <Item
                   key={`show-saved-${show.id}`}
+                  show={show}
                   id={show.id}
                   showStatus={show.status}
                   title={show.title}
@@ -261,15 +267,16 @@ export function AlphaLayout({ shows, removeFromShows } : { shows: ShowWatchlist[
                   nextEpisode={show.nextEpisode}
                   lastEpisode={show.lastEpisode}
                   releaseDate={show.releaseDate}
-                  removeFromShows={removeFromShows}
+                  updateShows={setUpdate}
+                  saved={show.saved}
                 />
       })}
     </div>
   )
 }
 
-export function StatusLayout({ groups, removeFromShows } : 
-  { groups: Record<string, ShowWatchlist[]>, removeFromShows: (id: string) => void }) {
+export function StatusLayout({ groups, setUpdate } : 
+  { groups: Record<string, ShowWatchlist[]>, setUpdate: Dispatch<SetStateAction<number>> }) {
   return(
     <div>
       {statusSections.map(({ key, label }) => (
@@ -280,6 +287,7 @@ export function StatusLayout({ groups, removeFromShows } :
               {groups[key].map((show: ShowWatchlist) => (
                 <Item
                   key={show.id}
+                  show={show}
                   id={show.id}
                   showStatus={show.status}
                   title={show.title}
@@ -291,7 +299,8 @@ export function StatusLayout({ groups, removeFromShows } :
                   nextEpisode={show.nextEpisode}
                   lastEpisode={show.lastEpisode}
                   releaseDate={show.releaseDate}
-                  removeFromShows={removeFromShows}
+                  updateShows={setUpdate}
+                  saved={show.saved}
                 />
               ))}
             </div>
@@ -302,8 +311,8 @@ export function StatusLayout({ groups, removeFromShows } :
   )
 }
 
-export function RatingsLayout({ groups, removeFromShows } : 
-  { groups: Record<string, ShowWatchlist[]>, removeFromShows: (id: string) => void }) {
+export function RatingsLayout({ groups, setUpdate } : 
+  { groups: Record<string, ShowWatchlist[]>, setUpdate: Dispatch<SetStateAction<number>> }) {
   return(
     <div>
       {ratingsSections.map(({ key, label }) => (
@@ -314,6 +323,7 @@ export function RatingsLayout({ groups, removeFromShows } :
               {groups[key].map((show: ShowWatchlist) => (
                 <Item
                   key={show.id}
+                  show={show}
                   id={show.id}
                   showStatus={show.status}
                   title={show.title}
@@ -325,7 +335,8 @@ export function RatingsLayout({ groups, removeFromShows } :
                   nextEpisode={show.nextEpisode}
                   lastEpisode={show.lastEpisode}
                   releaseDate={show.releaseDate}
-                  removeFromShows={removeFromShows}
+                  updateShows={setUpdate}
+                  saved={show.saved}
                 />
               ))}
             </div>

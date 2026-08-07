@@ -118,12 +118,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const user: IUser | null = await Users.findOne({ email: session.user?.email });
 
   if (!user) {
-    await Users.create({ email: session.user?.email, savedMovies: [], savedShows: [] });
+    await Users.create({ email: session.user?.email, movies: [], shows: [] });
   } else {
-    const index = user.savedMovies.findIndex((movie) => movie.movieId == `${id}`);
-    saved = index != -1 ? true : false;
-    watched = index != -1 ? user.savedMovies[index].watched : false;
-    rating = index != -1 ? (user.savedMovies[index].rating || 0) : 0;
+    const index = user.movies.findIndex((movie) => movie.movieId == `${id}`);
+    saved = index != -1 ? !!user.movies[index].saved : false;
+    watched = index != -1 ? user.movies[index].watched : false;
+    rating = index != -1 ? (user.movies[index].rating || 0) : 0;
   }
 
   if (!user) return res.status(200).json({ success: false, message: "Unauthenticated user." });
