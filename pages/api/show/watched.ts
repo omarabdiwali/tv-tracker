@@ -23,7 +23,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const index = user.shows.findIndex((show) => show.showId == `${showId}`);
-  const showExists = await Show.exists({ showId });
+  const showExists = await Show.exists({ id: showId });
   if (!showExists) return res.status(200).json({ success: false, message: "Invalid show." });
   
   if (index == -1) {

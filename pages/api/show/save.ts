@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]";
 import dbConnect from "@/utils/dbConnect";
 import Users from "@/models/Users";
-import { hasValue, IUser, UserShow } from "@/utils/types";
+import { hasValue, IUser } from "@/utils/types";
 import Show from "@/models/Show";
 
 const verifyRequiredKeys = (info: any) => {

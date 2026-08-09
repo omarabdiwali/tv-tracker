@@ -88,9 +88,6 @@ export default function MovieDetails({ movie }: MovieDetailsProps) {
     }).then(res => res.json()).then(data => {
       if (data.success) {
         setButtonText(prevText == 'Add to Watchlist' ? "Remove from Watchlist" : "Add to Watchlist");
-        movie.saved = prevText == 'Add to Watchlist';
-        movie.watched = false;
-        setWatchStatus(false);
         enqueueSnackbar(data.message, { variant: 'success', autoHideDuration: 1500 });
       } else {
         if (data.message == 'Unauthenticated user.') {

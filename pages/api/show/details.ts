@@ -53,7 +53,6 @@ const parseEpisodes = (episodes: any, nextEpisodeId: string | null, lastEpisodeI
     const season: number = episode.season;
     const number = episode.number;
     const airdate = episode.airdate;
-    const rating = episode.rating?.average;
     const summary = episode.summary;
 
     if (!hasValue(id) || !hasValue(number) || !hasValue(airdate) || !hasValue(season)) continue;
@@ -66,7 +65,7 @@ const parseEpisodes = (episodes: any, nextEpisodeId: string | null, lastEpisodeI
       lastEpisode = `${season}x${episodeString} / ${airdate}`;
     }
 
-    (seasons[season] ??= []).push({ id, title, number, airdate, rating, summary });
+    (seasons[season] ??= []).push({ id, title, number, airdate, summary });
   }
 
   return {
