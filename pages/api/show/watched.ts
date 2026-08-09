@@ -4,6 +4,7 @@ import { authOptions } from "../auth/[...nextauth]";
 import dbConnect from "@/utils/dbConnect";
 import Users from "@/models/Users";
 import { hasValue, IUser } from "@/utils/types";
+import Show from "@/models/Show";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method != "POST") return res.status(200).json({ success: false, message: 'Method not allowed.' });
@@ -22,6 +23,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const index = user.shows.findIndex((show) => show.showId == `${showId}`);
+  const showExists = await Show.exists({ showId });
+  if (!showExists) return res.status(200).json({ success: false, message: "Invalid show." });
   
   if (index == -1) {
     const showObj = { showId: `${showId}`, saved: false, watchedEpisodes: setWatched ? [`${epId}`] : [], rating: 0 };

@@ -85,6 +85,7 @@ const queryTVMaze = async (showId: string) => {
   const url = `https://api.tvmaze.com/shows/${showId}?embed=episodes`;
 
   return fetch(url).then(res => res.json()).then(data => {
+    if (data.status == 404) return {};
     const id = data.id;
     const title = data.name;
     const genres = data.genres;
@@ -160,9 +161,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const show: IShow | null = await Show.findOne({ id }, showKeys);
   if (!show || !show.episodes || timeToRefresh(show.updatedAt, show.status)) {
     const info = await queryTVMaze(id as string);
-    if (verifyRequiredKeys(info)) {
+    
+    if (!verifyRequiredKeys(info)) {
+      return res.status(200).json({ success: false, message: "Invalid show." });
+    } else {
       !show ? await Show.create(info) : await Show.findOneAndUpdate({ id }, info);
     }
+
     showInfo = info;
   } else {
     showInfo = show;

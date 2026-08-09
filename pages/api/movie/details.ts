@@ -63,6 +63,8 @@ const queryTMDB = async (movieId: string) => {
   const url = `https://api.themoviedb.org/3/movie/${movieId}?api_key=${apiKey}&language=en-US&append_to_response=videos`;
 
   return fetch(url).then(res => res.json()).then(data => {
+    if (hasValue(data.success) && data.success == false) return {};
+    
     const id = data.id;
     const title = data.title;
     const genres = data.genres;
@@ -134,7 +136,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (!movie || movie.trailer == 'n/a' || timeToRefresh(movie.updatedAt)) {
     const data = await queryTMDB(id as string);
-    verifyRequiredKeys(data) && (!movie ? await Movie.create(data) : await Movie.findOneAndUpdate({ id }, data));
+
+    if (!verifyRequiredKeys(data)) {
+      return res.status(200).json({ success: false, message: "Invalid movie." });
+    } else {
+      !movie ? await Movie.create(data) : await Movie.findOneAndUpdate({ id }, data)
+    }
+
     info = formatData(data, saved, watched, rating);
   } else {
     info = formatData(movie, saved, watched, rating);

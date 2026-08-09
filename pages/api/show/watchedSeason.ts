@@ -4,22 +4,23 @@ import { authOptions } from "../auth/[...nextauth]";
 import dbConnect from "@/utils/dbConnect";
 import Users from "@/models/Users";
 import { IUser } from "@/utils/types";
+import Show from "@/models/Show";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method != "POST") return res.status(200).json({ success: false, message: 'Method not allowed.' });
   const { showId, episodeIds, watched } = req.body;
   const session = await getServerSession(req, res, authOptions);
 
-  if (!session || !showId || !episodeIds || watched == undefined || watched == null) {
+  if (!session || !showId || !episodeIds || episodeIds.length == 0 || watched == undefined || watched == null) {
     const message = !session ? "Unauthenticated user." : "Missing body parameters.";
     return res.status(200).json({ success: false, message  });
   }
 
   await dbConnect();
   const user: IUser | null = await Users.findOne({ email: session.user?.email });
-  if (!user) {
-    return res.status(200).json({ success: false, message: "Unauthenticated user." });
-  }
+  const showExists = await Show.exists({ showId });
+  if (!user) return res.status(200).json({ success: false, message: "Unauthenticated user." });
+  if (!showExists) return res.status(200).json({ success: false, message: "Invalid show." });
 
   const index = user.shows.findIndex((show) => show.showId == `${showId}`);
   

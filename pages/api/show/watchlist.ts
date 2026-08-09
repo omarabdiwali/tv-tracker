@@ -49,6 +49,7 @@ const parseEpisodeInfo = (data: any) => {
 const getEpisodesAndImage = async (showId: string) => {
   const url = `https://api.tvmaze.com/shows/${showId}?embed[]=nextepisode&embed[]=previousepisode`;
   return fetch(url).then(res => res.json()).then(data => {
+    if (data.status == 404) return {};
     const image = data.image?.original || data.image?.medium || 'https://static.tvmaze.com/images/no-img/no-img-portrait-text.png';
     const imageSmall = data.image?.medium;
     const lastEpisode = parseEpisodeInfo(data._embedded?.previousepisode);

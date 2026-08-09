@@ -26,6 +26,7 @@ const queryTVMaze = async (showId: string, targetTitle: string) => {
   const url = `https://api.tvmaze.com/shows/${showId}?embed[]=nextepisode&embed[]=previousepisode`;
 
   return fetch(url).then(res => res.json()).then(async (data) => {
+    if (data.status == 404) return {};
     const id = data.id;
     const title = data.name;
     const genres = data.genres;

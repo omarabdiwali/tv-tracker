@@ -4,6 +4,7 @@ import { authOptions } from "../auth/[...nextauth]";
 import dbConnect from "@/utils/dbConnect";
 import { hasValue, IUser } from "@/utils/types";
 import Users from "@/models/Users";
+import Movie from "@/models/Movie";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method != "POST") return res.status(200).json({ success: false, message: 'Method not allowed.' });
@@ -18,7 +19,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   await dbConnect();
 
   const user: IUser | null = await Users.findOne({ email: session.user?.email });
+  const movieExists = await Movie.exists({ id });
+
   if (!user) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
+  if (!movieExists) return res.status(200).json({ success: false, message: 'Invalid movie.' });
   const movieIndex = user.movies.findIndex((movie) => movie.movieId == `${id}`);
 
   if (movieIndex == -1) {

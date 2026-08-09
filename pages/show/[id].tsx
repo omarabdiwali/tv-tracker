@@ -1,6 +1,7 @@
 import ShowDetails from "@/components/ShowDetails";
 import { ShowProps } from "@/utils/types";
 import { useSession } from "next-auth/react";
+import Error from "next/error";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
@@ -58,7 +59,7 @@ export default function Details() {
     return (
       <>
         <Title />
-        <div>{error}</div>
+        {error == "Invalid show." ? <Error statusCode={404} /> : <div>{error}</div>}
       </>
     )
   }
