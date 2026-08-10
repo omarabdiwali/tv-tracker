@@ -4,13 +4,37 @@ import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useSnackbar } from 'notistack';
-import { useState, useCallback, memo, useEffect } from 'react';
+import { useState, useCallback, memo, useEffect, useRef } from 'react';
 import { FaImdb, FaStar } from 'react-icons/fa';
 import { HiOutlineStatusOnline } from 'react-icons/hi';
 import { IoIosAddCircleOutline, IoIosCheckmarkCircle, IoIosCloseCircleOutline, IoIosHourglass, IoMdArrowDropdown, IoMdArrowDropup, IoMdCalendar } from 'react-icons/io';
 import { RxClock } from 'react-icons/rx';
 import StarRating from './StarRating';
 import { useRouter } from 'next/router';
+
+const isElementInViewport = (el: HTMLElement, parent: HTMLElement | null) => {
+  const rect = el.getBoundingClientRect();
+
+  if (parent) {
+    const parentRect = parent.getBoundingClientRect();
+    return (
+      rect.top >= parentRect.top &&
+      rect.left >= parentRect.left &&
+      rect.bottom <= parentRect.bottom &&
+      rect.right <= parentRect.right
+    );
+  }
+
+  const viewHeight = window.innerHeight || document.documentElement.clientHeight;
+  const viewWidth = window.innerWidth || document.documentElement.clientWidth;
+
+  return (
+    rect.top >= 0 &&
+    rect.left >= 0 &&
+    rect.bottom <= viewHeight &&
+    rect.right <= viewWidth
+  );
+}
 
 const EpisodeItem = memo(({ episode, watched, onToggleWatched }: {
   episode: Episode;
@@ -26,7 +50,7 @@ const EpisodeItem = memo(({ episode, watched, onToggleWatched }: {
   }, [episode.id, watched, onToggleWatched]);
 
   return (
-    <div className="flex items-start justify-between p-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors duration-200">
+    <div id={`${episode.id}`} className="flex items-start justify-between p-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors duration-200">
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
           <span className="text-sm font-medium text-blue-400 bg-blue-900/50 px-2 py-0.5 rounded">
@@ -83,10 +107,43 @@ const SeasonSection = ({
   const [watched, setWatched] = useState(initialWatched);
   const [watchedCount, setWatchedCount] = useState(episodes.filter(ep => watched.has(`${ep.id}`)).length);
   const [loading, setLoading] = useState(false);
+  const [scrollEpisode, setScrollEpisode] = useState<string | null>(null);
+  const seasonRef = useRef(null);
+  const nextEpRef = useRef<string | null>(null);
 
   useEffect(() => {
-    setWatchedCount(episodes.filter(ep => watched.has(`${ep.id}`)).length);
+    const unwatchedEpisodes = episodes.filter(ep => !watched.has(`${ep.id}`));
+    const firstId = unwatchedEpisodes.at(0)?.id;
+    nextEpRef.current = firstId ? `${firstId}` : null;
+    setWatchedCount(episodes.length - unwatchedEpisodes.length);
   }, [episodes, watched])
+
+  useEffect(() => {
+    if (!isOpen) {
+      setScrollEpisode(nextEpRef.current);
+    }
+  }, [isOpen])
+
+  useEffect(() => {
+    if (!isOpen || !scrollEpisode || !seasonRef.current) return;
+    
+    const timeoutId = setTimeout(() => {
+      const element = document.getElementById(scrollEpisode);
+      const scrollContainer = seasonRef.current;
+
+      if (!element || !scrollContainer) return;
+      const isVisible = isElementInViewport(element, scrollContainer);
+
+      if (!isVisible) {
+        element.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }
+    }, 50);
+
+    return () => clearTimeout(timeoutId);
+  }, [isOpen, scrollEpisode])
 
   const handleToggleWatched = useCallback(async (episodeId: string | number, setToWatched: boolean) => {
     const result = await onToggleWatched(episodeId, setToWatched);
@@ -150,7 +207,7 @@ const SeasonSection = ({
       </button>
 
       {isOpen && (
-        <div className="p-3 space-y-2 max-h-96 overflow-y-auto bg-gray-800/50">
+        <div ref={seasonRef} className="p-3 space-y-2 max-h-96 overflow-y-auto bg-gray-800/50">
           {episodes.map(episode => (
             <EpisodeItem
               key={episode.id}
