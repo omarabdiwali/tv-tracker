@@ -182,15 +182,15 @@ const SeasonSection = ({
         className="w-full flex items-center cursor-pointer justify-between p-4 bg-gray-800 hover:bg-gray-700 transition-colors duration-200"
       >
         <div className="flex items-center gap-3">
-          <h3 className="text-lg font-bold text-white">
+          <h3 className="text-sm sm:text-lg font-bold text-white">
             Season {seasonNumber}
           </h3>
-          <span className="text-sm text-gray-400 bg-gray-700 px-2 py-0.5 rounded-full">
+          <span className="hidden sm:block sm:text-sm text-gray-400 bg-gray-700 px-2 py-0.5 rounded-full">
             {episodes.length} Episodes
           </span>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-green-400">
+        <div className="flex text-xs sm:text-sm items-center gap-2">
+          <span className="text-green-400">
             {watchedCount}/{episodes.length} Watched
           </span>
           <div
@@ -337,7 +337,7 @@ interface InfoBoxesProps {
 function InfoBoxes({ status, releaseDate, lastEpisode, nextEpisode } : InfoBoxesProps) {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 py-5 rounded-xl">
-      <div className='bg-gray-800 p-2 rounded-lg px-3'>
+      <div className='col-span-2 sm:col-span-1 bg-gray-800 p-2 rounded-lg px-3'>
         <div className="text-sm font-semibold text-gray-400 mb-1">Release Date</div>
         <div className="text-white flex items-center gap-2">
           <IoMdCalendar size={18} className='text-blue-400' />
