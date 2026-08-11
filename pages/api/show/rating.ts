@@ -21,7 +21,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!user) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
   
   const showIndex = user.shows.findIndex((show) => show.showId == `${id}`);
-  const noWatchedEpisodes = user.shows[showIndex].watchedEpisodes.length == 0;
+  const noWatchedEpisodes = showIndex != -1 ? user.shows[showIndex].watchedEpisodes.length == 0 : true;
 
   if (showIndex == -1 || (noWatchedEpisodes && rating != 0)) {
     return res.status(200).json({ success: false, message: 'Show has not been started/watched.' });

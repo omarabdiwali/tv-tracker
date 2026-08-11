@@ -19,6 +19,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const user: IUser | null = await Users.findOne({ email: session.user?.email });
   if (!user) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
+  
   const movieIndex = user.movies.findIndex((movie) => movie.movieId == `${id}`);
   const movieObj = movieIndex != -1 ? user.movies[movieIndex] : null;
   const isReset = rating == 0;
