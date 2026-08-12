@@ -53,8 +53,11 @@ const EpisodeItem = memo(({ episode, watched, onToggleWatched }: {
     <div id={`${episode.id}`} className="flex items-start justify-between p-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors duration-200">
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
-          <span className="text-sm font-medium text-blue-400 bg-blue-900/50 px-2 py-0.5 rounded">
+          <span className="text-sm hidden sm:block font-medium text-blue-400 bg-blue-900/50 px-2 py-0.5 rounded">
             Ep {episode.number}
+          </span>
+          <span className="text-sm sm:hidden font-medium text-blue-400 bg-blue-900/50 px-2 py-0.5 rounded">
+            {episode.number}
           </span>
           <h4 className="font-semibold text-white text-sm sm:text-base line-clamp-1">
             {episode.title}
@@ -185,9 +188,9 @@ const SeasonSection = ({
           <h3 className="text-sm sm:text-lg font-bold text-white">
             Season {seasonNumber}
           </h3>
-          <span className="hidden sm:block sm:text-sm text-gray-400 bg-gray-700 px-2 py-0.5 rounded-full">
-            {episodes.length} Episodes
-          </span>
+          {episodes.length > 0 && episodes.at(0)?.airdate && <span className="hidden sm:block sm:text-xs text-gray-400">
+            {episodes.at(0)?.airdate}
+          </span>}
         </div>
         <div className="flex text-xs sm:text-sm items-center gap-2">
           <span className="text-green-400">
