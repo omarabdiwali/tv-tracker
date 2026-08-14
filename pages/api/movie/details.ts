@@ -58,7 +58,7 @@ const getBestVideo = (videos: any) => {
   return `https://www.youtube.com/watch?v=${currentBest}`;
 }
 
-const queryTMDB = async (movieId: string) => {
+const queryTMDB = async (movieId: string) : Promise<any> => {
   const apiKey = process.env.TMDB_API_KEY;
   const url = `https://api.themoviedb.org/3/movie/${movieId}?api_key=${apiKey}&language=en-US&append_to_response=videos`;
 
@@ -105,6 +105,18 @@ const timeToRefresh = (from: Date): boolean => {
   return (current - fromMs) >= refreshTime;
 }
 
+interface RatingObj {
+  rating: string | number | undefined;
+  votes: string | number | undefined;
+}
+
+const getLargestVotes = (prevRating: RatingObj, curRating: RatingObj) => {
+  if (!prevRating.rating || !prevRating.votes) return curRating;
+  if (!curRating.rating || !curRating.votes) return prevRating;
+  if (prevRating.votes > curRating.votes) return prevRating;
+  return curRating;
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { id } = req.query;
   if (req.method != "GET") return res.status(200).json({ success: false, message: 'Method not allowed.' })
@@ -140,6 +152,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!verifyRequiredKeys(data)) {
       return res.status(200).json({ success: false, message: "Invalid movie." });
     } else {
+      const prevRating = { rating: movie?.voteAverage, votes: movie?.voteCount };
+      const curRating = { rating: data?.voteAverage, votes: data.voteCount } 
+      const ratings = getLargestVotes(prevRating, curRating);
+      data.voteAverage = ratings.rating;
+      data.voteCount = ratings.votes;
       !movie ? await Movie.create(data) : await Movie.findOneAndUpdate({ id }, data)
     }
 

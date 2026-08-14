@@ -20,12 +20,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const user: IUser | null = await Users.findOne({ email: session.user?.email });
   if (!user) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
   
-  const movieIndex = user.movies.findIndex((movie) => movie.movieId == `${id}`);
-  const movieObj = movieIndex != -1 ? user.movies[movieIndex] : null;
-  const isReset = rating == 0;
-  
-  if (movieIndex == -1 || (!movieObj?.watched && !isReset)) {
-    return res.status(200).json({ success: false, message: 'Movie has not been watched.' });
+  const movieIndex = user.movies.findIndex((movie) => movie.movieId == `${id}`);  
+  if (movieIndex == -1) {
+    return res.status(200).json({ success: false, message: 'Movie has not been saved/watched.' });
   }
 
   user.movies[movieIndex].rating = rating;

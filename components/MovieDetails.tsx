@@ -15,8 +15,13 @@ const formatNumberOfVotes = (count: string) : string => {
   if (isNaN(parsedCount)) return '0 votes.';
   if (parsedCount < 1000) return `${count} votes`;
 
-  const asThousand = (parsedCount / 1000).toFixed(1);
-  return `${asThousand}k votes`;
+  if (parsedCount < 1000000) {
+    const asThousand = (parsedCount / 1000).toFixed(1);
+    return `${asThousand}k votes`;
+  } else {
+    const asMillion = (parsedCount / 1000000).toFixed(1);
+    return `${asMillion}M votes`;
+  }
 }
 
 export default function MovieDetails({ movie }: MovieDetailsProps) {
