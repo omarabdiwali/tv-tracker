@@ -2,19 +2,10 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]";
 import Users from "@/models/Users";
-import { hasValue, IMovie, IUser } from "@/utils/types";
+import { IMovie, IUser } from "@/utils/types";
 import dbConnect from "@/utils/dbConnect";
 import Movie from "@/models/Movie";
-
-const verifyRequiredKeys = (info: any) => {
-  const { id, image, title } = info;
-  return hasValue(id) && hasValue(image) && hasValue(title);
-}
-
-const buildPosterURL = (path: string, size: string) => {
-  if (!path) return null;
-  return `https://image.tmdb.org/t/p/${size}${path}`;
-}
+import { hasValue, buildPosterURL, verifyRequiredKeys, correctRatingInfo, getIMDBRatings } from "@/utils/util";
 
 const replaceValues = (video: any) => {
   return [ video.key, video.official, new Date(video.published_at), video.type ];
@@ -36,6 +27,7 @@ const getBestVideo = (videos: any) => {
       } else if (video.official && !isOfficial) {
         [currentBest, isOfficial, publishedAt, videoType] = replaceValues(video);
       } else if (new Date(video.published_at) > publishedAt) {
+        if (isOfficial && !video.official) continue;
         [currentBest, isOfficial, publishedAt, videoType] = replaceValues(video);
       }
     }
@@ -62,7 +54,7 @@ const queryTMDB = async (movieId: string) : Promise<any> => {
   const apiKey = process.env.TMDB_API_KEY;
   const url = `https://api.themoviedb.org/3/movie/${movieId}?api_key=${apiKey}&language=en-US&append_to_response=videos`;
 
-  return fetch(url).then(res => res.json()).then(data => {
+  return fetch(url).then(res => res.json()).then(async (data) => {
     if (hasValue(data.success) && data.success == false) return {};
     
     const id = data.id;
@@ -70,11 +62,15 @@ const queryTMDB = async (movieId: string) : Promise<any> => {
     const genres = data.genres;
     const homepage = data.homepage;
     const imdbId = data.imdb_id;
+    const imdbData = await getIMDBRatings(imdbId);
+    const ratingInfo = correctRatingInfo(imdbData, data.vote_average, data.vote_count);
+
     const origin = data.origin_country;
     const overview = data.overview;
     const releaseDate = data.release_date;
-    const voteCount = data.vote_count;
-    const voteAverage = data.vote_average;
+    const voteCount = ratingInfo.votes;
+    const voteAverage = ratingInfo.rating;
+    
     const runtime = data.runtime ? `${data.runtime} mins` : data.runtime;
     const image = data.poster_path ? buildPosterURL(data.poster_path, 'w342') : 'https://static.tvmaze.com/images/no-img/no-img-portrait-text.png';
     const imageSmall = data.poster_path ? buildPosterURL(data.poster_path, 'w185') : 'https://static.tvmaze.com/images/no-img/no-img-portrait-text.png';
@@ -103,18 +99,6 @@ const timeToRefresh = (from: Date): boolean => {
   const current = new Date().getTime();
   const fromMs = new Date(from).getTime();
   return (current - fromMs) >= refreshTime;
-}
-
-interface RatingObj {
-  rating: string | number | undefined;
-  votes: string | number | undefined;
-}
-
-const getLargestVotes = (prevRating: RatingObj, curRating: RatingObj) => {
-  if (!prevRating.rating || !prevRating.votes) return curRating;
-  if (!curRating.rating || !curRating.votes) return prevRating;
-  if (prevRating.votes > curRating.votes) return prevRating;
-  return curRating;
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -152,11 +136,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!verifyRequiredKeys(data)) {
       return res.status(200).json({ success: false, message: "Invalid movie." });
     } else {
-      const prevRating = { rating: movie?.voteAverage, votes: movie?.voteCount };
-      const curRating = { rating: data?.voteAverage, votes: data.voteCount } 
-      const ratings = getLargestVotes(prevRating, curRating);
-      data.voteAverage = ratings.rating;
-      data.voteCount = ratings.votes;
       !movie ? await Movie.create(data) : await Movie.findOneAndUpdate({ id }, data)
     }
 

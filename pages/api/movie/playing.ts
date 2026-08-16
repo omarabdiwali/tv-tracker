@@ -3,11 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]";
 import dbConnect from "@/utils/dbConnect";
 import Users from "@/models/Users";
-import { hasValue, ItemProps, IUser } from "@/utils/types";
-
-const buildPosterURL = (path: string, size: string) => {
-  return `https://image.tmdb.org/t/p/${size}${path}`;
-}
+import { ItemProps, IUser } from "@/utils/types";
+import { hasValue, buildPosterURL } from "@/utils/util";
 
 const queryTMDB = async (savedMovies: Set<string>) : Promise<ItemProps[]> => {
   const apiKey = process.env.TMDB_API_KEY;
@@ -19,12 +16,12 @@ const queryTMDB = async (savedMovies: Set<string>) : Promise<ItemProps[]> => {
     for (const movie of data.results) {
       const id = movie.id;
       const releaseDate = movie.release_date;
-      const image = movie.poster_path;
+      const image = buildPosterURL(movie.poster_path, 'w185');
       const title = movie.title;
       const saved = savedMovies.has(`${id}`);
 
       if (!hasValue(id) || !title || !image) continue;
-      items.push({ id, title, image: buildPosterURL(image, 'w185'), releaseDate, saved });
+      items.push({ id, title, image, releaseDate, saved });
     }
     return items;
   }).catch(err => {

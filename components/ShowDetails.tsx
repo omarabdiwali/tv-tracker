@@ -11,6 +11,7 @@ import { IoIosAddCircleOutline, IoIosCheckmarkCircle, IoIosCloseCircleOutline, I
 import { RxClock } from 'react-icons/rx';
 import StarRating from './StarRating';
 import { useRouter } from 'next/router';
+import { formatNumberOfVotes } from '@/utils/util';
 
 const isElementInViewport = (el: HTMLElement, parent: HTMLElement | null) => {
   const rect = el.getBoundingClientRect();
@@ -505,15 +506,18 @@ export default function ShowDetails({ show }: ShowDetailsProps) {
                   <div className="flex items-center gap-2">
                     <FaStar size={20} className='text-yellow-500' />
                     <span className="text-2xl font-bold text-white">
-                      {parseFloat(show.voteAverage as string).toFixed(1)}
+                      {show.voteAverage.toFixed(1)}
                     </span>
                   </div>
+                  {show.voteCount && <div className="text-sm text-gray-400">
+                    {formatNumberOfVotes(show.voteCount)}
+                  </div>}
                 </div>
 
                 <div className="w-full bg-gray-600 rounded-full h-2">
                   <div
                     className="bg-gradient-to-r from-yellow-400 to-yellow-500 h-2 rounded-full transition-all duration-500"
-                    style={{ width: `${(parseFloat(show.voteAverage as string || '0') / 10) * 100}%` }}
+                    style={{ width: `${(show.voteAverage / 10) * 100}%` }}
                   />
                 </div>
               </div>) : ''}

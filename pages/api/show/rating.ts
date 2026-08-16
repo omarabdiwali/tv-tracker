@@ -2,8 +2,9 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]";
 import dbConnect from "@/utils/dbConnect";
-import { hasValue, IUser } from "@/utils/types";
+import { IUser } from "@/utils/types";
 import Users from "@/models/Users";
+import { hasValue } from "@/utils/util";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method != "POST") return res.status(200).json({ success: false, message: 'Method not allowed.' });

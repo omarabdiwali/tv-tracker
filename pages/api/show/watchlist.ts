@@ -2,9 +2,10 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]";
 import Users from '@/models/Users'
-import { hasValue, IShow, IUser, UserShow, ShowWatchlist } from "@/utils/types";
+import { IShow, IUser, UserShow, ShowWatchlist } from "@/utils/types";
 import dbConnect from "@/utils/dbConnect";
 import Show from "@/models/Show";
+import { hasValue } from "@/utils/util";
 
 type ObjType = {
   [id: string] : UserShow

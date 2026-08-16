@@ -3,13 +3,9 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]";
 import dbConnect from "@/utils/dbConnect";
 import Users from "@/models/Users";
-import { hasValue, IUser } from "@/utils/types";
+import { IUser } from "@/utils/types";
 import Show from "@/models/Show";
-
-const verifyRequiredKeys = (info: any) => {
-  const { id, image, title } = info;
-  return hasValue(id) && hasValue(image) && hasValue(title);
-}
+import { hasValue, verifyRequiredKeys, correctRatingInfo, getIMDBRatings } from "@/utils/util";
 
 const parseEpisodeInfo = (data: any) => {
   if (!data) return null;
@@ -32,6 +28,8 @@ const queryTVMaze = async (showId: string, targetTitle: string) => {
     const genres = data.genres;
     const homepage = data.officialSite;
     const imdbId = data.externals?.imdb;
+    const imdbData = await getIMDBRatings(imdbId);
+    const ratingInfo = correctRatingInfo(imdbData, data.rating?.average);
 
     const language = data.language;
     const overview = data.summary;
@@ -41,15 +39,16 @@ const queryTVMaze = async (showId: string, targetTitle: string) => {
     const nextEpisode = parseEpisodeInfo(data._embedded?.nextepisode);
     const nextUpdatedAt = new Date();
 
-    const voteAverage = data.rating?.average;
+    const voteAverage = ratingInfo.rating;
+    const voteCount = ratingInfo.votes;
     const status = data.status;
     const image = data.image?.original || data.image?.medium || 'https://static.tvmaze.com/images/no-img/no-img-portrait-text.png';
     const imageSmall = data.image?.medium;
 
     if (!hasValue(id) || !title || title != targetTitle || !image) return {};
     return {
-      id, title, image, imdbId, releaseDate, genres, lastEpisode, imageSmall,
-      nextEpisode, homepage, language, overview, voteAverage, status, nextUpdatedAt
+      id, title, image, imdbId, releaseDate, genres, lastEpisode, imageSmall, nextEpisode,
+      homepage, language, overview, voteCount, voteAverage, status, nextUpdatedAt
     };
   }).catch(err => {
     console.error(err);

@@ -53,8 +53,8 @@ export interface MovieProps {
   overview: string;
   imdbId?: string;
   genres?: MovieGenre[] | any;
-  voteAverage?: string | number | undefined;
-  voteCount?: string | number | undefined;
+  voteAverage?: number;
+  voteCount?: number;
   releaseDate?: string;
   origin?: string[];
   runtime?: string;
@@ -73,7 +73,8 @@ export interface ShowProps {
   episodes?: EpisodesData;
   imdbId?: string;
   genres?: string[];
-  voteAverage?: string | number;
+  voteAverage?: number;
+  voteCount?: number,
   releaseDate?: string;
   homepage?: string;
   language?: string;
@@ -136,7 +137,8 @@ export interface IShow extends Document {
   overview: string;
   episodes: EpisodesData;
   genres: Array<string>;
-  voteAverage: string;
+  voteAverage: number;
+  voteCount: number;
   homepage: string;
   language: string;
   status: string;
@@ -197,6 +199,7 @@ export interface MovieWatchlist {
   saved?: boolean
 }
 
-export const hasValue = (val: any) => {
-  return val != undefined && val != null;
+export interface IMDBData {
+  rating?: number;
+  votes?: number;
 }

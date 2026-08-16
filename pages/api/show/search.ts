@@ -3,25 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]";
 import dbConnect from "@/utils/dbConnect";
 import Users from "@/models/Users";
-import { hasValue, IUser } from "@/utils/types";
-
-const getNestedProperty = (data: any, keys: string[], allowUndefined = true) => {
-  let current = data;
-  let prevKey = null;
-  const errorMessage = `Key '${keys.join(".")}' does not exist.`;
-
-  for (const key of keys) {
-    if (current === null || current === undefined) {
-      if (allowUndefined) return undefined;
-      else throw new Error(`${errorMessage} Missing ${prevKey}.${key}.`);
-    }
-    current = current[key];
-    prevKey = key;
-  }
-
-  if (current === undefined && !allowUndefined) throw new Error(errorMessage);
-  return current;
-}
+import { IUser } from "@/utils/types";
+import { getNestedProperty, hasValue } from "@/utils/util";
 
 const getYear = (str: string) => {
   return str.split('-', 1).at(0);

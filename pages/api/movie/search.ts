@@ -2,12 +2,9 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]";
 import dbConnect from "@/utils/dbConnect";
-import { hasValue, IUser } from "@/utils/types";
+import { IUser } from "@/utils/types";
 import Users from "@/models/Users";
-
-const buildPosterURL = (path: string, size: string) => {
-  return `https://image.tmdb.org/t/p/${size}${path}`;
-}
+import { buildPosterURL, hasValue } from "@/utils/util";
 
 const getYear = (str: string) => {
   return str.split('-', 1).at(0);

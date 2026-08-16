@@ -3,8 +3,9 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]";
 import dbConnect from "@/utils/dbConnect";
 import Users from "@/models/Users";
-import { IUser, EpisodesData, IShow, SeasonEpisodeCountType, hasValue, ShowProps } from "@/utils/types";
+import { IUser, EpisodesData, IShow, SeasonEpisodeCountType } from "@/utils/types";
 import Show from "@/models/Show";
+import { hasValue, correctRatingInfo, getIMDBRatings } from "@/utils/util";
 
 const getEpisodeId = (href: string | undefined | null) => {
   if (!href) return null;
@@ -83,18 +84,21 @@ const verifyRequiredKeys = (info: any) => {
 const queryTVMaze = async (showId: string) => {
   const url = `https://api.tvmaze.com/shows/${showId}?embed=episodes`;
 
-  return fetch(url).then(res => res.json()).then(data => {
+  return fetch(url).then(res => res.json()).then(async (data) => {
     if (data.status == 404) return {};
     const id = data.id;
     const title = data.name;
     const genres = data.genres;
     const homepage = data.officialSite;
     const imdbId = data.externals?.imdb;
+    const imdbData = await getIMDBRatings(imdbId);
+    const ratingInfo = correctRatingInfo(imdbData, data.rating?.average);
 
     const language = data.language;
     const overview = data.summary;
     const releaseDate = data.premiered;
-    const voteAverage = data.rating?.average;
+    const voteAverage = ratingInfo.rating;
+    const voteCount = ratingInfo.votes;
     const status = data.status;
     
     const lastEpisodeId = getEpisodeId(data._links?.previousepisode?.href);
@@ -109,7 +113,7 @@ const queryTVMaze = async (showId: string) => {
 
     return {
       title, genres, language, status, homepage, imdbId, image, overview, imageSmall, seasonEpisodeCount,
-      releaseDate, voteAverage, id, episodes, nextEpisode, lastEpisode, episodeCount, nextUpdatedAt
+      releaseDate, voteAverage, voteCount, id, episodes, nextEpisode, lastEpisode, episodeCount, nextUpdatedAt
     }
   }).catch(err => {
     console.error(err);
@@ -139,7 +143,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   let completed: boolean = false;
   
   let showInfo = {};
-  const showKeys = 'title genres language status homepage imdbId image overview releaseDate voteAverage id episodes episodeCount nextEpisode lastEpisode updatedAt';
+  const showKeys = 'title genres language status homepage imdbId image overview releaseDate voteAverage voteCount id episodes episodeCount nextEpisode lastEpisode updatedAt';
 
   await dbConnect();
   let user: IUser | null = await Users.findOne({ email: session.user?.email });

@@ -9,20 +9,7 @@ import { RxClock } from 'react-icons/rx';
 import StarRating from './StarRating';
 import { useRouter } from 'next/router';
 import { useSnackbar } from 'notistack';
-
-const formatNumberOfVotes = (count: string) : string => {
-  const parsedCount = parseInt(count);
-  if (isNaN(parsedCount)) return '0 votes.';
-  if (parsedCount < 1000) return `${count} votes`;
-
-  if (parsedCount < 1000000) {
-    const asThousand = (parsedCount / 1000).toFixed(1);
-    return `${asThousand}k votes`;
-  } else {
-    const asMillion = (parsedCount / 1000000).toFixed(1);
-    return `${asMillion}M votes`;
-  }
-}
+import { formatNumberOfVotes } from '@/utils/util';
 
 export default function MovieDetails({ movie }: MovieDetailsProps) {
   const { data: _, status } = useSession();
@@ -160,18 +147,18 @@ export default function MovieDetails({ movie }: MovieDetailsProps) {
                   <div className="flex items-center gap-2">
                     <FaStar size={20} className='text-yellow-500' />
                     <span className="text-2xl font-bold text-white">
-                      {parseFloat(movie.voteAverage as string).toFixed(1)}
+                      {movie.voteAverage.toFixed(1)}
                     </span>
                   </div>
                   <div className="text-sm text-gray-400">
-                    {formatNumberOfVotes(movie.voteCount as string)}
+                    {formatNumberOfVotes(movie.voteCount)}
                   </div>
                 </div>
 
                 <div className="w-full bg-gray-600 rounded-full h-2">
                   <div
                     className="bg-gradient-to-r from-yellow-400 to-yellow-500 h-2 rounded-full transition-all duration-500"
-                    style={{ width: `${(parseFloat(movie.voteAverage as string || '0') / 10) * 100}%` }}
+                    style={{ width: `${(movie.voteAverage / 10) * 100}%` }}
                   />
                 </div>
               </div>) : ''}

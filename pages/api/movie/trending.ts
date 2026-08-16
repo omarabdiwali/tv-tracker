@@ -2,12 +2,9 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]";
 import Users from '@/models/Users'
-import { hasValue, IUser } from "@/utils/types";
+import { IUser } from "@/utils/types";
 import dbConnect from "@/utils/dbConnect";
-
-const buildPosterURL = (path: string, size: string) => {
-  return `https://image.tmdb.org/t/p/${size}${path}`;
-}
+import { buildPosterURL, hasValue } from "@/utils/util";
 
 const queryTMDB = async (page: string, savedMovies: Set<string>) => {
   const apiKey = process.env.TMDB_API_KEY;

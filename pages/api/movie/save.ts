@@ -3,34 +3,29 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]";
 import dbConnect from "@/utils/dbConnect";
 import Users from "@/models/Users";
-import { hasValue, IUser } from "@/utils/types";
+import { IUser } from "@/utils/types";
 import Movie from "@/models/Movie";
-
-const buildPosterURL = (path: string, size: string) => {
-  if (!path) return null;
-  return `https://image.tmdb.org/t/p/${size}${path}`;
-}
-
-const verifyRequiredKeys = (info: any) => {
-  const { id, image, title } = info;
-  return hasValue(id) && hasValue(image) && hasValue(title);
-}
+import { hasValue, buildPosterURL, getIMDBRatings, correctRatingInfo, verifyRequiredKeys } from "@/utils/util";
 
 const queryTMDB = async (movieId: string, targetTitle: string) => {
   const apiKey = process.env.TMDB_API_KEY;
   const url = `https://api.themoviedb.org/3/movie/${movieId}?api_key=${apiKey}&language=en-US`;
 
-  return fetch(url).then(res => res.json()).then(data => {
+  return fetch(url).then(res => res.json()).then(async (data) => {
     const id = data.id;
     const title = data.title;
     const genres = data.genres;
     const homepage = data.homepage;
     const imdbId = data.imdb_id;
+    const imdbData = await getIMDBRatings(imdbId);
+    const ratingInfo = correctRatingInfo(imdbData, data.vote_average, data.vote_count);
+    
     const origin = data.origin_country;
     const overview = data.overview;
     const releaseDate = data.release_date;
-    const voteCount = data.vote_count;
-    const voteAverage = data.vote_average;
+    const voteCount = ratingInfo.votes;
+    const voteAverage = ratingInfo.rating;
+    
     const runtime = data.runtime ? `${data.runtime} mins` : data.runtime;
     const image = data.poster_path ? buildPosterURL(data.poster_path, 'w342') : 'https://static.tvmaze.com/images/no-img/no-img-portrait-text.png';
     const imageSmall = data.poster_path ? buildPosterURL(data.poster_path, 'w185') : 'https://static.tvmaze.com/images/no-img/no-img-portrait-text.png';
