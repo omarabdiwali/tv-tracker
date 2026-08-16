@@ -5,7 +5,7 @@ import Head from "next/head";
 import { useRouter } from "next/router";
 import { Dispatch, Fragment, SetStateAction, useEffect, useMemo, useState } from "react";
 import { FaSortAlphaDown, FaStar } from "react-icons/fa";
-import { IoIosCalendar, IoIosEye } from "react-icons/io";
+import { IoIosCalendar } from "react-icons/io";
 
 const ratingsSections = [
   { key: 10, label: '5 Stars ☆' },
@@ -218,7 +218,7 @@ export default function Movies() {
       </div>
       {activeMovies.length == 0 && (
           <div className="flex flex-1 justify-center items-center">
-            <div className="text-gray-400">There are currently no movies saved.</div>
+            <div className="text-gray-400">{`There are currently no movies ${filter}.`}</div>
           </div>
         )}
       {activeMovies.length > 0 ? sortBy == 'date' ? (

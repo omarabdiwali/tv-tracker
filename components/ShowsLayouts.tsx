@@ -13,7 +13,7 @@ const inAMonth = new Date().setMonth(now.getMonth() + 1) + 86400000;
 const dateSections = [
   { key: 'week', label: 'This Week' },
   { key: 'month', label: 'This Month' },
-  { key: 'future', label: 'Future' },
+  { key: 'upcoming', label: 'Upcoming' },
   { key: 'others', label: 'Others' },
 ] as const;
 
@@ -35,13 +35,18 @@ const ratingsSections = [
   { key: 2, label: '1 Stars ☆' },
   { key: 1, label: '0.5 Stars ☆' },
   { key: 0, label: 'Unrated' },
-]
+] as const;
 
 const parseAirDate = (str: string | null | undefined) => {
   if (!str) return null;
   const strd = str.slice(str.indexOf('/') + 2)
   const d = new Date(strd);
   return isNaN(d.getTime()) ? null : d.getTime();
+}
+
+interface LayoutProps {
+  groups: Record<string, ShowWatchlist[]>,
+  setUpdate: Dispatch<SetStateAction<number>>
 }
 
 interface ItemProps {
@@ -212,8 +217,7 @@ function Item({ show, id, image, imageSmall, title, releaseDate, episodeCount, e
   );
 }
 
-export function DateLayout({ groups, setUpdate } :
-  { groups: Record<string, ShowWatchlist[]>, setUpdate: Dispatch<SetStateAction<number>> }) {
+export function DateLayout({ groups, setUpdate } : LayoutProps) {
   return(
     <div>
       {dateSections.map(({ key, label }) => (
@@ -275,8 +279,7 @@ export function AlphaLayout({ shows, setUpdate } :
   )
 }
 
-export function StatusLayout({ groups, setUpdate } : 
-  { groups: Record<string, ShowWatchlist[]>, setUpdate: Dispatch<SetStateAction<number>> }) {
+export function StatusLayout({ groups, setUpdate } : LayoutProps) {
   return(
     <div>
       {statusSections.map(({ key, label }) => (
@@ -311,8 +314,7 @@ export function StatusLayout({ groups, setUpdate } :
   )
 }
 
-export function RatingsLayout({ groups, setUpdate } : 
-  { groups: Record<string, ShowWatchlist[]>, setUpdate: Dispatch<SetStateAction<number>> }) {
+export function RatingsLayout({ groups, setUpdate } : LayoutProps) {
   return(
     <div>
       {ratingsSections.map(({ key, label }) => (
@@ -354,7 +356,7 @@ export function groupByDate(shows: ShowWatchlist[]) {
     if (airdate !== null) {
       if (airdate < inAWeek) key = 'week';
       else if (airdate < inAMonth) key = 'month';
-      else key = 'future';
+      else key = 'upcoming';
     }
     (acc[key] ??= []).push(show);
     return acc;
