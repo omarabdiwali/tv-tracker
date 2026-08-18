@@ -1,4 +1,5 @@
 import { signIn } from "next-auth/react";
+import Image from "next/image";
 import {
   IoCheckmarkDoneCircle,
   IoSearch,
@@ -55,9 +56,13 @@ export default function LandingPage() {
 
         <div className="max-w-6xl mx-auto mt-16 px-4 sm:px-6 relative z-10">
           <div className="rounded-xl border border-slate-700/50 bg-slate-800/50 p-2 shadow-2xl backdrop-blur-sm transform -rotate-1 hover:rotate-0 transition-transform duration-500">
-            <img 
+            <Image
               src="/images/watchlist.png" 
               alt="TV Tracker Dashboard showing saved shows" 
+              width={0}
+              height={0}
+              sizes="100%"
+              loading="eager"
               className="rounded-lg w-full h-auto object-cover border border-slate-700 shadow-inner"
             />
           </div>
@@ -96,8 +101,11 @@ export default function LandingPage() {
             
             <div className="relative">
               <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/20 to-blue-500/20 rounded-2xl blur-2xl transform translate-x-4 translate-y-4" />
-              <img 
-                src="/images/details.png" 
+              <Image
+                src="/images/details.png"
+                width={0}
+                height={0}
+                sizes="100%"
                 alt="Show Details and Episode Tracking" 
                 className="relative rounded-2xl transition-all duration-300 hover:scale-105 border border-slate-700 shadow-2xl w-full"
               />
@@ -112,8 +120,11 @@ export default function LandingPage() {
             
             <div className="relative mt-12 lg:mt-0">
               <div className="absolute inset-0 bg-gradient-to-tr from-blue-500/20 to-purple-500/20 rounded-2xl blur-2xl transform -translate-x-4 translate-y-4" />
-              <img 
+              <Image
                 src="/images/search.png" 
+                width={0}
+                height={0}
+                sizes="100%"
                 alt="Searching for new shows and movies" 
                 className="relative rounded-2xl transition-all duration-300 hover:scale-105 hover:shadow-xl border border-slate-700 shadow-2xl w-full"
               />
