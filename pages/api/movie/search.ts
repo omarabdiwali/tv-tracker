@@ -4,7 +4,7 @@ import { authOptions } from "../auth/[...nextauth]";
 import dbConnect from "@/utils/dbConnect";
 import { IUser } from "@/utils/types";
 import Users from "@/models/Users";
-import { buildPosterURL, hasValue } from "@/utils/util";
+import { buildPosterURL, hasValue, purgeMoviesAndShows } from "@/utils/util";
 
 const getYear = (str: string) => {
   return str.split('-', 1).at(0);
@@ -58,6 +58,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!user) {
     await Users.create({ email: session.user?.email, movies: [], shows: [] })
   } else {
+    await purgeMoviesAndShows(user);
     const info = user.movies.filter((movie) => movie.saved).map((movie) => movie.movieId);
     savedMovies = new Set(info);
   }

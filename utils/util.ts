@@ -1,4 +1,10 @@
-import { IMDBData } from "./types";
+import { IMDBData, IUser } from "./types";
+
+export const timeToRefresh = (from: Date, refreshTime: number): boolean => {
+  const current = new Date().getTime();
+  const fromMs = new Date(from).getTime();
+  return (current - fromMs) >= refreshTime;
+}
 
 export const getNestedProperty = (data: any, keys: string[], allowUndefined = true) => {
   let current = data;
@@ -62,5 +68,30 @@ export const formatNumberOfVotes = (count: string | number) : string => {
   } else {
     const asMillion = (parsedCount / 1000000).toFixed(1);
     return `${asMillion}M votes`;
+  }
+}
+
+export const purgeMoviesAndShows = async (user: IUser) => {
+  const refreshTime = 86400000 * 5;
+  if (!user.lastPurgedAt || timeToRefresh(user.lastPurgedAt, refreshTime)) {
+    const userMovies = [];
+    const userShows = [];
+
+    for (const movie of user.movies) {
+      if (movie.rating || movie.saved || movie.watched) {
+        userMovies.push(movie);
+      }
+    }
+
+    for (const show of user.shows) {
+      if (show.rating || show.saved || show.completed || show.watchedEpisodes.length) {
+        userShows.push(show);
+      }
+    }
+
+    user.movies = userMovies;
+    user.shows = userShows;
+    user.lastPurgedAt = new Date();
+    await user.save();
   }
 }

@@ -19,12 +19,10 @@ const userSchema = new Schema<IUser>({
     },
     rating: {
       type: Number,
-      required: false,
       default: 0
     },
     saved: {
       type: Boolean,
-      required: false,
       default: false
     }
   }],
@@ -39,20 +37,21 @@ const userSchema = new Schema<IUser>({
     }],
     rating: {
       type: Number,
-      required: false,
       default: 0
     },
     saved: {
       type: Boolean,
-      required: false,
       default: false
     },
     completed: {
       type: Boolean,
-      required: false,
       default: false
     }
-  }]
+  }],
+  lastPurgedAt: {
+    type: Date,
+    default: Date.now
+  }
 });
 
 const Users = models.Users || model<IUser>("Users", userSchema);

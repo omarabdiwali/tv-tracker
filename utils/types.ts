@@ -100,6 +100,7 @@ export interface IUser extends Document {
   email: string;
   movies: UserMovie[];
   shows: UserShow[];
+  lastPurgedAt: Date;
 }
 
 export interface IMovie extends Document {

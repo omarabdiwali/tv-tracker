@@ -4,7 +4,7 @@ import { authOptions } from "../auth/[...nextauth]";
 import dbConnect from "@/utils/dbConnect";
 import Users from "@/models/Users";
 import { ItemProps, IUser } from "@/utils/types";
-import { hasValue, buildPosterURL } from "@/utils/util";
+import { hasValue, buildPosterURL, purgeMoviesAndShows } from "@/utils/util";
 
 const queryTMDB = async (savedMovies: Set<string>) : Promise<ItemProps[]> => {
   const apiKey = process.env.TMDB_API_KEY;
@@ -45,6 +45,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!user) {
     await Users.create({ email: session.user?.email, movies: [], shows: [] })
   } else {
+    await purgeMoviesAndShows(user);
     const info = user.movies.filter((movie) => movie.saved).map((movie) => movie.movieId);
     savedMovies = new Set(info);
   }

@@ -5,7 +5,7 @@ import dbConnect from "@/utils/dbConnect";
 import Users from "@/models/Users";
 import { IUser, EpisodesData, IShow, SeasonEpisodeCountType } from "@/utils/types";
 import Show from "@/models/Show";
-import { hasValue, correctRatingInfo, getIMDBRatings } from "@/utils/util";
+import { hasValue, correctRatingInfo, getIMDBRatings, timeToRefresh, purgeMoviesAndShows } from "@/utils/util";
 
 const getEpisodeId = (href: string | undefined | null) => {
   if (!href) return null;
@@ -121,13 +121,6 @@ const queryTVMaze = async (showId: string) => {
   })
 }
 
-const timeToRefresh = (from: Date, status: string): boolean => {
-  const refreshTime = status != 'Ended' ? 86400000 / 2 : 86400000 * 5;
-  const current = new Date().getTime();
-  const fromMs = new Date(from).getTime();
-  return (current - fromMs) >= refreshTime;
-}
-
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { id } = req.query;
   if (req.method != "GET") return res.status(200).json({ success: false, message: 'Method not allowed.' })
@@ -151,6 +144,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!user) {
     user = await Users.create({ email: session.user?.email, movies: [], shows: [] });
   } else {
+    await purgeMoviesAndShows(user);
     const index = user.shows.findIndex((show) => show.showId == `${id}`);
     saved = index != -1 ? !!user.shows[index].saved : false;
     watched = index != -1 ? new Set(user.shows[index].watchedEpisodes) : watched;
@@ -162,7 +156,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!user) return res.status(200).json({ success: false, message: "Unauthenticated user." });
 
   const show: IShow | null = await Show.findOne({ id }, showKeys);
-  if (!show || !show.episodes || timeToRefresh(show.updatedAt, show.status)) {
+  const refreshTime = show ? show.status != 'Ended' ? 86400000 / 2 : 86400000 * 5 : 0;
+
+  if (!show || !show.episodes || timeToRefresh(show.updatedAt, refreshTime)) {
     const info = await queryTVMaze(id as string);
     
     if (!verifyRequiredKeys(info)) {

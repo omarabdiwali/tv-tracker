@@ -5,7 +5,7 @@ import Users from "@/models/Users";
 import { IMovie, IUser } from "@/utils/types";
 import dbConnect from "@/utils/dbConnect";
 import Movie from "@/models/Movie";
-import { hasValue, buildPosterURL, verifyRequiredKeys, correctRatingInfo, getIMDBRatings } from "@/utils/util";
+import { hasValue, buildPosterURL, verifyRequiredKeys, correctRatingInfo, getIMDBRatings, timeToRefresh, purgeMoviesAndShows } from "@/utils/util";
 
 const replaceValues = (video: any) => {
   return [ video.key, video.official, new Date(video.published_at), video.type ];
@@ -94,13 +94,6 @@ const formatData = (movie: any, saved: boolean, watched: boolean, rating: number
   }
 }
 
-const timeToRefresh = (from: Date): boolean => {
-  const refreshTime = 86400000 * 7;
-  const current = new Date().getTime();
-  const fromMs = new Date(from).getTime();
-  return (current - fromMs) >= refreshTime;
-}
-
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { id } = req.query;
   if (req.method != "GET") return res.status(200).json({ success: false, message: 'Method not allowed.' })
@@ -118,6 +111,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!user) {
     await Users.create({ email: session.user?.email, movies: [], shows: [] });
   } else {
+    await purgeMoviesAndShows(user);
     const index = user.movies.findIndex((movie) => movie.movieId == `${id}`);
     saved = index != -1 ? !!user.movies[index].saved : false;
     watched = index != -1 ? user.movies[index].watched : false;
@@ -129,8 +123,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   let info: any = {};
   const fields = 'title genres trailer updatedAt runtime homepage imdbId origin image overview releaseDate voteCount voteAverage id';
   const movie: IMovie | null = await Movie.findOne({ id }, fields);
+  const refreshTime = 86400000 * 5;
 
-  if (!movie || movie.trailer == 'n/a' || timeToRefresh(movie.updatedAt)) {
+  if (!movie || movie.trailer == 'n/a' || timeToRefresh(movie.updatedAt, refreshTime)) {
     const data = await queryTMDB(id as string);
 
     if (!verifyRequiredKeys(data)) {

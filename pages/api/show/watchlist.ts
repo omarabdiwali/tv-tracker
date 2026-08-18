@@ -5,7 +5,7 @@ import Users from '@/models/Users'
 import { IShow, IUser, UserShow, ShowWatchlist } from "@/utils/types";
 import dbConnect from "@/utils/dbConnect";
 import Show from "@/models/Show";
-import { hasValue } from "@/utils/util";
+import { hasValue, purgeMoviesAndShows } from "@/utils/util";
 
 type ObjType = {
   [id: string] : UserShow
@@ -129,6 +129,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!user) {
     user = await Users.create({ email: session.user?.email, shows: [], movies: [] });
   } else {
+    await purgeMoviesAndShows(user);
     const showIds = user.shows.map((show) => show.showId);
     const showObj: ObjType = user.shows.reduce((acc: ObjType, show) => {
       acc[show.showId] = show;

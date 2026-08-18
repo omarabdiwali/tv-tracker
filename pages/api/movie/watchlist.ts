@@ -5,6 +5,7 @@ import Users from '@/models/Users'
 import { IMovie, IUser, MovieWatchlist, UserMovie } from "@/utils/types";
 import dbConnect from "@/utils/dbConnect";
 import Movie from "@/models/Movie";
+import { purgeMoviesAndShows } from "@/utils/util";
 
 type ObjType = {
   [id: string] : UserMovie
@@ -44,6 +45,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!user) {
     user = await Users.create({ email: session.user?.email, movies: [], shows: [] });
   } else {
+    await purgeMoviesAndShows(user);
     const movieIds = user.movies.map((movie) => movie.movieId);
     const movieObj: ObjType = user.movies.reduce((acc: ObjType, movie) => {
       acc[movie.movieId] = movie;
