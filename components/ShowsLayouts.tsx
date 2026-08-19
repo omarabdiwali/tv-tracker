@@ -7,8 +7,8 @@ import { IoIosAdd, IoIosHourglass, IoIosRemove } from "react-icons/io";
 import { Fragment } from "react/jsx-runtime";
 
 const now = new Date();
-const inAWeek = new Date().setDate(now.getDate() + 8);
-const inAMonth = new Date().setMonth(now.getMonth() + 1) + 86400000;
+const inAWeek = new Date().setDate(now.getDate() + 7);
+const inAMonth = new Date().setMonth(now.getMonth() + 1);
 
 const dateSections = [
   { key: 'week', label: 'This Week' },
@@ -24,16 +24,16 @@ const statusSections = [
 ] as const;
 
 const ratingsSections = [
-  { key: 10, label: '5 Stars ☆' },
-  { key: 9, label: '4.5 Stars ☆' },
-  { key: 8, label: '4 Stars ☆' },
-  { key: 7, label: '3.5 Stars ☆' },
-  { key: 6, label: '3 Stars ☆' },
-  { key: 5, label: '2.5 Stars ☆' },
-  { key: 4, label: '2 Stars ☆' },
-  { key: 3, label: '1.5 Stars ☆' },
-  { key: 2, label: '1 Stars ☆' },
-  { key: 1, label: '0.5 Stars ☆' },
+  { key: 10, label: '★★★★★' },
+  { key: 9, label: '★★★★½' },
+  { key: 8, label: '★★★★' },
+  { key: 7, label: '★★★½' },
+  { key: 6, label: '★★★' },
+  { key: 5, label: '★★½' },
+  { key: 4, label: '★★' },
+  { key: 3, label: '★½' },
+  { key: 2, label: '★' },
+  { key: 1, label: '½' },
   { key: 0, label: 'Unrated' },
 ] as const;
 
@@ -320,7 +320,7 @@ export function RatingsLayout({ groups, setUpdate } : LayoutProps) {
       {ratingsSections.map(({ key, label }) => (
         groups[key]?.length && (
           <Fragment key={key}>
-            <h2 className="text-xl mb-2 mx-4 font-bold text-gray-400">{label}</h2>
+            <h2 className={`text-xl mb-2 mx-4 font-bold ${label == 'Unrated' ? 'text-slate-400' : 'text-yellow-400'}`}>{label}</h2>
             <div className="grid items-stretch grid-cols-[repeat(auto-fill,_minmax(170px,_1fr))] gap-4 m-4">
               {groups[key].map((show: ShowWatchlist) => (
                 <Item
