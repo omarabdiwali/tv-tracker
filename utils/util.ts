@@ -73,7 +73,7 @@ export const formatNumberOfVotes = (count: string | number) : string => {
 
 export const purgeMoviesAndShows = async (user: IUser) => {
   const refreshTime = 86400000 * 5;
-  if (!user.lastPurgedAt || timeToRefresh(user.lastPurgedAt, refreshTime)) {
+  if (timeToRefresh(user.lastPurgedAt, refreshTime)) {
     const userMovies = [];
     const userShows = [];
 
@@ -94,4 +94,9 @@ export const purgeMoviesAndShows = async (user: IUser) => {
     user.lastPurgedAt = new Date();
     await user.save();
   }
+}
+
+export const getCorrectImdbId = (prev: string | undefined, current: string | undefined) => {
+  if (prev && !current) return prev;
+  return current;
 }

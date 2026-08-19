@@ -5,7 +5,7 @@ import dbConnect from "@/utils/dbConnect";
 import Users from "@/models/Users";
 import { IUser, EpisodesData, IShow, SeasonEpisodeCountType } from "@/utils/types";
 import Show from "@/models/Show";
-import { hasValue, correctRatingInfo, getIMDBRatings, timeToRefresh, purgeMoviesAndShows } from "@/utils/util";
+import { hasValue, correctRatingInfo, getIMDBRatings, timeToRefresh, purgeMoviesAndShows, getCorrectImdbId } from "@/utils/util";
 
 const getEpisodeId = (href: string | undefined | null) => {
   if (!href) return null;
@@ -81,7 +81,7 @@ const verifyRequiredKeys = (info: any) => {
   return hasValue(id) && hasValue(image) && hasValue(title);
 }
 
-const queryTVMaze = async (showId: string) => {
+const queryTVMaze = async (showId: string, prevImdbId: string | undefined) => {
   const url = `https://api.tvmaze.com/shows/${showId}?embed=episodes`;
 
   return fetch(url).then(res => res.json()).then(async (data) => {
@@ -90,7 +90,7 @@ const queryTVMaze = async (showId: string) => {
     const title = data.name;
     const genres = data.genres;
     const homepage = data.officialSite;
-    const imdbId = data.externals?.imdb;
+    const imdbId = getCorrectImdbId(prevImdbId, data.externals?.imdb)
     const imdbData = await getIMDBRatings(imdbId);
     const ratingInfo = correctRatingInfo(imdbData, data.rating?.average);
 
@@ -156,10 +156,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!user) return res.status(200).json({ success: false, message: "Unauthenticated user." });
 
   const show: IShow | null = await Show.findOne({ id }, showKeys);
-  const refreshTime = show ? show.status != 'Ended' ? 86400000 / 2 : 86400000 * 5 : 0;
+  const refreshTime = show ? show.status != 'Ended' ? 86400000 / 4 : 86400000 * 5 : 0;
 
   if (!show || !show.episodes || timeToRefresh(show.updatedAt, refreshTime)) {
-    const info = await queryTVMaze(id as string);
+    const info = await queryTVMaze(id as string, show?.imdbId);
     
     if (!verifyRequiredKeys(info)) {
       return res.status(200).json({ success: false, message: "Invalid show." });

@@ -5,7 +5,7 @@ import Users from "@/models/Users";
 import { IMovie, IUser } from "@/utils/types";
 import dbConnect from "@/utils/dbConnect";
 import Movie from "@/models/Movie";
-import { hasValue, buildPosterURL, verifyRequiredKeys, correctRatingInfo, getIMDBRatings, timeToRefresh, purgeMoviesAndShows } from "@/utils/util";
+import { hasValue, buildPosterURL, verifyRequiredKeys, correctRatingInfo, getIMDBRatings, timeToRefresh, purgeMoviesAndShows, getCorrectImdbId } from "@/utils/util";
 
 const replaceValues = (video: any) => {
   return [ video.key, video.official, new Date(video.published_at), video.type ];
@@ -50,7 +50,7 @@ const getBestVideo = (videos: any) => {
   return `https://www.youtube.com/watch?v=${currentBest}`;
 }
 
-const queryTMDB = async (movieId: string) : Promise<any> => {
+const queryTMDB = async (movieId: string, prevImdbId: string | undefined) : Promise<any> => {
   const apiKey = process.env.TMDB_API_KEY;
   const url = `https://api.themoviedb.org/3/movie/${movieId}?api_key=${apiKey}&language=en-US&append_to_response=videos`;
 
@@ -61,7 +61,7 @@ const queryTMDB = async (movieId: string) : Promise<any> => {
     const title = data.title;
     const genres = data.genres;
     const homepage = data.homepage;
-    const imdbId = data.imdb_id;
+    const imdbId = getCorrectImdbId(prevImdbId, data.imdb_id);
     const imdbData = await getIMDBRatings(imdbId);
     const ratingInfo = correctRatingInfo(imdbData, data.vote_average, data.vote_count);
 
@@ -126,7 +126,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const refreshTime = 86400000 * 5;
 
   if (!movie || movie.trailer == 'n/a' || timeToRefresh(movie.updatedAt, refreshTime)) {
-    const data = await queryTMDB(id as string);
+    const data = await queryTMDB(id as string, movie?.imdbId);
 
     if (!verifyRequiredKeys(data)) {
       return res.status(200).json({ success: false, message: "Invalid movie." });
