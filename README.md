@@ -4,7 +4,7 @@ A modern web application for tracking TV shows and movies built with Next.js. Tr
 
 ### The project is hosted at: https://tracktvshows.vercel.app
 
-![Show Details](https://i.imgur.com/QQv8xWh.png)
+![Show Details](https://i.imgur.com/sDfzubB.png)
 
 ## Features
 
@@ -34,7 +34,7 @@ A modern web application for tracking TV shows and movies built with Next.js. Tr
 - **Optimized Images** - Next.js Image component with proper sizing
 - **Personal Ratings** - Ability to rate saved movies and shows out of 5 stars
 
-![Search Page](https://i.imgur.com/ZWZbONh.png)
+![Search Page](https://i.imgur.com/FAYwDnO.png)
 
 ## Usage Guide
 
@@ -56,10 +56,20 @@ A modern web application for tracking TV shows and movies built with Next.js. Tr
 3. Filter by **Watched/Unwatched** using the sort buttons
 
 ### Sorting & Filtering
-- **Shows**: Sort by "Next Episode Date" or "Watch Status" (In Progress → Completed → Unwatched)
-- **Movies**: Sort by "Release Date" or "Watch Status" (Unwatched → Watched)
+Both shows and movies have seperate sections with one being **Saved** and the other being **Watched**, allowing users
+the ability to keep track of watched content, while also having those in-progress or upcoming saved.
 
-![Sort Movies By Watch Status](https://i.imgur.com/VAckWKe.png)
+- Sort **Shows** by:
+  - Alphabetically
+  - Next Episode Date
+  - Watch Status
+  - Ratings
+- Sort **Movies** by:
+  - Alphabetically
+  - Release Date
+  - Ratings
+
+![Sort Movies By Watch Status](https://i.imgur.com/5dCKtnG.png)
 
 ## Color Legend
 
@@ -73,7 +83,7 @@ A modern web application for tracking TV shows and movies built with Next.js. Tr
 - **Orange**: Ongoing show without next episode yet (in progress / to be determined)
 - **Red**: Show has ended or no episodes available (completed/ended)
 
-![Saved Shows](https://i.imgur.com/JPn9L0s.png)
+![Saved Shows](https://i.imgur.com/ys829eU.png)
 
 These colors were chosen for visibility:
 - Green gradients for positive/progress states
