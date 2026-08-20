@@ -139,15 +139,6 @@ export default function Movies() {
     })
   }
 
-  const removeFromMovies = (id: string) => {
-    const moviesCopy = [...movies];
-    const index = moviesCopy.findIndex((movie) => movie.id == id);
-    if (index != -1) {
-      moviesCopy.splice(index, 1);
-    }
-    setMovies(moviesCopy);
-  }
-
   const handleSort = (sortType: string) => {
     if (sortType == sortBy) return;
     setSortBy(sortType);

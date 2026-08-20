@@ -1,4 +1,4 @@
-import { IMDBData, IUser } from "./types";
+import { IMDBData, IUser, SeasonEpisodeCountType } from "./types";
 
 export const timeToRefresh = (from: Date, refreshTime: number): boolean => {
   const current = new Date().getTime();
@@ -99,4 +99,31 @@ export const purgeMoviesAndShows = async (user: IUser) => {
 export const getCorrectImdbId = (prev: string | undefined, current: string | undefined) => {
   if (prev && !current) return prev;
   return current;
+}
+
+export const getNextEpisodeNumber = (nextEpisode: string | undefined | null, seasonEpisodeCount: SeasonEpisodeCountType | undefined) => {
+  if (nextEpisode == null || nextEpisode == undefined) return;
+
+  const end = nextEpisode.indexOf(' / ');
+  if (end == -1) return;
+  const seasonAndNumber = nextEpisode.slice(0, end);
+  const [season, number] = seasonAndNumber.split('x').map(v => v.length == 0 ? Number('a') : Number(v));
+  if (number == undefined || isNaN(number) || isNaN(season)) return;
+
+  const passedEpisodes = getPassedEpisodes(season, seasonEpisodeCount);
+  return passedEpisodes + number;
+}
+
+const getPassedEpisodes = (season: number | undefined, seasonEpisodeCount: SeasonEpisodeCountType | undefined) => {
+  if (!season || season == 1 || !seasonEpisodeCount) return 0;
+  let passedEpisodes = 0;
+  for (const [prevSeason, count] of Object.entries(seasonEpisodeCount)) {
+    if (prevSeason == 'total') continue;
+    const prevSeasonInt = parseInt(prevSeason);
+    if (prevSeasonInt < season) {
+      passedEpisodes += count;
+    }
+  }
+
+  return passedEpisodes;
 }

@@ -184,9 +184,9 @@ export interface ShowWatchlist {
   category: number,
   episodeCount?: number,
   episodesWatched?: number,
-  seasonEpisodeCount?: SeasonEpisodeCountType,
   rating?: number,
   saved?: boolean,
+  nextEpisodeNumber?: number,
   completed?: boolean
 }
 

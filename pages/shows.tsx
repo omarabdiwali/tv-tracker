@@ -108,15 +108,6 @@ export default function Shows() {
     })
   }
 
-  const removeFromShows = (id: string) => {
-    const showsCopy = [...shows];
-    const index = showsCopy.findIndex((show) => show.id == id);
-    if (index != -1) {
-      showsCopy.splice(index, 1);
-    }
-    setShows(showsCopy);
-  }
-
   const handleSort = (sortType: string) => {
     if (sortType == sortBy) return;
     setSortBy(sortType);

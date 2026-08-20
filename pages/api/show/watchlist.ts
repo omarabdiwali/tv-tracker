@@ -5,7 +5,7 @@ import Users from '@/models/Users'
 import { IShow, IUser, UserShow, ShowWatchlist } from "@/utils/types";
 import dbConnect from "@/utils/dbConnect";
 import Show from "@/models/Show";
-import { hasValue, purgeMoviesAndShows } from "@/utils/util";
+import { getNextEpisodeNumber, hasValue, purgeMoviesAndShows } from "@/utils/util";
 
 type ObjType = {
   [id: string] : UserShow
@@ -60,9 +60,10 @@ const getEpisodesAndImage = async (showId: string) => {
 }
 
 // Categories are as follows:
-// 0 - Unwatched
-// 1 - In Progress
-// 2 - Completed / Up-to-Date
+// 0 - In Progress
+// 1 - Up-to-Date
+// 2 - Unwatched
+// 3 - Completed (watched all available episodes, with no next episode date set)
 
 const addCategory = async (shows: IShow[], userShows: ObjType) => {
   const populated: ShowWatchlist[] = [];
@@ -82,15 +83,15 @@ const addCategory = async (shows: IShow[], userShows: ObjType) => {
       show.nextUpdatedAt = new Date();
       await show.save({ timestamps: false });
     }
-
-    if (info.watchedEpisodes.length == 0) {
-      category = 0;
+    
+    const watchedCount = info.watchedEpisodes.length;
+    const nextEpNumber = getNextEpisodeNumber(show.nextEpisode, show.seasonEpisodeCount);
+    
+    if (watchedCount == 0) {
+      category = 2;
     } else {
-      if (info.watchedEpisodes.length != show.episodeCount) {
-        category = 1;
-      } else {
-        category = 2;
-      }
+      const isUptoDate = nextEpNumber == watchedCount + 1 || nextEpNumber == watchedCount;
+      category = isUptoDate ? 1 : watchedCount == show.episodeCount ? 3 : 0;
     }
 
     populated.push({
@@ -104,10 +105,10 @@ const addCategory = async (shows: IShow[], userShows: ObjType) => {
       status: show.status,
       episodeCount: show.episodeCount,
       episodesWatched: info.watchedEpisodes.length,
-      seasonEpisodeCount: show.seasonEpisodeCount,
       rating: info.rating,
       saved: info.saved,
       completed: info.completed,
+      nextEpisodeNumber: nextEpNumber,
       category
     });
   }

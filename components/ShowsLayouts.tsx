@@ -1,4 +1,5 @@
 import { SeasonEpisodeCountType, ShowWatchlist } from "@/utils/types";
+import { getNextEpisodeNumber } from "@/utils/util";
 import Image from "next/image";
 import Link from "next/link";
 import { useSnackbar } from "notistack";
@@ -18,9 +19,10 @@ const dateSections = [
 ] as const;
 
 const statusSections = [
-  { key: 1, label: 'In Progress' },
-  { key: 2, label: 'Completed / Up-To-Date' },
-  { key: 0, label: 'Unwatched' }
+  { key: 0, label: 'In Progress' },
+  { key: 1, label: 'Up-to-Date' },
+  { key: 2, label: 'Unwatched' },
+  { key: 3, label: 'Completed' }
 ] as const;
 
 const ratingsSections = [
@@ -63,11 +65,10 @@ interface ItemProps {
   saved?: boolean;
   episodeCount?: number,
   episodesWatched?: number,
-  seasonEpisodeCount?: SeasonEpisodeCountType
 }
 
 function Item({ show, id, image, imageSmall, title, releaseDate, episodeCount, episodesWatched,
-  saved, seasonEpisodeCount, nextEpisode, lastEpisode, showStatus, updateShows }: ItemProps) {
+  saved, nextEpisode, lastEpisode, showStatus, updateShows }: ItemProps) {
   const [action, setAction] = useState(saved ? 'remove' : 'add');
   const [disabled, setDisabled] = useState(false);
   const [imgSrc, setImgSrc] = useState(imageSmall || image || 'https://static.tvmaze.com/images/no-img/no-img-portrait-text.png');
@@ -116,37 +117,9 @@ function Item({ show, id, image, imageSmall, title, releaseDate, episodeCount, e
       return <div className="absolute bottom-[0%] w-full bg-red-600 h-1" />;
     }
 
-    const getPassedEpisodes = (season: number | undefined) => {
-      if (!season || season == 1 || !seasonEpisodeCount) return 0;
-      let passedEpisodes = 0;
-      for (const [prevSeason, count] of Object.entries(seasonEpisodeCount)) {
-        if (prevSeason == 'total') continue;
-        const prevSeasonInt = parseInt(prevSeason);
-        if (prevSeasonInt < season) {
-          passedEpisodes += count;
-        }
-      }
-
-      return passedEpisodes;
-    }
-
-    const getNextEpisode = () => {
-      if (nextEpisode == null || nextEpisode == undefined) return null;
-
-      const end = nextEpisode.indexOf(' / ');
-      if (end == -1) return null;
-      const seasonAndNumber = nextEpisode.slice(0, end);
-      const [season, number] = seasonAndNumber.split('x').map(v => v.length == 0 ? Number('a') : Number(v));
-      if (number == undefined || isNaN(number) || isNaN(season)) return null;
-
-      const passedEpisodes = getPassedEpisodes(season);
-      return passedEpisodes + number;
-    }
-
-    const nextEpisodeNumber = getNextEpisode();
-    const totalEpisodeCount = Math.max(nextEpisodeNumber || -1, episodeCount);
-    const nextEpisodePosition = nextEpisodeNumber
-      ? ((nextEpisodeNumber - 1) / totalEpisodeCount) * 100
+    const totalEpisodeCount = Math.max(show.nextEpisodeNumber || -1, episodeCount);
+    const nextEpisodePosition = show.nextEpisodeNumber
+      ? ((show.nextEpisodeNumber - 1) / totalEpisodeCount) * 100
       : 0;
     const isLastEpisode = nextEpisodePosition + (1 / totalEpisodeCount * 100) == 100;
 
@@ -156,7 +129,7 @@ function Item({ show, id, image, imageSmall, title, releaseDate, episodeCount, e
           className="bg-gradient-to-r z-100 from-green-400 to-green-500 h-1 transition-all duration-500"
           style={{ width: `${(episodesWatched / totalEpisodeCount) * 100}%` }}
         />
-        {nextEpisodeNumber && nextEpisodeNumber > episodesWatched && nextEpisodeNumber <= totalEpisodeCount && (
+        {show.nextEpisodeNumber && show.nextEpisodeNumber > episodesWatched && show.nextEpisodeNumber <= totalEpisodeCount && (
           <div
             className="absolute bottom-[0%] h-full cursor-default z-50 bg-blue-500"
             style={{
@@ -235,7 +208,6 @@ export function DateLayout({ groups, setUpdate } : LayoutProps) {
                   image={show.image}
                   episodeCount={show.episodeCount}
                   episodesWatched={show.episodesWatched}
-                  seasonEpisodeCount={show.seasonEpisodeCount}
                   imageSmall={show.imageSmall}
                   nextEpisode={show.nextEpisode}
                   lastEpisode={show.lastEpisode}
@@ -266,7 +238,6 @@ export function AlphaLayout({ shows, setUpdate } :
                   image={show.image}
                   episodeCount={show.episodeCount}
                   episodesWatched={show.episodesWatched}
-                  seasonEpisodeCount={show.seasonEpisodeCount}
                   imageSmall={show.imageSmall}
                   nextEpisode={show.nextEpisode}
                   lastEpisode={show.lastEpisode}
@@ -297,7 +268,6 @@ export function StatusLayout({ groups, setUpdate } : LayoutProps) {
                   image={show.image}
                   episodeCount={show.episodeCount}
                   episodesWatched={show.episodesWatched}
-                  seasonEpisodeCount={show.seasonEpisodeCount}
                   imageSmall={show.imageSmall}
                   nextEpisode={show.nextEpisode}
                   lastEpisode={show.lastEpisode}
@@ -332,7 +302,6 @@ export function RatingsLayout({ groups, setUpdate } : LayoutProps) {
                   image={show.image}
                   episodeCount={show.episodeCount}
                   episodesWatched={show.episodesWatched}
-                  seasonEpisodeCount={show.seasonEpisodeCount}
                   imageSmall={show.imageSmall}
                   nextEpisode={show.nextEpisode}
                   lastEpisode={show.lastEpisode}
