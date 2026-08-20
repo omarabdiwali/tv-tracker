@@ -86,14 +86,19 @@ export default function Movies() {
   const ratingGropus = useMemo(() => groupByRatings(activeMovies), [activeMovies]);
 
   useEffect(() => {
-    if (!window) return;
+    if (!window || !router.isReady) return;
+    const { filter } = router.query;
     const validOptions = new Set(['date', 'alpha', 'ratings']);
-    const savedSort = window.localStorage.getItem('savedSortTypeMovies');
-    const watchedSort = window.localStorage.getItem('watchedSortTypeMovies');
-    setSavedSortBy(savedSort && validOptions.has(savedSort) ? savedSort : 'alpha');
-    setWatchedSortBy(watchedSort && validOptions.has(watchedSort) ? watchedSort : 'ratings');
-    setSortBy(savedSort && validOptions.has(savedSort) ? savedSort : 'alpha');
-  }, [])
+    const localSavedSort = window.localStorage.getItem('savedSortTypeMovies');
+    const localWatchedSort = window.localStorage.getItem('watchedSortTypeMovies');
+    const savedSort = localSavedSort && validOptions.has(localSavedSort) ? localSavedSort : 'alpha'
+    const watchedSort = localWatchedSort && validOptions.has(localWatchedSort) ? localWatchedSort : 'ratings'
+    
+    setFilter(filter == 'watched' ? filter : 'saved');
+    setSavedSortBy(savedSort);
+    setWatchedSortBy(watchedSort);
+    setSortBy(filter == 'watched' ? watchedSort : savedSort);
+  }, [router.isReady])
 
   useEffect(() => {
     if (status == 'loading') return;
@@ -156,12 +161,16 @@ export default function Movies() {
   }
 
   const changeFilter = (filterVal: string) => {
+    if (filterVal == filter) return;    
+    setFilter(filterVal);
+
     if (filterVal == 'saved') {
       setSortBy(savedSortBy);
+      router.replace('/movies', undefined, { shallow: true });
     } else {
       setSortBy(watchedSortBy);
+      router.replace(`/movies?filter=${filterVal}`, undefined, { shallow: true });
     }
-    setFilter(filterVal);
   }
 
   if (status != 'authenticated') return null;
