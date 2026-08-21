@@ -12,8 +12,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const session = await getServerSession(req, res, authOptions);
   const { id, rating } = req.body;
 
-  if (!session || !hasValue(id) || !hasValue(rating)) {
-    return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
+  if (!session || !hasValue(id) || !hasValue(rating) || isNaN(parseFloat(`${rating}`))) {
+    const message = !session ? 'Unauthenticated user.' : 'Missing body parameter(s).';
+    return res.status(200).json({ success: false, message });
   }
 
   await dbConnect();
@@ -22,11 +23,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!user) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
   
   const movieIndex = user.movies.findIndex((movie) => movie.movieId == `${id}`);  
+  
   if (movieIndex == -1) {
-    return res.status(200).json({ success: false, message: 'Movie has not been saved/watched.' });
+    const movieObj = { movieId: `${id}`, rating, watched: false };
+    user.movies.push(movieObj);
+  } else {
+    user.movies[movieIndex].rating = rating;
   }
 
-  user.movies[movieIndex].rating = rating;
   user.save();
   return res.status(200).json({ success: true });
 }

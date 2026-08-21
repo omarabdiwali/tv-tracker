@@ -32,22 +32,22 @@ const queryTMDB = async (page: string, savedMovies: Set<string>) => {
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { page } = req.query;
+  const session = await getServerSession(req, res, authOptions);
+
   if (req.method != "GET") return res.status(200).json({ success: false, message: 'Method not allowed.' });
   if (!page || (page != '1' && page != '2')) return res.status(200).json({ sucess: false, message: 'Invalid parameter.' });
+  if (!session) return;
 
-  const session = await getServerSession(req, res, authOptions);
+  await dbConnect();
+  const user: IUser | null = await Users.findOne({ email: session.user?.email });
   let savedMovies: Set<string> = new Set();
-
-  if (session) {
-    await dbConnect();
-    const user: IUser | null = await Users.findOne({ email: session.user?.email });
-    if (!user) {
-      await Users.create({ email: session.user?.email, movies: [], shows: [] });
-    } else {
-      page == '1' && await purgeMoviesAndShows(user);
-      const info = user.movies.filter((movie) => movie.saved).map((movie) => movie.movieId);
-      savedMovies = new Set(info);
-    }
+  
+  if (!user) {
+    await Users.create({ email: session.user?.email, movies: [], shows: [] });
+  } else {
+    page == '1' && await purgeMoviesAndShows(user);
+    const info = user.movies.filter((movie) => movie.saved).map((movie) => movie.movieId);
+    savedMovies = new Set(info);
   }
 
   const movies = await queryTMDB(page as string, savedMovies);

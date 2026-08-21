@@ -49,8 +49,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const session = await getServerSession(req, res, authOptions);
 
   if (!session || !hasValue(id) || !title || !hasValue(save)) {
-    const message = !session ? "Unauthenticated user." : "Missing body parameters.";
-    return res.status(200).json({ success: false, message  });
+    const message = !session ? "Unauthenticated user." : "Missing body parameter(s).";
+    return res.status(200).json({ success: false, message });
   }
 
   await dbConnect();

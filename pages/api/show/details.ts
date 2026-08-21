@@ -123,10 +123,10 @@ const queryTVMaze = async (showId: string, prevImdbId: string | undefined) => {
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { id } = req.query;
+  const session = await getServerSession(req, res, authOptions);
+  
   if (req.method != "GET") return res.status(200).json({ success: false, message: 'Method not allowed.' })
   if (!id) return res.status(200).json({ success: false, message: 'Missing parameter.' });
-
-  const session = await getServerSession(req, res, authOptions);
   if (!session) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
   
   let saved = false;

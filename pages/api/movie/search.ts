@@ -43,18 +43,16 @@ const queryTMDB = async (queryString: string, savedMovies: Set<string>) => {
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { q } = req.query;
+  const session = await getServerSession(req, res, authOptions);
+
   if (req.method != "GET") return res.status(200).json({ success: false, message: 'Method not allowed.' })
   if (!q) return res.status(200).json({ success: false, message: 'Missing parameter.' });
-
-  const session = await getServerSession(req, res, authOptions);
-  let savedMovies: Set<string> = new Set();
-  if (!session) {
-    return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
-  }
+  if (!session) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
 
   await dbConnect();
-
   const user: IUser | null = await Users.findOne({ email: session.user?.email });
+  let savedMovies: Set<string> = new Set();
+
   if (!user) {
     await Users.create({ email: session.user?.email, movies: [], shows: [] })
   } else {

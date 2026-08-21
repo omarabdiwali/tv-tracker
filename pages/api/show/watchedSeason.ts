@@ -13,8 +13,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const session = await getServerSession(req, res, authOptions);
 
   if (!session || !hasValue(showId) || !hasValue(episodeIds) || episodeIds.length == 0 || !hasValue(watched)) {
-    const message = !session ? "Unauthenticated user." : "Missing body parameters.";
-    return res.status(200).json({ success: false, message  });
+    const message = !session ? "Unauthenticated user." : "Missing body parameter(s).";
+    return res.status(200).json({ success: false, message });
   }
 
   await dbConnect();
