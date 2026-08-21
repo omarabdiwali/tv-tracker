@@ -11,6 +11,11 @@ const replaceValues = (video: any) => {
   return [ video.key, video.official, new Date(video.published_at), video.type ];
 }
 
+const buildWikiDataUrl = (wikidataId: string | null | undefined) => {
+  if (!wikidataId) return;
+  return `https://www.wikidata.org/wiki/Special:GoToLinkedPage/enwiki/${wikidataId}`;
+}
+
 const getBestVideo = (videos: any) => {
   let currentBest = null;
   let isOfficial = false;
@@ -52,7 +57,7 @@ const getBestVideo = (videos: any) => {
 
 const queryTMDB = async (movieId: string, prevImdbId: string | undefined) : Promise<any> => {
   const apiKey = process.env.TMDB_API_KEY;
-  const url = `https://api.themoviedb.org/3/movie/${movieId}?api_key=${apiKey}&language=en-US&append_to_response=videos`;
+  const url = `https://api.themoviedb.org/3/movie/${movieId}?api_key=${apiKey}&language=en-US&append_to_response=videos,external_ids`;
 
   return fetch(url).then(res => res.json()).then(async (data) => {
     if (hasValue(data.success) && data.success == false) return {};
@@ -60,7 +65,7 @@ const queryTMDB = async (movieId: string, prevImdbId: string | undefined) : Prom
     const id = data.id;
     const title = data.title;
     const genres = data.genres;
-    const homepage = data.homepage;
+    const homepage = buildWikiDataUrl(data.external_ids?.wikidata_id) || data.homepage;
     const imdbId = getCorrectImdbId(prevImdbId, data.imdb_id);
     const imdbData = await getIMDBRatings(imdbId);
     const ratingInfo = correctRatingInfo(imdbData, data.vote_average, data.vote_count);
