@@ -37,11 +37,11 @@ const checkIfPassed = (show: IShow) => {
 }
 
 const parseEpisodeInfo = (data: any) => {
-  if (!data) return null;
+  if (!data) return;
   const season = data.season;
   const episode = data.number;
   const airdate = data.airdate;
-  if (!hasValue(season) || !hasValue(episode) || !hasValue(airdate)) return null;
+  if (!hasValue(season) || !hasValue(episode) || !hasValue(airdate)) return;
 
   const episodeString = `${episode}`.padStart(2, '0');
   return `${season}x${episodeString} / ${airdate}`
@@ -76,8 +76,8 @@ const addCategory = async (shows: IShow[], userShows: ObjType) => {
 
     if (checkIfPassed(show)) {
       const { lastEpisode, nextEpisode, image, imageSmall } = await getEpisodesAndImage(show.id);
-      show.nextEpisode = nextEpisode || show.nextEpisode;
-      show.lastEpisode = lastEpisode || show.lastEpisode;
+      show.nextEpisode = nextEpisode ? nextEpisode : null;
+      show.lastEpisode = lastEpisode ? lastEpisode : null;
       show.image = image || show.image;
       show.imageSmall = imageSmall || show.imageSmall;
       show.nextUpdatedAt = new Date();

@@ -1,5 +1,4 @@
-import { SeasonEpisodeCountType, ShowWatchlist } from "@/utils/types";
-import { getNextEpisodeNumber } from "@/utils/util";
+import { ShowWatchlist } from "@/utils/types";
 import Image from "next/image";
 import Link from "next/link";
 import { useSnackbar } from "notistack";
@@ -57,8 +56,8 @@ interface ItemProps {
   title: string,
   image: string,
   imageSmall?: string,
-  nextEpisode: string | undefined | null,
-  lastEpisode: string | undefined | null,
+  nextEpisode: string | null,
+  lastEpisode: string | null,
   releaseDate?: string,
   showStatus: string,
   updateShows: Dispatch<SetStateAction<number>>;

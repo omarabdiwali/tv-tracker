@@ -143,8 +143,8 @@ export interface IShow extends Document {
   homepage: string;
   language: string;
   status: string;
-  nextEpisode: string;
-  lastEpisode: string;
+  nextEpisode: string | null;
+  lastEpisode: string | null;
   updatedAt: Date;
   createdAt: Date;
   episodeCount?: number;
@@ -178,8 +178,8 @@ export interface ShowWatchlist {
   imageSmall?: string,
   title: string,
   releaseDate: string,
-  nextEpisode: string,
-  lastEpisode: string,
+  nextEpisode: string | null,
+  lastEpisode: string | null,
   status: string,
   category: number,
   episodeCount?: number,

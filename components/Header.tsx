@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
-import { useSession, signIn, signOut } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
 import { IoIosFilm, IoIosHome, IoIosTv } from "react-icons/io";
 import { BiSolidCameraMovie } from "react-icons/bi";
