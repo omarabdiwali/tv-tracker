@@ -1,5 +1,7 @@
 import { IMDBData, IUser, SeasonEpisodeCountType } from "./types";
 
+export const wikiLangEd = `enwiki,jawiki,eswiki,dewiki,ruwiki,frwiki,itwiki,zhwiki,ptwiki,plwiki,arwiki,fawiki,idwiki,nlwiki,trwiki,ukwiki,hewiki,svwiki,kowiki,cswiki,viwiki,huwiki,fiwiki,rowwiki,thwiki,elwiki,srwiki,dawiki,bgwiki,hrwiki,skwiki,nowiki,mswiki,cawiki,hiwiki,ltwiki,tawiki,slwiki,etwiki,lvwiki,bnwiki,urwiki,kawiki,sqwiki,azwiki,tewiki,mlwiki,glwiki,mkwiki,kkwiki`
+
 export const timeToRefresh = (from: Date, refreshTime: number): boolean => {
   const current = new Date().getTime();
   const fromMs = new Date(from).getTime();

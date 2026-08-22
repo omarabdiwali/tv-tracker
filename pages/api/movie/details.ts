@@ -5,7 +5,7 @@ import Users from "@/models/Users";
 import { IMovie, IUser } from "@/utils/types";
 import dbConnect from "@/utils/dbConnect";
 import Movie from "@/models/Movie";
-import { hasValue, buildPosterURL, verifyRequiredKeys, correctRatingInfo, getIMDBRatings, timeToRefresh, purgeMoviesAndShows, getCorrectImdbId } from "@/utils/util";
+import { hasValue, buildPosterURL, verifyRequiredKeys, correctRatingInfo, getIMDBRatings, timeToRefresh, purgeMoviesAndShows, getCorrectImdbId, wikiLangEd } from "@/utils/util";
 
 const replaceValues = (video: any) => {
   return [ video.key, video.official, new Date(video.published_at), video.type ];
@@ -13,7 +13,7 @@ const replaceValues = (video: any) => {
 
 const buildWikiDataUrl = (wikidataId: string | null | undefined) => {
   if (!wikidataId) return;
-  return `https://www.wikidata.org/wiki/Special:GoToLinkedPage/enwiki/${wikidataId}`;
+  return `https://www.wikidata.org/wiki/Special:GoToLinkedPage/${wikiLangEd}/${wikidataId}`;
 }
 
 const getBestVideo = (videos: any) => {
