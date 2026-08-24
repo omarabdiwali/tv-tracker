@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]";
 import dbConnect from "@/utils/dbConnect";
-import { IUser } from "@/utils/types";
+import { IUser, StatusObjType } from "@/utils/types";
 import Users from "@/models/Users";
 import { buildPosterURL, hasValue, purgeMoviesAndShows } from "@/utils/util";
 
@@ -10,7 +10,7 @@ const getYear = (str: string) => {
   return str.split('-', 1).at(0);
 }
 
-const queryTMDB = async (queryString: string, savedMovies: Set<string>) => {
+const queryTMDB = async (queryString: string, statusInfo: StatusObjType) => {
   const apiKey = process.env.TMDB_API_KEY;
   const query = encodeURIComponent(queryString);
   const url = `https://api.themoviedb.org/3/search/movie?api_key=${apiKey}&query=${query}&include_adult=false&language=en-US&page=1`;
@@ -24,14 +24,17 @@ const queryTMDB = async (queryString: string, savedMovies: Set<string>) => {
       const releaseDate = movie.release_date;
       const image = movie.poster_path ? buildPosterURL(movie.poster_path, 'w185') : 'https://static.tvmaze.com/images/no-img/no-img-portrait-text.png';
       const title = movie.title;
-      const saved = savedMovies.has(`${id}`);
+
+      const statusVal = `${id}` in statusInfo ? statusInfo[`${id}`] : -2;
+      const saved = statusVal == 0 || statusVal == 1;
+      const watched = statusVal == 0 || statusVal == -1;
 
       if (!hasValue(id) || !title || !image) continue;
       if (image == 'https://static.tvmaze.com/images/no-img/no-img-portrait-text.png') {
         if (!releaseDate || Number(getYear(releaseDate)) < 1970) continue;
-        noImageItems.push({ id, title, image, releaseDate, saved });
+        noImageItems.push({ id, title, image, releaseDate, saved, watched });
       } else {
-        items.push({ id, title, image, releaseDate, saved });
+        items.push({ id, title, image, releaseDate, saved, watched });
       }
     }
     return items.concat(noImageItems);
@@ -51,16 +54,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   await dbConnect();
   const user: IUser | null = await Users.findOne({ email: session.user?.email });
-  let savedMovies: Set<string> = new Set();
+  let statusInfo: StatusObjType = {};
 
   if (!user) {
     await Users.create({ email: session.user?.email, movies: [], shows: [] })
   } else {
     await purgeMoviesAndShows(user);
-    const info = user.movies.filter((movie) => movie.saved).map((movie) => movie.movieId);
-    savedMovies = new Set(info);
+    statusInfo = user.movies.reduce((acc: StatusObjType, movie) => {
+      if (!movie.watched && !movie.saved) return acc;
+      acc[movie.movieId] = -(Number(movie.watched || 0)) + Number(movie.saved || 0);
+      return acc;
+    }, {})
   }
 
-  const movies = await queryTMDB(q as string, savedMovies);
+  const movies = await queryTMDB(q as string, statusInfo);
   return res.status(200).json({ success: true, movies });
 }

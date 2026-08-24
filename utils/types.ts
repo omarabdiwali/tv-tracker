@@ -7,10 +7,15 @@ export interface ItemProps {
   title: string,
   image: string,
   saved?: boolean,
+  watched?: boolean,
   releaseDate?: string,
   type?: string,
   showReleaseDate?: boolean,
   updateShows?: Dispatch<SetStateAction<number>>
+}
+
+export type StatusObjType = {
+  [id: string] : number
 }
 
 export interface UserMovie {

@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useSnackbar } from "notistack";
 import { useState } from "react";
-import { IoIosAdd, IoIosHourglass, IoIosRemove } from "react-icons/io";
+import { IoIosAdd, IoIosCheckmark, IoIosHourglass, IoIosRemove } from "react-icons/io";
 
 const getYear = (releaseDate: string | undefined | null) => {
   if (!releaseDate) return null;
@@ -15,7 +15,7 @@ const getYear = (releaseDate: string | undefined | null) => {
   return year;
 }
 
-export default function Item({ movie, id, image, title, releaseDate, type, saved, updateShows, showReleaseDate=false }: ItemProps) {
+export default function Item({ movie, id, image, title, releaseDate, type, saved, watched, updateShows, showReleaseDate=false }: ItemProps) {
   const [action, setAction] = useState(saved ? 'remove' : 'add');
   const [disabled, setDisabled] = useState(false);
   const [imgSrc, setImgSrc] = useState(image || 'https://static.tvmaze.com/images/no-img/no-img-portrait-text.png');
@@ -75,6 +75,9 @@ export default function Item({ movie, id, image, title, releaseDate, type, saved
         {action == 'add' ? <IoIosAdd className="my-[0.5]" /> : action == 'remove' ?
          <IoIosRemove className="my-[0.5]" /> : <IoIosHourglass className="my-[0.5]" />}
       </button>
+      {watched && <div title="Watched" className="absolute right-[75%] top-[8%] z-10 bg-black/80 py-[3px] px-[5px] rounded-[50%]">
+        <IoIosCheckmark className="my-[0.5]" />
+      </div>}
       {showReleaseDate && releaseDate && <div className="absolute left-[50%] top-[2%] -translate-x-1/2 bg-black/80 text-xs py-[3px] px-[5px] rounded-lg z-100">{releaseDate}</div>}
       <Link href={`/${type}/${id}`} title={title} className="h-full">
         <div className="relative cursor-pointer flex flex-col h-full group">

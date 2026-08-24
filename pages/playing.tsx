@@ -94,6 +94,7 @@ export default function Movies() {
                       image={movie.image}
                       releaseDate={movie.releaseDate}
                       saved={movie.saved}
+                      watched={movie.watched}
                       type={'movie'}
                       showReleaseDate
                     />

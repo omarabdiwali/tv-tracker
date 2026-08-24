@@ -97,6 +97,7 @@ export default function Home() {
                     id={movie.id} title={movie.title}
                     image={movie.image}
                     saved={movie.saved}
+                    watched={movie.watched}
                     type={'movie'}
                   />
         })}

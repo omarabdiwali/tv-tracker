@@ -119,6 +119,7 @@ export default function Search() {
                       image={movie.image}
                       releaseDate={movie.releaseDate}
                       saved={movie.saved}
+                      watched={movie.watched}
                       type={'movie'}
                     />
           }) : <Loading inline />}
@@ -133,6 +134,7 @@ export default function Search() {
                       image={show.image}
                       releaseDate={show.releaseDate}
                       saved={show.saved}
+                      watched={show.watched}
                       type={'show'}
                     />
           }) : <Loading inline />}
