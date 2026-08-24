@@ -199,7 +199,7 @@ export default function MovieDetails({ movie }: MovieDetailsProps) {
               <div className="text-sm font-semibold text-gray-400 mb-1">Runtime</div>
               <div className="text-white flex items-center gap-2">
                 <RxClock size={18} className='text-orange-500' />
-                {movie.runtime || 'N/A'}
+                {movie.runtime && movie.runtime != '0' ? movie.runtime : 'N/A'}
               </div>
             </div>
           </div>
