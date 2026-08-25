@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]";
 import dbConnect from "@/utils/dbConnect";
 import Users from "@/models/Users";
-import { IUser, EpisodesData, IShow, SeasonEpisodeCountType } from "@/utils/types";
+import { IUser, EpisodesData, IShow, SeasonEpisodeCountType, SessionType } from "@/utils/types";
 import Show from "@/models/Show";
 import { hasValue, correctRatingInfo, getIMDBRatings, timeToRefresh, purgeMoviesAndShows, getCorrectImdbId } from "@/utils/util";
 
@@ -123,38 +123,24 @@ const queryTVMaze = async (showId: string, prevImdbId: string | undefined) => {
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { id } = req.query;
-  const session = await getServerSession(req, res, authOptions);
+  const session: SessionType = await getServerSession(req, res, authOptions);
   
   if (req.method != "GET") return res.status(200).json({ success: false, message: 'Method not allowed.' })
   if (!id) return res.status(200).json({ success: false, message: 'Missing parameter.' });
-  if (!session) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
-  
-  let saved = false;
-  let watched: Set<string> = new Set();
-  let watchedList: string[] = [];
-  let rating: number = 0;
-  let completed: boolean = false;
-  
+  if (!session || !session.user?.id) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
+
   let showInfo = {};
   const showKeys = 'title genres language status homepage imdbId image overview releaseDate voteAverage voteCount id episodes episodeCount nextEpisode lastEpisode updatedAt';
-
   await dbConnect();
-  let user: IUser | null = await Users.findOne({ email: session.user?.email });
+  const user: IUser | null = await Users.findById(session.user.id, 'shows');
+  if (!user) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
 
-  if (!user) {
-    user = await Users.create({ email: session.user?.email, movies: [], shows: [] });
-  } else {
-    await purgeMoviesAndShows(user);
-    const index = user.shows.findIndex((show) => show.showId == `${id}`);
-    saved = index != -1 ? !!user.shows[index].saved : false;
-    watched = index != -1 ? new Set(user.shows[index].watchedEpisodes) : watched;
-    watchedList = index != -1 ? user.shows[index].watchedEpisodes : watchedList;
-    rating = index != -1 ? (user.shows[index].rating || 0) : 0;
-    completed = index != -1 ? !!user.shows[index].completed : false;
-  }
-
-  if (!user) return res.status(200).json({ success: false, message: "Unauthenticated user." });
-
+  await purgeMoviesAndShows(user);
+  const index = user.shows.findIndex((show) => show.showId == `${id}`);
+  const saved = index != -1 ? !!user.shows[index].saved : false;
+  const watched = index != -1 ? user.shows[index].watchedEpisodes : [];
+  const rating = index != -1 ? (user.shows[index].rating || 0) : 0;
+  const completed = index != -1 ? !!user.shows[index].completed : false;
   const show: IShow | null = await Show.findOne({ id }, showKeys);
   const refreshTime = show ? show.status != 'Ended' ? 86400000 / 4 : 86400000 * 5 : 0;
 
@@ -172,5 +158,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     showInfo = show;
   }
 
-  return res.status(200).json({ success: true, show: showInfo, saved, watched: watchedList, completed, rating });
+  return res.status(200).json({ success: true, show: showInfo, saved, watched, completed, rating });
 }

@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]";
 import Users from '@/models/Users'
-import { IShow, IUser, UserShow, ShowWatchlist } from "@/utils/types";
+import { IShow, IUser, UserShow, ShowWatchlist, SessionType } from "@/utils/types";
 import dbConnect from "@/utils/dbConnect";
 import Show from "@/models/Show";
 import { getNextEpisodeNumber, hasValue, purgeMoviesAndShows } from "@/utils/util";
@@ -118,29 +118,22 @@ const addCategory = async (shows: IShow[], userShows: ObjType) => {
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method != "GET") return res.status(200).json({ success: false, message: 'Method not allowed.' });
-  const session = await getServerSession(req, res, authOptions);
-  if (!session) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
+  const session: SessionType = await getServerSession(req, res, authOptions);
+  if (!session || !session.user?.id) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
 
   await dbConnect();
   const showFields = 'id image imageSmall title episodeCount releaseDate nextEpisode lastEpisode nextUpdatedAt status seasonEpisodeCount'
-  let user: IUser | null = await Users.findOne({ email: session.user?.email });
-  let userShows: IShow[] = [];
-  let formatted: ShowWatchlist[] = [];
+  const user: IUser | null = await Users.findById(session.user.id, 'shows');
+  if (!user) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
 
-  if (!user) {
-    user = await Users.create({ email: session.user?.email, shows: [], movies: [] });
-  } else {
-    await purgeMoviesAndShows(user);
-    const showIds = user.shows.map((show) => show.showId);
-    const showObj: ObjType = user.shows.reduce((acc: ObjType, show) => {
-      acc[show.showId] = show;
-      return acc;
-    }, {})
+  await purgeMoviesAndShows(user);
+  const showIds = user.shows.map((show) => show.showId);
+  const showObj: ObjType = user.shows.reduce((acc: ObjType, show) => {
+    acc[show.showId] = show;
+    return acc;
+  }, {})
 
-    userShows = await Show.find({ id: { $in: showIds } }, showFields);
-    formatted = await addCategory(userShows, showObj);
-  }
-
-  if (!user) return res.status(200).json({ success: false, message: 'Error creating user.' });
+  const userShows = await Show.find({ id: { $in: showIds } }, showFields);
+  const formatted = await addCategory(userShows, showObj);
   return res.status(200).json({ success: true, shows: formatted });
 }

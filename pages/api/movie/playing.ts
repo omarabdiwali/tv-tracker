@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]";
 import dbConnect from "@/utils/dbConnect";
 import Users from "@/models/Users";
-import { ItemProps, IUser, StatusObjType } from "@/utils/types";
+import { ItemProps, IUser, SessionType, StatusObjType } from "@/utils/types";
 import { hasValue, buildPosterURL, purgeMoviesAndShows } from "@/utils/util";
 
 const queryTMDB = async (statusInfo: StatusObjType) : Promise<ItemProps[]> => {
@@ -36,26 +36,21 @@ const queryTMDB = async (statusInfo: StatusObjType) : Promise<ItemProps[]> => {
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method != "GET") return res.status(200).json({ success: false, message: 'Method not allowed.' })
 
-  const session = await getServerSession(req, res, authOptions);
-  let statusInfo: StatusObjType = {};
-  
-  if (!session) {
+  const session: SessionType = await getServerSession(req, res, authOptions);
+  if (!session || !session.user?.id) {
     return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
   }
 
   await dbConnect();
+  const user: IUser | null = await Users.findById(session.user.id, 'movies');
+  if (!user) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
 
-  const user: IUser | null = await Users.findOne({ email: session.user?.email });
-  if (!user) {
-    await Users.create({ email: session.user?.email, movies: [], shows: [] })
-  } else {
-    await purgeMoviesAndShows(user);
-    statusInfo = user.movies.reduce((acc: StatusObjType, movie) => {
-      if (!movie.watched && !movie.saved) return acc;
-      acc[movie.movieId] = -(Number(movie.watched || 0)) + Number(movie.saved || 0);
-      return acc;
-    }, {})
-  }
+  await purgeMoviesAndShows(user);
+  const statusInfo = user.movies.reduce((acc: StatusObjType, movie) => {
+    if (!movie.watched && !movie.saved) return acc;
+    acc[movie.movieId] = -(Number(movie.watched || 0)) + Number(movie.saved || 0);
+    return acc;
+  }, {})
 
   const movies = await queryTMDB(statusInfo);
   return res.status(200).json({ success: true, movies });

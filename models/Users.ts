@@ -7,6 +7,11 @@ const userSchema = new Schema<IUser>({
     unique: true,
     required: true
   },
+  googleId: {
+    type: String,
+    unique: true,
+    sparse: true
+  },
   movies: [{
     movieId: {
       type: String,

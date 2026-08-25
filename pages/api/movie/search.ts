@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]";
 import dbConnect from "@/utils/dbConnect";
-import { IUser, StatusObjType } from "@/utils/types";
+import { IUser, SessionType, StatusObjType } from "@/utils/types";
 import Users from "@/models/Users";
 import { buildPosterURL, hasValue, purgeMoviesAndShows } from "@/utils/util";
 
@@ -46,26 +46,22 @@ const queryTMDB = async (queryString: string, statusInfo: StatusObjType) => {
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { q } = req.query;
-  const session = await getServerSession(req, res, authOptions);
+  const session: SessionType = await getServerSession(req, res, authOptions);
 
   if (req.method != "GET") return res.status(200).json({ success: false, message: 'Method not allowed.' })
   if (!q) return res.status(200).json({ success: false, message: 'Missing parameter.' });
-  if (!session) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
+  if (!session || !session.user?.id) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
 
   await dbConnect();
-  const user: IUser | null = await Users.findOne({ email: session.user?.email });
-  let statusInfo: StatusObjType = {};
+  const user: IUser | null = await Users.findById(session.user.id, 'movies');
+  if (!user) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
 
-  if (!user) {
-    await Users.create({ email: session.user?.email, movies: [], shows: [] })
-  } else {
-    await purgeMoviesAndShows(user);
-    statusInfo = user.movies.reduce((acc: StatusObjType, movie) => {
-      if (!movie.watched && !movie.saved) return acc;
-      acc[movie.movieId] = -(Number(movie.watched || 0)) + Number(movie.saved || 0);
-      return acc;
-    }, {})
-  }
+  await purgeMoviesAndShows(user);
+  const statusInfo = user.movies.reduce((acc: StatusObjType, movie) => {
+    if (!movie.watched && !movie.saved) return acc;
+    acc[movie.movieId] = -(Number(movie.watched || 0)) + Number(movie.saved || 0);
+    return acc;
+  }, {})
 
   const movies = await queryTMDB(q as string, statusInfo);
   return res.status(200).json({ success: true, movies });

@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]";
 import Users from "@/models/Users";
-import { IMovie, IUser } from "@/utils/types";
+import { IMovie, IUser, SessionType } from "@/utils/types";
 import dbConnect from "@/utils/dbConnect";
 import Movie from "@/models/Movie";
 import { hasValue, buildPosterURL, verifyRequiredKeys, correctRatingInfo, getIMDBRatings, timeToRefresh, purgeMoviesAndShows, getCorrectImdbId, wikiLangEd } from "@/utils/util";
@@ -101,30 +101,21 @@ const formatData = (movie: any, saved: boolean, watched: boolean, rating: number
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { id } = req.query;
-  const session = await getServerSession(req, res, authOptions);
+  const session: SessionType = await getServerSession(req, res, authOptions);
   
   if (req.method != "GET") return res.status(200).json({ success: false, message: 'Method not allowed.' })
   if (!id) return res.status(200).json({ success: false, message: 'Missing parameter.' });
-  if (!session) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
-  
-  let saved: boolean = false;
-  let watched: boolean = false;
-  let rating: number = 0;
+  if (!session || !session.user?.id) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
 
   await dbConnect();
-  const user: IUser | null = await Users.findOne({ email: session.user?.email });
+  const user: IUser | null = await Users.findById(session.user.id, 'movies');
+  if (!user) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
 
-  if (!user) {
-    await Users.create({ email: session.user?.email, movies: [], shows: [] });
-  } else {
-    await purgeMoviesAndShows(user);
-    const index = user.movies.findIndex((movie) => movie.movieId == `${id}`);
-    saved = index != -1 ? !!user.movies[index].saved : false;
-    watched = index != -1 ? user.movies[index].watched : false;
-    rating = index != -1 ? (user.movies[index].rating || 0) : 0;
-  }
-
-  if (!user) return res.status(200).json({ success: false, message: "Unauthenticated user." });
+  await purgeMoviesAndShows(user);
+  const index = user.movies.findIndex((movie) => movie.movieId == `${id}`);
+  const saved = index != -1 ? !!user.movies[index].saved : false;
+  const watched = index != -1 ? user.movies[index].watched : false;
+  const rating = index != -1 ? (user.movies[index].rating || 0) : 0;
 
   let info: any = {};
   const fields = 'title genres trailer updatedAt runtime homepage imdbId origin image overview releaseDate voteCount voteAverage id';

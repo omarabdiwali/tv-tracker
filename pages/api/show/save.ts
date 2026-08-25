@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]";
 import dbConnect from "@/utils/dbConnect";
 import Users from "@/models/Users";
-import { IUser } from "@/utils/types";
+import { IUser, SessionType } from "@/utils/types";
 import Show from "@/models/Show";
 import { hasValue, verifyRequiredKeys, correctRatingInfo, getIMDBRatings } from "@/utils/util";
 
@@ -59,25 +59,17 @@ const queryTVMaze = async (showId: string, targetTitle: string) => {
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method != "POST") return res.status(200).json({ success: false, message: 'Method not allowed.' });
   const { id, title, save } = req.body;
-  const session = await getServerSession(req, res, authOptions);
+  const session: SessionType = await getServerSession(req, res, authOptions);
 
-  if (!session || !hasValue(id) || !title || !hasValue(save)) {
-    const message = !session ? "Unauthenticated user." : "Missing body parameter(s).";
+  if (!session || !session.user?.id || !hasValue(id) || !title || !hasValue(save)) {
+    const message = (!session || !session.user?.id) ? "Unauthenticated user." : "Missing body parameter(s).";
     return res.status(200).json({ success: false, message });
   }
 
   await dbConnect();
-
-  let user : IUser | null = await Users.findOne({ email: session.user?.email });
-  let index = -1;
-
-  if (!user) {
-    user = await Users.create({ email: session.user?.email, shows: [], movies: [] });
-  } else {
-    index = user.shows.findIndex(show => show.showId == `${id}`);
-  }
-
+  const user : IUser | null = await Users.findById(session.user.id, 'shows');
   if (!user) return res.status(200).json({ success: false, message: "Unauthenticated user." });
+  const index = user.shows.findIndex(show => show.showId == `${id}`);
   const show = await Show.exists({ id });
 
   if (!show) {
@@ -103,6 +95,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     user.shows.push(showObj);
   }
 
-  user.save();
+  await user.save();
   return res.status(200).json({ success: true, message: `${title} has been ${save ? "saved to" : "removed from"} watchlist!` });
 }

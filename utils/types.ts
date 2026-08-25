@@ -1,5 +1,18 @@
 import { Document, Types } from "mongoose";
+import { Session } from "next-auth";
 import { Dispatch, SetStateAction } from "react";
+
+interface CustomSessionType extends Session {
+  user?: {
+    name?: string | null
+    email?: string | null
+    image?: string | null
+    id?: string | null
+    googleId?: string | null
+  },
+}
+
+export type SessionType = CustomSessionType | null;
 
 export interface ItemProps {
   movie?: MovieWatchlist,
@@ -103,6 +116,7 @@ export interface ShowDetailsProps {
 
 export interface IUser extends Document {
   email: string;
+  googleId?: string;
   movies: UserMovie[];
   shows: UserShow[];
   lastPurgedAt: Date;

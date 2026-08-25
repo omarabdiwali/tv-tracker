@@ -1,7 +1,7 @@
 import Item from "@/components/Item";
 import LandingPage from "@/components/LandingPage";
 import { ItemProps } from "@/utils/types";
-import { useSession } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import Head from "next/head";
 import { useEffect, useState } from "react";
 
@@ -31,6 +31,7 @@ export default function Home() {
       if (data.success) {
         page == 1 ? setTrending(data.movies) : setTrending1(data.movies);
       } else {
+        if (data.message == 'Unauthenticated user.') signOut();
         setError(data.message);
       }
     }).catch(err => {
