@@ -5,7 +5,7 @@ import dbConnect from "@/utils/dbConnect";
 import Users from "@/models/Users";
 import { IUser, EpisodesData, IShow, SeasonEpisodeCountType, SessionType } from "@/utils/types";
 import Show from "@/models/Show";
-import { hasValue, correctRatingInfo, getIMDBRatings, timeToRefresh, purgeMoviesAndShows, getCorrectImdbId } from "@/utils/util";
+import { hasValue, correctRatingInfo, getIMDBRatings, timeToRefresh, getCorrectImdbId } from "@/utils/util";
 
 const getEpisodeId = (href: string | undefined | null) => {
   if (!href) return null;
@@ -135,7 +135,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const user: IUser | null = await Users.findById(session.user.id, 'shows');
   if (!user) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
 
-  await purgeMoviesAndShows(user);
   const index = user.shows.findIndex((show) => show.showId == `${id}`);
   const saved = index != -1 ? !!user.shows[index].saved : false;
   const watched = index != -1 ? user.shows[index].watchedEpisodes : [];

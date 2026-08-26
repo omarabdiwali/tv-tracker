@@ -4,7 +4,7 @@ import { authOptions } from "../auth/[...nextauth]";
 import dbConnect from "@/utils/dbConnect";
 import { IUser, SessionType, StatusObjType } from "@/utils/types";
 import Users from "@/models/Users";
-import { buildPosterURL, hasValue, purgeMoviesAndShows } from "@/utils/util";
+import { buildPosterURL, hasValue } from "@/utils/util";
 
 const getYear = (str: string) => {
   return str.split('-', 1).at(0);
@@ -56,7 +56,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const user: IUser | null = await Users.findById(session.user.id, 'movies');
   if (!user) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
 
-  await purgeMoviesAndShows(user);
   const statusInfo = user.movies.reduce((acc: StatusObjType, movie) => {
     if (!movie.watched && !movie.saved) return acc;
     acc[movie.movieId] = -(Number(movie.watched || 0)) + Number(movie.saved || 0);

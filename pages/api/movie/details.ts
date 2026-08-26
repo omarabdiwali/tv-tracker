@@ -5,7 +5,7 @@ import Users from "@/models/Users";
 import { IMovie, IUser, SessionType } from "@/utils/types";
 import dbConnect from "@/utils/dbConnect";
 import Movie from "@/models/Movie";
-import { hasValue, buildPosterURL, verifyRequiredKeys, correctRatingInfo, getIMDBRatings, timeToRefresh, purgeMoviesAndShows, getCorrectImdbId, wikiLangEd } from "@/utils/util";
+import { hasValue, buildPosterURL, verifyRequiredKeys, correctRatingInfo, getIMDBRatings, timeToRefresh, getCorrectImdbId, wikiLangEd } from "@/utils/util";
 
 const replaceValues = (video: any) => {
   return [ video.key, video.official, new Date(video.published_at), video.type ];
@@ -111,7 +111,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const user: IUser | null = await Users.findById(session.user.id, 'movies');
   if (!user) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
 
-  await purgeMoviesAndShows(user);
   const index = user.movies.findIndex((movie) => movie.movieId == `${id}`);
   const saved = index != -1 ? !!user.movies[index].saved : false;
   const watched = index != -1 ? user.movies[index].watched : false;

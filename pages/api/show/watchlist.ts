@@ -5,7 +5,7 @@ import Users from '@/models/Users'
 import { IShow, IUser, UserShow, ShowWatchlist, SessionType } from "@/utils/types";
 import dbConnect from "@/utils/dbConnect";
 import Show from "@/models/Show";
-import { getNextEpisodeNumber, hasValue, purgeMoviesAndShows } from "@/utils/util";
+import { getNextEpisodeNumber, hasValue } from "@/utils/util";
 
 type ObjType = {
   [id: string] : UserShow
@@ -126,7 +126,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const user: IUser | null = await Users.findById(session.user.id, 'shows');
   if (!user) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
 
-  await purgeMoviesAndShows(user);
   const showIds = user.shows.map((show) => show.showId);
   const showObj: ObjType = user.shows.reduce((acc: ObjType, show) => {
     acc[show.showId] = show;

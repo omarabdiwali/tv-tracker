@@ -4,7 +4,7 @@ import { authOptions } from "../auth/[...nextauth]";
 import Users from '@/models/Users'
 import { IUser, SessionType, StatusObjType } from "@/utils/types";
 import dbConnect from "@/utils/dbConnect";
-import { buildPosterURL, hasValue, purgeMoviesAndShows } from "@/utils/util";
+import { buildPosterURL, hasValue } from "@/utils/util";
 
 const queryTMDB = async (page: string, statusInfo: StatusObjType) => {
   const apiKey = process.env.TMDB_API_KEY;
@@ -45,7 +45,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const user: IUser | null = await Users.findById(session.user.id, 'movies');
   if (!user) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
   
-  page == '1' && await purgeMoviesAndShows(user);
   const statusInfo = user.movies.reduce((acc: StatusObjType, movie) => {
     if (!movie.watched && !movie.saved) return acc;
     acc[movie.movieId] = -(Number(movie.watched || 0)) + Number(movie.saved || 0);
