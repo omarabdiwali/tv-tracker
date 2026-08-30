@@ -155,7 +155,7 @@ function Item({ show, id, image, imageSmall, title, releaseDate, episodeCount, e
         `}
       >
         {action == 'add' ? <IoIosAdd className="my-[0.5]" /> : action == 'remove' ?
-         <IoIosRemove className="my-[0.5]" /> : <IoIosHourglass className="my-[0.5]" />}
+         <IoIosRemove className="my-[0.5]" /> : <IoIosHourglass className="my-[0.5] animate-spin" />}
       </button>
       {(nextEpisode || lastEpisode) && (
         <div

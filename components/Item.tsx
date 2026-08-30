@@ -73,7 +73,7 @@ export default function Item({ movie, id, image, title, releaseDate, type, saved
         `}
       >
         {action == 'add' ? <IoIosAdd className="my-[0.5]" /> : action == 'remove' ?
-         <IoIosRemove className="my-[0.5]" /> : <IoIosHourglass className="my-[0.5]" />}
+         <IoIosRemove className="my-[0.5]" /> : <IoIosHourglass className="my-[0.5] animate-spin" />}
       </button>
       {watched && <div title="Watched" className="absolute right-[75%] top-[8%] z-10 bg-black/80 py-[3px] px-[5px] rounded-[50%]">
         <IoIosCheckmark className="my-[0.5]" />
