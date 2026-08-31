@@ -18,16 +18,45 @@ const parseEpisodeInfo = (data: any) => {
 const getEpisodesAndImage = async (showId: string) => {
   const url = `https://api.tvmaze.com/shows/${showId}?embed[]=nextepisode&embed[]=previousepisode`;
   return fetch(url).then(res => res.json()).then(data => {
-    if (data.status == 404) return { success: false };
+    if (!isNaN(parseInt(data.status))) return { success: false };
     const showStatus = data.status;
     const img = data.image?.original || data.image?.medium || 'https://static.tvmaze.com/images/no-img/no-img-portrait-text.png';
     const imgSmall = data.image?.medium;
     const lastEp = parseEpisodeInfo(data._embedded?.previousepisode);
     const nxtEp = parseEpisodeInfo(data._embedded?.nextepisode);
     return { success: true, lastEp, nxtEp, img, imgSmall, showStatus };
-  }).catch(err => {
+  }).catch(_ => {
     return { success: false, lastEp: undefined, nxtEp: undefined, img: undefined, imgSmall: undefined, showStatus: undefined };
   })
+}
+
+const getUpdatedShows = async () => {
+  const url = 'https://api.tvmaze.com/updates/shows?since=week';
+  return fetch(url).then(res => res.json()).then(data => {
+    return { fetchSuccess: true, data };
+  }).catch(_ => {
+    return { fetchSuccess: false, data: undefined };
+  })
+}
+
+const getUpdatedInfo = async (show: IShow) => {
+  const { lastEp, nxtEp, img, imgSmall, showStatus, success } = await getEpisodesAndImage(show.id);
+  if (!success) return { success, updateItem: undefined };
+  
+  const status = showStatus ? showStatus : show.status;
+  const nextEpisode = nxtEp ? nxtEp : null;
+  const lastEpisode = lastEp ? lastEp : null;
+  const image = img || show.image;
+  const imageSmall = imgSmall || show.imageSmall;
+  const nextUpdatedAt = new Date();
+  const updateItem = {
+    updateOne: {
+      filter: { _id: show._id },
+      update: { $set: { status, nextEpisode, lastEpisode, image, imageSmall, nextUpdatedAt } }
+    }
+  }
+
+  return { success, updateItem };
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -38,31 +67,35 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     await dbConnect();
-    const twoWeeksAgo = new Date(Date.now() - 86400000 * 14);
-    const showsToUpdate: IShow[] = await Show.find({ nextUpdatedAt: { $lte: twoWeeksAgo }, status: "Ended" });
+    const aroundAWeekAgo = new Date(Date.now() - 86400000 * 6);
+    const showsToUpdate: IShow[] = await Show.find({ nextUpdatedAt: { $lte: aroundAWeekAgo }, status: "Ended" });
+    const { fetchSuccess, data: updatedShows } = await getUpdatedShows();
     const itemsToUpdate = [];
-    
-    for (const show of showsToUpdate) {
-      const { lastEp, nxtEp, img, imgSmall, showStatus, success } = await getEpisodesAndImage(show.id);
-      if (!success) continue;
-      
-      const status = showStatus ? showStatus : show.status;
-      const nextEpisode = nxtEp ? nxtEp : null;
-      const lastEpisode = lastEp ? lastEp : null;
-      const image = img || show.image;
-      const imageSmall = imgSmall || show.imageSmall;
-      const nextUpdatedAt = new Date();
+    let fetchedNewInfo = 0;
 
-      itemsToUpdate.push({
-        updateOne: {
-          filter: { _id: show._id },
-          update: { $set: { status, nextEpisode, lastEpisode, image, imageSmall, nextUpdatedAt } }
+    for (const show of showsToUpdate) {
+      if (!fetchSuccess || updatedShows[show.id]) {
+        fetchedNewInfo += 1;
+        const { success, updateItem } = await getUpdatedInfo(show);
+        if (!success) continue;
+        itemsToUpdate.push(updateItem);
+      } else {
+        const nextUpdatedAt = new Date();
+        const updateItem = {
+          updateOne: {
+            filter: { _id: show._id },
+            update: { $set: { nextUpdatedAt } }
+          }
         }
-      })      
+        itemsToUpdate.push(updateItem);
+      }
     }
 
-    if (itemsToUpdate.length) await Show.bulkWrite(itemsToUpdate);
-    return res.status(200).json({ success: true, message: `${itemsToUpdate.length}/${showsToUpdate.length} show(s) updated!` });
+    if (itemsToUpdate.length) await Show.bulkWrite(itemsToUpdate, { timestamps: false });
+    return res.status(200).json({
+      success: true, 
+      message: `${itemsToUpdate.length}/${showsToUpdate.length} show(s) updated, with ${fetchedNewInfo} show(s) getting new info!`
+    });
   } catch (error) {
     return res.status(500).json({ error: 'Internal Server Error' });
   }

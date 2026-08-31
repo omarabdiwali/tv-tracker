@@ -50,12 +50,12 @@ const parseEpisodeInfo = (data: any) => {
 const getEpisodesAndImage = async (showId: string) => {
   const url = `https://api.tvmaze.com/shows/${showId}?embed[]=nextepisode&embed[]=previousepisode`;
   return fetch(url).then(res => res.json()).then(data => {
-    if (data.status == 404) return {};
+    if (!isNaN(parseInt(data.status))) return { success: false };
     const image = data.image?.original || data.image?.medium || 'https://static.tvmaze.com/images/no-img/no-img-portrait-text.png';
     const imageSmall = data.image?.medium;
     const lastEpisode = parseEpisodeInfo(data._embedded?.previousepisode);
     const nextEpisode = parseEpisodeInfo(data._embedded?.nextepisode);
-    return { lastEpisode, nextEpisode, image, imageSmall };
+    return { success: true, lastEpisode, nextEpisode, image, imageSmall };
   })
 }
 
@@ -75,12 +75,12 @@ const addCategory = async (shows: IShow[], userShows: ObjType) => {
     if (!info.saved && !info.completed) continue;
 
     if (checkIfPassed(show)) {
-      const { lastEpisode, nextEpisode, image, imageSmall } = await getEpisodesAndImage(show.id);
-      show.nextEpisode = nextEpisode ? nextEpisode : null;
-      show.lastEpisode = lastEpisode ? lastEpisode : null;
+      const { success, lastEpisode, nextEpisode, image, imageSmall } = await getEpisodesAndImage(show.id);
+      show.nextEpisode = success ? nextEpisode ? nextEpisode : null : show.nextEpisode;
+      show.lastEpisode = success ? lastEpisode ? lastEpisode : null : show.lastEpisode;
       show.image = image || show.image;
       show.imageSmall = imageSmall || show.imageSmall;
-      show.nextUpdatedAt = new Date();
+      show.nextUpdatedAt = success ? new Date() : show.nextUpdatedAt;
       await show.save({ timestamps: false });
     }
     
