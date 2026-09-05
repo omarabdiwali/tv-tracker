@@ -11,6 +11,23 @@ type ObjType = {
   [id: string] : UserShow
 }
 
+type UpdatedShowsResult = {
+  fetchSuccess: boolean;
+  data: any;
+} | {
+  fetchSuccess: boolean;
+  data: undefined;
+}
+
+const getUpdatedShows = async (timeLength: string) : Promise<UpdatedShowsResult> => {
+  const url = `https://api.tvmaze.com/updates/shows?since=${timeLength}`;
+  return fetch(url).then(res => res.json()).then(data => {
+    return { fetchSuccess: true, data };
+  }).catch(_ => {
+    return { fetchSuccess: false, data: undefined };
+  })
+}
+
 const nextEpisodeInFuture = (nextEpisode: string) => {
   const dayOld = new Date();
   dayOld.setDate(dayOld.getDate() - 1);
@@ -68,22 +85,64 @@ const getEpisodesAndImage = async (showId: string) => {
 
 const addCategory = async (shows: IShow[], userShows: ObjType) => {
   const populated: ShowWatchlist[] = [];
+  const showsToUpdate = [];
+  
+  let dayShows: UpdatedShowsResult | undefined = undefined;
+  let weekShows: UpdatedShowsResult | undefined = undefined;
 
   for (const show of shows) {
     let category = 0;
     const info = userShows[show.id];
-    if (!info) continue;
-    if (!info.saved && !info.completed) continue;
+    if (!info || (!info.saved && !info.completed)) continue;
 
     if (checkIfPassed(show)) {
-      const { success, status, lastEpisode, nextEpisode, image, imageSmall } = await getEpisodesAndImage(show.id);
-      show.nextEpisode = success ? nextEpisode ? nextEpisode : null : show.nextEpisode;
-      show.lastEpisode = success ? lastEpisode ? lastEpisode : null : show.lastEpisode;
-      show.status = success ? status : show.status;
-      show.image = image || show.image;
-      show.imageSmall = imageSmall || show.imageSmall;
-      show.nextUpdatedAt = success ? new Date() : show.nextUpdatedAt;
-      await show.save({ timestamps: false });
+      const timeDiff = show.nextUpdatedAt ? new Date().getTime() - new Date(show.nextUpdatedAt).getTime() : 86400000 * 8;
+      let fetchInfo = true;
+      
+      if (timeDiff < 86400000) {
+        dayShows = dayShows ?? await getUpdatedShows("day");
+        fetchInfo = !dayShows.fetchSuccess ? true : show.id in dayShows.data;
+      } else if (timeDiff < 86400000 * 7) {
+        weekShows = weekShows ?? await getUpdatedShows("week");
+        fetchInfo = !weekShows.fetchSuccess ? true : show.id in weekShows.data;
+      }
+
+      if (fetchInfo) {
+        const { success, status, lastEpisode, nextEpisode, image, imageSmall } = await getEpisodesAndImage(show.id);
+        if (success) {
+          show.nextEpisode = nextEpisode ? nextEpisode : null;
+          show.lastEpisode = lastEpisode ? lastEpisode : null;
+          show.status = status || show.status;
+          show.image = image || show.image;
+          show.imageSmall = imageSmall || show.imageSmall;
+          show.nextUpdatedAt = new Date();
+          
+          const update = {
+            $set: {
+              nextEpisode: show.nextEpisode,
+              lastEpisode: show.lastEpisode,
+              status: show.status,
+              image: show.image,
+              imageSmall: show.imageSmall,
+              nextUpdatedAt: show.nextUpdatedAt
+            }
+          }
+
+          showsToUpdate.push({
+            updateOne: {
+              filter: { id: show.id },
+              update
+            }
+          })
+        }
+      } else {
+        showsToUpdate.push({
+          updateOne: {
+            filter: { id: show.id },
+            update: { $set: { nextUpdatedAt: new Date() } }
+          }
+        })
+      }
     }
     
     const watchedCount = info.watchedEpisodes.length;
@@ -115,6 +174,7 @@ const addCategory = async (shows: IShow[], userShows: ObjType) => {
     });
   }
 
+  if (showsToUpdate.length) await Show.bulkWrite(showsToUpdate, { timestamps: false });
   return populated;
 }
 
@@ -124,8 +184,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!session || !session.user?.id) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
 
   await dbConnect();
-  const showFields = 'id image imageSmall title episodeCount releaseDate nextEpisode lastEpisode nextUpdatedAt status seasonEpisodeCount'
-  const user: IUser | null = await Users.findById(session.user.id, 'shows');
+  const showFields = 'id image imageSmall title episodeCount releaseDate nextEpisode lastEpisode nextUpdatedAt status seasonEpisodeCount';
+  const user: IUser | null = await Users.findById(session.user.id, 'shows').lean();
   if (!user) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
 
   const showIds = user.shows.map((show) => show.showId);
@@ -134,7 +194,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return acc;
   }, {})
 
-  const userShows = await Show.find({ id: { $in: showIds } }, showFields);
+  const userShows = await Show.find({ id: { $in: showIds } }, showFields).lean();
   const formatted = await addCategory(userShows, showObj);
   return res.status(200).json({ success: true, shows: formatted });
 }
