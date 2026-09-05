@@ -53,7 +53,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!session || !session.user?.id) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
 
   await dbConnect();
-  const user: IUser | null = await Users.findById(session.user.id, 'movies');
+  const user: IUser | null = await Users.findById(session.user.id, 'movies').lean();
   if (!user) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
 
   const statusInfo = user.movies.reduce((acc: StatusObjType, movie) => {

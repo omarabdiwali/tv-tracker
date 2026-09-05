@@ -108,7 +108,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!session || !session.user?.id) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
 
   await dbConnect();
-  const user: IUser | null = await Users.findById(session.user.id, 'movies');
+  const user: IUser | null = await Users.findById(session.user.id, 'movies').lean();
   if (!user) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
 
   const index = user.movies.findIndex((movie) => movie.movieId == `${id}`);
@@ -118,7 +118,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   let info: any = {};
   const fields = 'title genres trailer updatedAt runtime homepage imdbId origin image overview releaseDate voteCount voteAverage id';
-  const movie: IMovie | null = await Movie.findOne({ id }, fields);
+  const movie: IMovie | null = await Movie.findOne({ id }, fields).lean();
   const refreshTime = 86400000 * 5;
 
   if (!movie || movie.trailer == 'n/a' || timeToRefresh(movie.updatedAt, refreshTime)) {

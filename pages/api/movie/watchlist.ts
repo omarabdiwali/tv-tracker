@@ -37,7 +37,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   await dbConnect();
   const movieFields = 'id imageSmall title releaseDate'
-  const user: IUser | null = await Users.findById(session.user.id, 'movies');
+  const user: IUser | null = await Users.findById(session.user.id, 'movies').lean();
   if (!user) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
 
   const movieIds = user.movies.map((movie) => movie.movieId);
@@ -46,7 +46,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return acc;
   }, {})
 
-  const savedMovies = await Movie.find({ id: { $in: movieIds } }, movieFields);
+  const savedMovies = await Movie.find({ id: { $in: movieIds } }, movieFields).lean();
   const formatted = addWatchedStatus(savedMovies, movieObj);
 
   if (!user) return res.status(200).json({ success: false, message: 'Error creating user.' });

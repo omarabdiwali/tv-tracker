@@ -132,7 +132,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   let showInfo = {};
   const showKeys = 'title genres language status homepage imdbId image overview releaseDate voteAverage voteCount id episodes episodeCount nextEpisode lastEpisode updatedAt';
   await dbConnect();
-  const user: IUser | null = await Users.findById(session.user.id, 'shows');
+  const user: IUser | null = await Users.findById(session.user.id, 'shows').lean();
   if (!user) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
 
   const index = user.shows.findIndex((show) => show.showId == `${id}`);
