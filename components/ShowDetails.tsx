@@ -56,7 +56,7 @@ const EpisodeItem = memo(({ episode, actions, onToggleAction }: {
   }, [episode.id, actions, onToggleAction]);
 
   return (
-    <div id={`${episode.id}`} className="flex items-start justify-between p-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors duration-200">
+    <div id={`${episode.id}`} className="flex items-start justify-between p-3 bg-gray-900 border border-gray-700 rounded-lg hover:bg-gray-950 transition-colors duration-200">
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
           <span className="text-sm hidden sm:block font-medium text-blue-400 bg-blue-900/50 px-2 py-0.5 rounded">
@@ -73,7 +73,7 @@ const EpisodeItem = memo(({ episode, actions, onToggleAction }: {
           {episode.airdate || 'N/A'}
         </div>
         {episode.summary && (
-          <div dangerouslySetInnerHTML={{ __html: sanitizeHtml((episode.summary || 'No summary.'))}} className="text-xs text-gray-300" />
+          <div dangerouslySetInnerHTML={{ __html: sanitizeHtml((episode.summary || 'No summary.'))}} className="text-xs text-gray-100" />
         )}
       </div>
 
@@ -84,8 +84,8 @@ const EpisodeItem = memo(({ episode, actions, onToggleAction }: {
         className={`ml-3 flex-shrink-0 enabled:cursor-pointer flex items-center gap-1 px-1.5 py-1.5 rounded-full text-xs ${
           actions[`${episode.id}`] == 2
             ? 'bg-green-600 hover:bg-green-700 text-white'
-            : 'bg-gray-600 hover:bg-gray-500 text-gray-300'
-        } font-medium transition-all border-[1px] border-gray-700 duration-200 bg-gray-600 hover:bg-gray-500 text-gray-300 disabled:opacity-50`}
+            : 'bg-gray-600 hover:bg-gray-500 text-gray-100'
+        } font-medium transition-all border-[1px] border-gray-700 duration-200 bg-gray-600 hover:bg-gray-500 text-gray-100 disabled:opacity-50`}
       >
         {isLoading && currentActive == 2 ? (
           <IoIosHourglass size={14} className="animate-spin" />
@@ -100,8 +100,8 @@ const EpisodeItem = memo(({ episode, actions, onToggleAction }: {
         className={`ml-1 flex-shrink-0 enabled:cursor-pointer flex items-center gap-1 px-1.5 py-1.5 rounded-full text-xs ${
           actions[`${episode.id}`] == 1
             ? 'bg-orange-500 hover:bg-orange-600 text-white'
-            : 'bg-gray-600 hover:bg-gray-500 text-gray-300'
-        } font-medium transition-all border-[1px] border-gray-700 duration-200 bg-gray-600 hover:bg-gray-500 text-gray-300 disabled:opacity-50`}
+            : 'bg-gray-600 hover:bg-gray-500 text-gray-100'
+        } font-medium transition-all border-[1px] border-gray-700 duration-200 bg-gray-600 hover:bg-gray-500 text-gray-100 disabled:opacity-50`}
       >
         {isLoading && currentActive == 1 ? (
           <IoIosHourglass size={14} className="animate-spin" />
