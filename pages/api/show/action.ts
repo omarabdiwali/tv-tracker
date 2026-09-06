@@ -3,46 +3,48 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]";
 import dbConnect from "@/utils/dbConnect";
 import Users from "@/models/Users";
-import { IUser, SessionType } from "@/utils/types";
+import { IUser, SessionType, UserShow } from "@/utils/types";
 import Show from "@/models/Show";
 import { hasValue } from "@/utils/util";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method != "POST") return res.status(200).json({ success: false, message: 'Method not allowed.' });
-  const { showId, episodeIds, watched } = req.body;
+  const { showId, epId, value, btnTyp } = req.body;
   const session: SessionType = await getServerSession(req, res, authOptions);
 
-  if (!session || !session.user?.id || !hasValue(showId) || !hasValue(episodeIds) || episodeIds.length == 0 || !hasValue(watched)) {
+  if (!session || !session.user?.id || !hasValue(showId) || !hasValue(epId) || !hasValue(value) || !hasValue(btnTyp) || (btnTyp != 1 && btnTyp != 2)) {
     const message = (!session || !session.user?.id) ? "Unauthenticated user." : "Missing body parameter(s).";
     return res.status(200).json({ success: false, message });
   }
 
   await dbConnect();
   const user: IUser | null = await Users.findById(session.user.id, 'shows');
-  const showExists = await Show.exists({ id: showId });
   if (!user) return res.status(200).json({ success: false, message: "Unauthenticated user." });
-  if (!showExists) return res.status(200).json({ success: false, message: "Invalid show." });
 
   const index = user.shows.findIndex((show) => show.showId == `${showId}`);
+  const showExists = await Show.exists({ id: showId });
+  if (!showExists) return res.status(200).json({ success: false, message: "Invalid show." });
   
   if (index == -1) {
-    const watchedEpisodes = episodeIds.map((id: string | number) => `${id}`);
-    const showObj = { showId: `${showId}`, saved: false, watchedEpisodes: watched ? watchedEpisodes : [], rating: 0 };
+    const item = value ? { [epId]: btnTyp } : {};
+    const showObj: UserShow = { showId: `${showId}`, saved: false, episodes: item, rating: 0 };
     user.shows.push(showObj);
-  } 
-  else {
-    const watchedEpisodesList = user.shows[index].watchedEpisodes;
-    const watchedEpisodes = new Set(watchedEpisodesList);
-
-    if (watched) {
-      episodeIds.forEach((id: string | number) => watchedEpisodes.add(`${id}`));
+  } else {
+    if (value) {
+      if (user.shows[index].episodes) {
+        user.shows[index].episodes[epId] = btnTyp;
+      } else {
+        user.shows[index].episodes = { [epId]: btnTyp };
+      }
+      user.markModified(`shows.${index}.episodes`);
     } else {
-      episodeIds.forEach((id: string | number) => watchedEpisodes.delete(`${id}`));
+      if (user.shows[index].episodes && epId in user.shows[index].episodes) {
+        delete user.shows[index].episodes[epId];
+        user.markModified(`shows.${index}.episodes`);
+      }
     }
-
-    user.shows[index].watchedEpisodes = [...watchedEpisodes];
   }
 
   await user.save();
-  return res.status(200).json({ success: true, message: `Success.` });
+  return res.status(200).json({ success: true });
 }

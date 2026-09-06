@@ -13,6 +13,7 @@ interface CustomSessionType extends Session {
 }
 
 export type SessionType = CustomSessionType | null;
+export type ProgressType = [number, number, number, string?][];
 
 export interface ItemProps {
   movie?: MovieWatchlist,
@@ -31,6 +32,10 @@ export type StatusObjType = {
   [id: string] : number
 }
 
+export type EpisodeObjType = {
+  [id: string] : 1 | 2;
+}
+
 export interface UserMovie {
   movieId: string;
   watched: boolean;
@@ -40,7 +45,9 @@ export interface UserMovie {
 
 export interface UserShow {
   showId: string;
-  watchedEpisodes: string[];
+  episodes?: EpisodeObjType;
+  progress?: ProgressType;
+  lastHash?: string;
   saved?: boolean;
   rating?: number;
   completed?: boolean;
@@ -56,7 +63,6 @@ export interface Episode {
   number: number;
   airdate: string;
   summary: string;
-  watched: boolean;
 }
 
 export interface MovieGenre {
@@ -89,6 +95,7 @@ export interface ShowProps {
   image: string;
   overview: string;
   episodes?: EpisodesData;
+  actions?: EpisodeObjType;
   imdbId?: string;
   genres?: string[];
   voteAverage?: number;
@@ -100,7 +107,6 @@ export interface ShowProps {
   saved?: boolean;
   nextEpisode?: string | null;
   lastEpisode?: string | null;
-  watched: Set<string>;
   episodeCount?: number;
   rating?: number;
   completed?: boolean;
@@ -202,9 +208,9 @@ export interface ShowWatchlist {
   status: string,
   category: number,
   episodeCount?: number,
-  episodesWatched?: number,
   rating?: number,
   saved?: boolean,
+  progress?: ProgressType,
   nextEpisodeNumber?: number,
   completed?: boolean
 }

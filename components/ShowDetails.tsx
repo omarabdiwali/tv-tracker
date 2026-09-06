@@ -1,17 +1,20 @@
-import { ShowDetailsProps, Episode, EpisodesData } from '@/utils/types';
 import sanitizeHtml from 'sanitize-html';
-import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useSnackbar } from 'notistack';
+import StarRating from './StarRating';
+
+import { useSession } from 'next-auth/react';
+import { ShowDetailsProps, Episode, EpisodesData, EpisodeObjType } from '@/utils/types';
 import { useState, useCallback, memo, useEffect, useRef } from 'react';
+import { useRouter } from 'next/router';
+import { useSnackbar } from 'notistack';
+import { formatNumberOfVotes } from '@/utils/util';
+
 import { FaImdb, FaStar } from 'react-icons/fa';
 import { HiOutlineStatusOnline } from 'react-icons/hi';
-import { IoIosAddCircleOutline, IoIosCheckmarkCircle, IoIosCloseCircleOutline, IoIosHourglass, IoMdArrowDropdown, IoMdArrowDropup, IoMdCalendar } from 'react-icons/io';
+import { IoIosAddCircleOutline, IoIosCheckmarkCircle, IoIosCloseCircleOutline, IoIosHourglass, IoMdArrowDropdown, IoMdArrowDropup, IoMdCalendar, IoMdCheckmark } from 'react-icons/io';
 import { RxClock } from 'react-icons/rx';
-import StarRating from './StarRating';
-import { useRouter } from 'next/router';
-import { formatNumberOfVotes } from '@/utils/util';
+import { IoArrowRedoSharp } from 'react-icons/io5';
 
 const isElementInViewport = (el: HTMLElement, parent: HTMLElement | null) => {
   const rect = el.getBoundingClientRect();
@@ -37,18 +40,20 @@ const isElementInViewport = (el: HTMLElement, parent: HTMLElement | null) => {
   );
 }
 
-const EpisodeItem = memo(({ episode, watched, onToggleWatched }: {
+const EpisodeItem = memo(({ episode, actions, onToggleAction }: {
   episode: Episode;
-  watched: Set<string>;
-  onToggleWatched: (id: string | number, watched: boolean) => Promise<boolean>
+  actions: EpisodeObjType;
+  onToggleAction: (btnType: 1 | 2, id: string, value: boolean) => Promise<boolean>
 }) => {
   const [isLoading, setIsLoading] = useState(false);
-  const handleClick = useCallback(async () => {
+  const [currentActive, setCurrentActive] = useState(0);
+  const handleClick = useCallback(async (buttonType: 1 | 2) => {
+    setCurrentActive(buttonType);
     setIsLoading(true);
-    const newWatched = !watched.has(`${episode.id}`);
-    await onToggleWatched(episode.id, newWatched);
+    const newValue = !(actions[`${episode.id}`] == buttonType);
+    await onToggleAction(buttonType, `${episode.id}`, newValue);
     setIsLoading(false);
-  }, [episode.id, watched, onToggleWatched]);
+  }, [episode.id, actions, onToggleAction]);
 
   return (
     <div id={`${episode.id}`} className="flex items-start justify-between p-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors duration-200">
@@ -73,22 +78,36 @@ const EpisodeItem = memo(({ episode, watched, onToggleWatched }: {
       </div>
 
       <button
-        onClick={handleClick}
+        title="Watched"
+        onClick={() => handleClick(2)}
         disabled={isLoading}
-        className={`ml-3 flex-shrink-0 enabled:cursor-pointer flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 ${
-          watched.has(`${episode.id}`)
+        className={`ml-3 flex-shrink-0 enabled:cursor-pointer flex items-center gap-1 px-1.5 py-1.5 rounded-full text-xs ${
+          actions[`${episode.id}`] == 2
             ? 'bg-green-600 hover:bg-green-700 text-white'
             : 'bg-gray-600 hover:bg-gray-500 text-gray-300'
-        } disabled:opacity-50`}
+        } font-medium transition-all border-[1px] border-gray-700 duration-200 bg-gray-600 hover:bg-gray-500 text-gray-300 disabled:opacity-50`}
       >
-        {isLoading ? (
+        {isLoading && currentActive == 2 ? (
           <IoIosHourglass size={14} className="animate-spin" />
-        ) : watched.has(`${episode.id}`) ? (
-          <IoIosCloseCircleOutline size={14} />
         ) : (
-          <IoIosAddCircleOutline size={14} />
+          <IoMdCheckmark size={14} />
         )}
-        {watched.has(`${episode.id}`) ? 'Watched' : 'Mark Watched'}
+      </button>
+      <button
+        title="Skipped"
+        onClick={() => handleClick(1)}
+        disabled={isLoading}
+        className={`ml-1 flex-shrink-0 enabled:cursor-pointer flex items-center gap-1 px-1.5 py-1.5 rounded-full text-xs ${
+          actions[`${episode.id}`] == 1
+            ? 'bg-orange-500 hover:bg-orange-600 text-white'
+            : 'bg-gray-600 hover:bg-gray-500 text-gray-300'
+        } font-medium transition-all border-[1px] border-gray-700 duration-200 bg-gray-600 hover:bg-gray-500 text-gray-300 disabled:opacity-50`}
+      >
+        {isLoading && currentActive == 1 ? (
+          <IoIosHourglass size={14} className="animate-spin" />
+        ) : (
+          <IoArrowRedoSharp size={14} />
+        )}
       </button>
     </div>
   );
@@ -97,30 +116,57 @@ const EpisodeItem = memo(({ episode, watched, onToggleWatched }: {
 const SeasonSection = ({
   seasonNumber,
   episodes,
-  watched: initialWatched,
-  onToggleWatched,
-  onMarkAllWatched
+  actions: initialActions,
+  onToggle,
+  onMarkAll
 }: {
   seasonNumber: number;
   episodes: Episode[];
-  watched: Set<string>;
-  onToggleWatched: (id: string | number, watched: boolean) => Promise<boolean>;
-  onMarkAllWatched: (episodeIds: (string | number)[], watched: boolean) => Promise<boolean>;
+  actions: EpisodeObjType;
+  onToggle: (typ: 1 | 2, id: string, value: boolean) => Promise<boolean>;
+  onMarkAll: (typ: 1 | 2, episodeIds: string[], value: boolean) => Promise<boolean>;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [watched, setWatched] = useState(initialWatched);
-  const [watchedCount, setWatchedCount] = useState(episodes.filter(ep => watched.has(`${ep.id}`)).length);
+  const [actions, setActions] = useState(initialActions);
+  const [watchedCount, setWatchedCount] = useState(episodes.filter(ep => actions[`${ep.id}`] == 2).length);
+  const [skippedCount, setSkippedCount] = useState(episodes.filter(ep => actions[`${ep.id}`] == 1).length);
   const [loading, setLoading] = useState(false);
   const [scrollEpisode, setScrollEpisode] = useState<string | null>(null);
+  const [currentActive, setCurrentActive] = useState(0);
   const seasonRef = useRef(null);
   const nextEpRef = useRef<string | null>(null);
 
+  // can make faster?
+  const countWatched = () => {
+    const result = { watched: 0, skipped: 0, firstId: "" };
+    let firstSkipId = "";
+    let firstFound = false;
+
+    for (const ep of episodes) {
+      const val = actions[`${ep.id}`];
+      if (val == 2) result.watched += 1;
+      else if (val == 1) {
+        result.skipped += 1;
+        if (!firstSkipId) {
+          firstSkipId = `${ep.id}`;
+        }
+      }
+      else if (val == undefined && !firstFound) {
+        result.firstId = `${ep.id}`;
+        firstFound = true;
+      }
+    }
+
+    result.firstId = firstFound ? result.firstId : firstSkipId;
+    return result;
+  }
+
   useEffect(() => {
-    const unwatchedEpisodes = episodes.filter(ep => !watched.has(`${ep.id}`));
-    const firstId = unwatchedEpisodes.at(0)?.id;
-    nextEpRef.current = firstId ? `${firstId}` : null;
-    setWatchedCount(episodes.length - unwatchedEpisodes.length);
-  }, [episodes, watched])
+    const { watched, skipped, firstId } = countWatched();
+    nextEpRef.current = firstId ? firstId : null;
+    setWatchedCount(watched);
+    setSkippedCount(skipped);
+  }, [episodes, actions])
 
   useEffect(() => {
     if (!isOpen) {
@@ -149,35 +195,48 @@ const SeasonSection = ({
     return () => clearTimeout(timeoutId);
   }, [isOpen, scrollEpisode])
 
-  const handleToggleWatched = useCallback(async (episodeId: string | number, setToWatched: boolean) => {
-    const result = await onToggleWatched(episodeId, setToWatched);
+  const handleToggle = useCallback(async (btnTyp: 1 | 2, episodeId: string, value: boolean) : Promise<boolean> => {
+    if (loading) return false;
+    const result = await onToggle(btnTyp, episodeId, value);
     if (result) {
-      setWatched((prev) => {
-        const prevCopy = new Set(prev);
-        setToWatched ? prevCopy.add(`${episodeId}`) : prevCopy.delete(`${episodeId}`);
-        return prevCopy;
-      })
+      if (value) {
+        setActions((prev) => {
+          const copy = { ...prev };
+          copy[episodeId] = btnTyp;
+          return copy; 
+        })
+      } else {
+        setActions((prev) => {
+          const { [episodeId]: _, ...rest } = prev;
+          return rest;
+        })
+      }
     }
     return result;
-  }, [onToggleWatched]);
+  }, [onToggle])
 
-  const handleMarkAllClick = useCallback(async () => {
+  const handleMarkAllClick1 = useCallback(async (btnTyp: 1 | 2) => {
     if (loading) return;
-
+    setCurrentActive(btnTyp);
     setLoading(true);
-    const episodeIds = episodes.map((ep) => ep.id);
-    const watchStatus = watchedCount < episodes.length;
-    const result = await onMarkAllWatched(episodeIds, watchStatus);
-
+    const episodeIds = episodes.map((ep) => `${ep.id}`);
+    const status = btnTyp == 2 ? watchedCount < episodes.length : skippedCount < episodes.length;
+    const result = await onMarkAll(btnTyp, episodeIds, status);
     if (result) {
-      setWatched((prev) => {
-        const prevCopy = new Set(prev);
-        episodeIds.forEach(ep => watchStatus ? prevCopy.add(`${ep}`) : prevCopy.delete(`${ep}`));
-        return prevCopy;
+      setActions((prev) => {
+        const copy = { ...prev };
+        episodeIds.forEach((key) => {
+          if (status) {
+            copy[key] = btnTyp;
+          } else {
+            delete copy[key];
+          }
+        })
+        return copy;
       })
     }
     setLoading(false);
-  }, [onMarkAllWatched, seasonNumber, episodes, watchedCount]);
+  }, [onMarkAll, seasonNumber, episodes, watchedCount, skippedCount])
 
   return (
     <div className="border border-gray-700 rounded-lg overflow-hidden">
@@ -198,13 +257,32 @@ const SeasonSection = ({
             {watchedCount}/{episodes.length} Watched
           </span>
           <div
+            title="Mark Season as Watched"
             onClick={(e) => {
               e.stopPropagation();
-              handleMarkAllClick();
+              handleMarkAllClick1(2);
             }}
-            className={`flex items-center gap-1 px-2 py-1 text-xs ${watchedCount == episodes.length ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-600/80 hover:bg-gray-500 text-gray-300'} cursor-pointer text-white rounded-full transition-colors duration-200`}
+            className={`flex items-center gap-1 px-1.5 py-1.5 text-xs ${watchedCount == episodes.length ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-600/80 hover:bg-gray-500 text-gray-300'} cursor-pointer text-white rounded-full transition-colors duration-200`}
           >
-            {loading ? 'Loading...' : watchedCount < episodes.length ? 'Mark All Watched' : 'Watched'}
+            {loading && currentActive == 2 ? (
+              <IoIosHourglass size={14} className="animate-spin" />
+            ) : (
+              <IoMdCheckmark size={14} />
+            )}
+          </div>
+          <div
+            title="Mark Season as Skipped"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleMarkAllClick1(1);
+            }}
+            className={`flex items-center gap-1 px-1.5 py-1.5 text-xs ${skippedCount == episodes.length ? 'bg-orange-500 hover:bg-orange-600' : 'bg-gray-600/80 hover:bg-gray-500 text-gray-300'} cursor-pointer text-white rounded-full transition-colors duration-200`}
+          >
+            {loading && currentActive == 1 ? (
+              <IoIosHourglass size={14} className="animate-spin" />
+            ) : (
+              <IoArrowRedoSharp size={14} />
+            )}
           </div>
           {isOpen ? <IoMdArrowDropup size={20} /> : <IoMdArrowDropdown size={20} />}
         </div>
@@ -216,8 +294,8 @@ const SeasonSection = ({
             <EpisodeItem
               key={episode.id}
               episode={episode}
-              watched={watched}
-              onToggleWatched={handleToggleWatched}
+              actions={actions}
+              onToggleAction={handleToggle}
             />
           ))}
         </div>
@@ -229,20 +307,20 @@ const SeasonSection = ({
 interface EpisodeListProps {
   showId: string | number;
   episodes: EpisodesData;
-  watched: Set<string>;
+  actions: EpisodeObjType
 }
 
-function EpisodeList({ showId, episodes, watched }: EpisodeListProps) {
+function EpisodeList({ showId, episodes, actions }: EpisodeListProps) {
   const { enqueueSnackbar } = useSnackbar();
 
-  const handleToggleWatched = useCallback(async (episodeId: string | number, setWatched: boolean) => {
+  const handleToggle = useCallback(async (btnTyp: 1 | 2, episodeId: string, value: boolean) => {
     const reqBody = {
       showId: `${showId}`,
       epId: `${episodeId}`,
-      setWatched
+      btnTyp, value
     };
 
-    return fetch('/api/show/watched', {
+    return fetch('/api/show/action', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -269,14 +347,13 @@ function EpisodeList({ showId, episodes, watched }: EpisodeListProps) {
     });
   }, [showId, enqueueSnackbar]);
 
-  const handleMarkAllWatched = useCallback(async (episodeIds: (string | number)[], watchStatus: boolean) => {
+  const handleMarkAll = useCallback(async (btnTyp: 1 | 2, episodeIds: string[], value: boolean) => {
     const reqBody = {
       showId: `${showId}`,
-      episodeIds,
-      watched: watchStatus
+      episodeIds, value, btnTyp
     };
 
-    return fetch('/api/show/watchedSeason', {
+    return fetch('/api/show/actionSeason', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -322,9 +399,9 @@ function EpisodeList({ showId, episodes, watched }: EpisodeListProps) {
           key={seasonNum}
           seasonNumber={seasonNum}
           episodes={episodes[seasonNum]}
-          watched={watched}
-          onToggleWatched={handleToggleWatched}
-          onMarkAllWatched={handleMarkAllWatched}
+          actions={actions}
+          onToggle={handleToggle}
+          onMarkAll={handleMarkAll}
         />
       ))}
     </div>
@@ -376,7 +453,7 @@ function InfoBoxes({ status, releaseDate, lastEpisode, nextEpisode } : InfoBoxes
   )
 }
 
-export default function ShowDetails({ show }: ShowDetailsProps) {
+export default function NewShowDetails({ show }: ShowDetailsProps) {
   const { data: _, status } = useSession();
   const [buttonText, setButtonText] = useState(show.saved ? "Remove from Watchlist" : "Add to Watchlist");
   const [disabled, setDisabled] = useState(false);
@@ -588,7 +665,7 @@ export default function ShowDetails({ show }: ShowDetailsProps) {
               <EpisodeList
                 showId={show.id}
                 episodes={show.episodes}
-                watched={show.watched}
+                actions={show.actions ?? {}}
               />
             </div>
           )}

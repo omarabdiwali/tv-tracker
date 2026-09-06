@@ -2,10 +2,12 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]";
 import Users from '@/models/Users'
-import { IShow, IUser, UserShow, ShowWatchlist, SessionType } from "@/utils/types";
+import { IShow, IUser, UserShow, ShowWatchlist, SessionType, EpisodesData, EpisodeObjType, ProgressType } from "@/utils/types";
 import dbConnect from "@/utils/dbConnect";
 import Show from "@/models/Show";
 import { getNextEpisodeNumber, hasValue } from "@/utils/util";
+import { createHash } from "crypto";
+import { Types } from "mongoose";
 
 type ObjType = {
   [id: string] : UserShow
@@ -77,14 +79,107 @@ const getEpisodesAndImage = async (showId: string) => {
   })
 }
 
+const squishRLE = (rle: number[][], episodeInfo: Map<number, string>): ProgressType => {
+  if (!rle.length) return [];
+  const sorted = [...rle].sort((a, b) => a[1] - b[1]);
+  const merged: ProgressType = [];
+  let [val, start, count] = sorted[0];
+
+  for (let i = 1; i < sorted.length; i++) {
+    const [currVal, currStart, currCount] = sorted[i];
+    const expectedStart = start + count;
+
+    if (currVal === val && currStart === expectedStart) {
+      count += currCount;
+    } else {
+      const lastEp = start + count - 1;
+      merged.push([val, start, count, episodeInfo.get(lastEp)]);
+      val = currVal;
+      start = currStart;
+      count = currCount;
+    }
+  }
+
+  const lastEp = start + count - 1;
+  merged.push([val, start, count, episodeInfo.get(lastEp)]);
+  return merged;
+};
+
+const progressRLE = (actions: EpisodeObjType, seasons: EpisodesData | undefined) : ProgressType => {
+  const ids = Object.keys(actions);
+  
+  if (ids.length == 0 || !seasons) return [];
+  const indexes = new Map<string, number>();
+  const episodeInfo = new Map<number, string>();
+  let count = 0;
+  
+  for (const [season, episodes] of Object.entries(seasons)) {
+    for (const ep of episodes) {
+      const episodeString = `${ep.number}`.padStart(2, '0');
+      const lastEpInfo = `${season}x${episodeString}`;
+      
+      indexes.set(`${ep.id}`, count);
+      episodeInfo.set(count, lastEpInfo);
+      count += 1
+    }
+  }
+
+  const rle = [];
+  const current = { val: 0, start: 0, count: 0 };
+
+  for (const id of ids) {
+    const thisAction = actions[id];
+    const thisIdx = indexes.get(id)!
+    if (thisAction == 1) continue;
+
+    if (!current.val) {
+      current.val = thisAction;
+      current.start = thisIdx;
+      current.count = 1;
+    } else {
+      if (current.val != thisAction) {
+        rle.push([ current.val, current.start, current.count ]);
+        current.val = thisAction;
+        current.start = thisIdx;
+        current.count = 1;
+      } else {
+        if (thisIdx == current.start + current.count) {
+          current.count += 1;
+        } else {
+          rle.push([ current.val, current.start, current.count ]);
+          current.val = thisAction;
+          current.start = thisIdx;
+          current.count = 1;
+        }
+      }
+    }
+  }
+
+  if (current.val == 2) {
+    rle.push([ current.val, current.start, current.count ]);
+  }
+
+  return squishRLE(rle, episodeInfo);
+}
+
+const getHash = (obj: EpisodeObjType) => {
+  const stringified = JSON.stringify(obj);
+  return createHash('sha256').update(stringified).digest('hex');
+}
+
+const getEpisodes = async (id: Types.ObjectId) => {
+  return await Show.findById(id, 'episodes');
+} 
+
 // Categories are as follows:
 // 0 - In Progress
 // 1 - Up-to-Date
 // 2 - Unwatched
 // 3 - Completed (watched all available episodes, with no next episode date set)
 
-const addCategory = async (shows: IShow[], userShows: ObjType) => {
+const addCategory = async (userId: string, shows: IShow[], userShows: ObjType) => {
   const populated: ShowWatchlist[] = [];
+  const itemsToUpdate = [];
   const showsToUpdate = [];
   
   let dayShows: UpdatedShowsResult | undefined = undefined;
@@ -92,6 +187,8 @@ const addCategory = async (shows: IShow[], userShows: ObjType) => {
 
   for (const show of shows) {
     let category = 0;
+    let progress: ProgressType = [];
+
     const info = userShows[show.id];
     if (!info || (!info.saved && !info.completed)) continue;
 
@@ -144,8 +241,24 @@ const addCategory = async (shows: IShow[], userShows: ObjType) => {
         })
       }
     }
+
+    if (info.episodes) {
+      const checkHash = getHash(info.episodes);
+      if (checkHash == info.lastHash) {
+        progress = info.progress ?? [];
+      } else {
+        const showEps = await getEpisodes(show._id);
+        progress = progressRLE(info.episodes, showEps.episodes);
+        itemsToUpdate.push({
+          updateOne: {
+            filter: { _id: userId, "shows.showId": show.id },
+            update: { $set: { "shows.$.lastHash": checkHash, "shows.$.progress": progress } }
+          }
+        })
+      }
+    }
     
-    const watchedCount = info.watchedEpisodes.length;
+    const watchedCount = Object.values(info.episodes ?? {}).filter(v => v == 2).length;
     const nextEpNumber = getNextEpisodeNumber(show.nextEpisode, show.seasonEpisodeCount);
     
     if (watchedCount == 0) {
@@ -165,15 +278,16 @@ const addCategory = async (shows: IShow[], userShows: ObjType) => {
       lastEpisode: show.lastEpisode,
       status: show.status,
       episodeCount: show.episodeCount,
-      episodesWatched: info.watchedEpisodes.length,
       rating: info.rating,
       saved: info.saved,
       completed: info.completed,
       nextEpisodeNumber: nextEpNumber,
+      progress,
       category
     });
   }
 
+  if (itemsToUpdate.length) await Users.bulkWrite(itemsToUpdate);
   if (showsToUpdate.length) await Show.bulkWrite(showsToUpdate, { timestamps: false });
   return populated;
 }
@@ -195,6 +309,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }, {})
 
   const userShows = await Show.find({ id: { $in: showIds } }, showFields).lean();
-  const formatted = await addCategory(userShows, showObj);
+  const formatted = await addCategory(session.user.id, userShows, showObj);
   return res.status(200).json({ success: true, shows: formatted });
 }

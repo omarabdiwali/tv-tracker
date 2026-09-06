@@ -137,7 +137,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const index = user.shows.findIndex((show) => show.showId == `${id}`);
   const saved = index != -1 ? !!user.shows[index].saved : false;
-  const watched = index != -1 ? user.shows[index].watchedEpisodes : [];
+  const actions = index != -1 ? user.shows[index].episodes : {};
   const rating = index != -1 ? (user.shows[index].rating || 0) : 0;
   const completed = index != -1 ? !!user.shows[index].completed : false;
   const show: IShow | null = await Show.findOne({ id }, showKeys);
@@ -157,5 +157,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     showInfo = show;
   }
 
-  return res.status(200).json({ success: true, show: showInfo, saved, watched, completed, rating });
+  return res.status(200).json({ success: true, show: showInfo, actions, saved, completed, rating });
 }

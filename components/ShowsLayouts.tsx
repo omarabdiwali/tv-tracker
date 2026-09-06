@@ -1,4 +1,4 @@
-import { ShowWatchlist } from "@/utils/types";
+import { ProgressType, ShowWatchlist } from "@/utils/types";
 import Image from "next/image";
 import Link from "next/link";
 import { useSnackbar } from "notistack";
@@ -62,12 +62,12 @@ interface ItemProps {
   showStatus: string,
   updateShows: Dispatch<SetStateAction<number>>;
   saved?: boolean;
+  progress?: ProgressType;
   episodeCount?: number,
-  episodesWatched?: number,
 }
 
-function Item({ show, id, image, imageSmall, title, releaseDate, episodeCount, episodesWatched,
-  saved, nextEpisode, lastEpisode, showStatus, updateShows }: ItemProps) {
+function Item({ show, id, image, imageSmall, title, releaseDate, episodeCount,
+  progress, saved, nextEpisode, lastEpisode, showStatus, updateShows }: ItemProps) {
   const [action, setAction] = useState(saved ? 'remove' : 'add');
   const [disabled, setDisabled] = useState(false);
   const [imgSrc, setImgSrc] = useState(imageSmall || image || 'https://static.tvmaze.com/images/no-img/no-img-portrait-text.png');
@@ -112,10 +112,11 @@ function Item({ show, id, image, imageSmall, title, releaseDate, episodeCount, e
   }
 
   const WatchedProgress = () => {
-    if (episodeCount == 0 || episodeCount == undefined || episodeCount == null || episodesWatched == undefined || episodesWatched == null) {
+    if (episodeCount == 0 || episodeCount == undefined || episodeCount == null || !progress) {
       return <div className="absolute bottom-[0%] w-full bg-red-600 h-1" />;
     }
 
+    let hideNext = false;
     const totalEpisodeCount = Math.max(show.nextEpisodeNumber || -1, episodeCount);
     const nextEpisodePosition = show.nextEpisodeNumber
       ? ((show.nextEpisodeNumber - 1) / totalEpisodeCount) * 100
@@ -123,12 +124,28 @@ function Item({ show, id, image, imageSmall, title, releaseDate, episodeCount, e
     const isLastEpisode = nextEpisodePosition + (1 / totalEpisodeCount * 100) == 100;
 
     return (
-      <div className="absolute flex bottom-[0%] w-full bg-red-600 h-1">
-        <div
-          className="bg-gradient-to-r z-100 from-green-400 to-green-500 h-1 transition-all duration-500"
-          style={{ width: `${(episodesWatched / totalEpisodeCount) * 100}%` }}
-        />
-        {show.nextEpisodeNumber && show.nextEpisodeNumber > episodesWatched && show.nextEpisodeNumber <= totalEpisodeCount && (
+      <div onClick={(e) => { e.preventDefault(); e.stopPropagation(); }} className="absolute flex bottom-[0%] w-full bg-red-600 h-1">
+        {progress && progress.map((section) => {
+          if (section[0] == 1) return;
+          const left = `${section[1] / totalEpisodeCount * 100}%`;
+          const width = section[1] + section[2] != totalEpisodeCount ? `${section[2] / totalEpisodeCount * 100}%` : 'stretch';
+          if (!hideNext && show.nextEpisodeNumber) {
+            hideNext = show.nextEpisodeNumber >= section[1] + 1 && show.nextEpisodeNumber <= section[1] + section[2];
+          }
+          
+          return (
+            <div
+              key={section[1]}
+              title={section[3] && width != "stretch" ? `Last Watched: ${section[3]}` : ""}
+              className={`absolute z-100 bg-green-400 h-full cursor-default transition-all duration-500`}
+              style={{
+                left: `${left}`,
+                width: `${width}`,
+              }}
+            />
+          )
+        })}
+        {show.nextEpisodeNumber && show.nextEpisodeNumber <= totalEpisodeCount&& !hideNext && (
           <div
             className="absolute bottom-[0%] h-full cursor-default z-50 bg-blue-500"
             style={{
@@ -206,13 +223,13 @@ export function DateLayout({ groups, setUpdate } : LayoutProps) {
                   title={show.title}
                   image={show.image}
                   episodeCount={show.episodeCount}
-                  episodesWatched={show.episodesWatched}
                   imageSmall={show.imageSmall}
                   nextEpisode={show.nextEpisode}
                   lastEpisode={show.lastEpisode}
                   releaseDate={show.releaseDate}
                   updateShows={setUpdate}
                   saved={show.saved}
+                  progress={show.progress}
                 />
               ))}
             </div>
@@ -236,13 +253,13 @@ export function AlphaLayout({ shows, setUpdate } :
                   title={show.title}
                   image={show.image}
                   episodeCount={show.episodeCount}
-                  episodesWatched={show.episodesWatched}
                   imageSmall={show.imageSmall}
                   nextEpisode={show.nextEpisode}
                   lastEpisode={show.lastEpisode}
                   releaseDate={show.releaseDate}
                   updateShows={setUpdate}
                   saved={show.saved}
+                  progress={show.progress}
                 />
       })}
     </div>
@@ -266,13 +283,13 @@ export function StatusLayout({ groups, setUpdate } : LayoutProps) {
                   title={show.title}
                   image={show.image}
                   episodeCount={show.episodeCount}
-                  episodesWatched={show.episodesWatched}
                   imageSmall={show.imageSmall}
                   nextEpisode={show.nextEpisode}
                   lastEpisode={show.lastEpisode}
                   releaseDate={show.releaseDate}
                   updateShows={setUpdate}
                   saved={show.saved}
+                  progress={show.progress}
                 />
               ))}
             </div>
@@ -300,13 +317,13 @@ export function RatingsLayout({ groups, setUpdate } : LayoutProps) {
                   title={show.title}
                   image={show.image}
                   episodeCount={show.episodeCount}
-                  episodesWatched={show.episodesWatched}
                   imageSmall={show.imageSmall}
                   nextEpisode={show.nextEpisode}
                   lastEpisode={show.lastEpisode}
                   releaseDate={show.releaseDate}
                   updateShows={setUpdate}
                   saved={show.saved}
+                  progress={show.progress}
                 />
               ))}
             </div>

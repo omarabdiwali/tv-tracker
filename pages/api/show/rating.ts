@@ -23,7 +23,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const showIndex = user.shows.findIndex((show) => show.showId == `${id}`);
   
   if (showIndex == -1) {
-    const showObj = { showId: `${id}`, rating, watchedEpisodes: [] };
+    const showObj = { showId: `${id}`, rating, episodes: {} };
     user.shows.push(showObj);
   } else {
     user.shows[showIndex].rating = rating;

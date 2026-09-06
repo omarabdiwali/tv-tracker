@@ -86,7 +86,7 @@ export const purgeMoviesAndShows = async (user: IUser) => {
     }
 
     for (const show of user.shows) {
-      if (show.rating || show.saved || show.completed || show.watchedEpisodes.length) {
+      if (show.rating || show.saved || show.completed || Object.keys(show.episodes ?? {}).length) {
         userShows.push(show);
       }
     }

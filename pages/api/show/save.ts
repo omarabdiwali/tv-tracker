@@ -91,7 +91,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (index != -1) {
     user.shows[index].saved = save;
   } else {
-    const showObj = { showId: `${id}`, saved: save, watchedEpisodes: [], rating: 0 };
+    const showObj = { showId: `${id}`, saved: save, episodes: {}, rating: 0 };
     user.shows.push(showObj);
   }
 

@@ -27,9 +27,9 @@ export default function Details() {
         const obj = {
           ...data.show, 
           saved: data.saved, 
-          watched: new Set(data.watched), 
           rating: data.rating, 
-          completed: data.completed 
+          completed: data.completed,
+          actions: data.actions
         };
         setShow(obj);
       } else {
