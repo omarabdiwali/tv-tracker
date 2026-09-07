@@ -152,7 +152,7 @@ function Item({ show, id, image, imageSmall, title, releaseDate, episodeCount,
               left: `${nextEpisodePosition}%`,
               width: `${!isLastEpisode ? `${1 / totalEpisodeCount * 100}%` : 'stretch'}`,
             }}
-            title={`Next: Episode ${nextEpisode}`}
+            title={`Next: ${nextEpisode}`}
           />
         )}
       </div>

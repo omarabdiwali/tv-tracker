@@ -131,27 +131,21 @@ const progressRLE = (actions: EpisodeObjType, seasons: EpisodesData | undefined)
     const thisAction = actions[id];
     const thisIdx = indexes.get(id)!
     if (thisAction == 1) continue;
-
+    
     if (!current.val) {
       current.val = thisAction;
       current.start = thisIdx;
       current.count = 1;
+      continue;
+    }
+
+    if (thisIdx == current.start + current.count) {
+      current.count += 1;
     } else {
-      if (current.val != thisAction) {
-        rle.push([ current.val, current.start, current.count ]);
-        current.val = thisAction;
-        current.start = thisIdx;
-        current.count = 1;
-      } else {
-        if (thisIdx == current.start + current.count) {
-          current.count += 1;
-        } else {
-          rle.push([ current.val, current.start, current.count ]);
-          current.val = thisAction;
-          current.start = thisIdx;
-          current.count = 1;
-        }
-      }
+      rle.push([ current.val, current.start, current.count ]);
+      current.val = thisAction;
+      current.start = thisIdx;
+      current.count = 1;
     }
   }
 
@@ -193,15 +187,18 @@ const addCategory = async (userId: string, shows: IShow[], userShows: ObjType) =
     if (!info || (!info.saved && !info.completed)) continue;
 
     if (checkIfPassed(show)) {
-      const timeDiff = show.nextUpdatedAt ? new Date().getTime() - new Date(show.nextUpdatedAt).getTime() : 86400000 * 8;
+      const lastUpdateTime = show.nextUpdatedAt ? new Date(show.nextUpdatedAt).getTime() : 0;
+      const timeDiff = new Date().getTime() - lastUpdateTime;
       let fetchInfo = true;
       
       if (timeDiff < 86400000) {
         dayShows = dayShows ?? await getUpdatedShows("day");
-        fetchInfo = !dayShows.fetchSuccess ? true : show.id in dayShows.data;
+        const lastUpdate: number | undefined = !dayShows.fetchSuccess ? undefined : dayShows.data[show.id];
+        fetchInfo = !dayShows.fetchSuccess ? true : !lastUpdate ? false : lastUpdateTime < lastUpdate * 1000;
       } else if (timeDiff < 86400000 * 7) {
         weekShows = weekShows ?? await getUpdatedShows("week");
-        fetchInfo = !weekShows.fetchSuccess ? true : show.id in weekShows.data;
+        const lastUpdate: number | undefined = !weekShows.fetchSuccess ? undefined : weekShows.data[show.id];
+        fetchInfo = !weekShows.fetchSuccess ? true : !lastUpdate ? false : lastUpdateTime < lastUpdate * 1000;
       }
 
       if (fetchInfo) {
@@ -258,14 +255,14 @@ const addCategory = async (userId: string, shows: IShow[], userShows: ObjType) =
       }
     }
     
-    const watchedCount = Object.values(info.episodes ?? {}).filter(v => v == 2).length;
+    const actionsCount = info.episodes ? Object.keys(info.episodes).length : 0;
     const nextEpNumber = getNextEpisodeNumber(show.nextEpisode, show.seasonEpisodeCount);
     
-    if (watchedCount == 0) {
+    if (actionsCount == 0) {
       category = 2;
     } else {
-      const isUptoDate = nextEpNumber == watchedCount + 1 || nextEpNumber == watchedCount;
-      category = isUptoDate ? 1 : watchedCount == show.episodeCount ? 3 : 0;
+      const isUptoDate = nextEpNumber == actionsCount + 1 || nextEpNumber == actionsCount;
+      category = isUptoDate ? 1 : actionsCount == show.episodeCount ? 3 : 0;
     }
 
     populated.push({
