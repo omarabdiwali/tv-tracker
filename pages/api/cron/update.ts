@@ -68,7 +68,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     await dbConnect();
     const aroundAWeekAgo = new Date(Date.now() - 86400000 * 6);
-    const showsToUpdate: IShow[] = await Show.find({ nextUpdatedAt: { $lte: aroundAWeekAgo }, status: "Ended" });
+    const showsToUpdate: IShow[] = await Show.find({ nextUpdatedAt: { $lte: aroundAWeekAgo }, status: "Ended" }).lean();
     const { fetchSuccess, data: updatedShows } = await getUpdatedShows();
     const itemsToUpdate = [];
     let fetchedNewInfo = 0;

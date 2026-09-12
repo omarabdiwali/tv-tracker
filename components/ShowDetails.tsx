@@ -16,6 +16,52 @@ import { IoIosAddCircleOutline, IoIosCheckmarkCircle, IoIosCloseCircleOutline, I
 import { RxClock } from 'react-icons/rx';
 import { IoArrowRedoSharp } from 'react-icons/io5';
 
+const stripContent = (htmlString: string): string => {
+  if (!htmlString) return htmlString;
+
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(htmlString.replaceAll('\u00A0', ' ').trim(), 'text/html');
+  const body = doc.body;
+
+  const getDeepestLastChild = (element: ChildNode): ChildNode | null => {
+    let current = element;
+    while (current.lastChild) {
+      current = current.lastChild;
+    }
+    return current === element ? null : current;
+  };
+
+  while (true) {
+    const deepestNode = getDeepestLastChild(body);
+    if (!deepestNode) break;
+    let removed = false;
+
+    if (deepestNode.nodeType === Node.TEXT_NODE) {
+      if (!deepestNode.textContent?.trim()) {
+        deepestNode.remove();
+        removed = true;
+      }
+    }
+    else if (deepestNode instanceof HTMLElement) {
+      const tagName = deepestNode.tagName.toLowerCase();
+      if (tagName === 'br') {
+        deepestNode.remove();
+        removed = true;
+      }
+      else if (!deepestNode.innerHTML.replace(/<br\s*\/?>/gi, '').trim()) {
+        deepestNode.remove();
+        removed = true;
+      }
+    }
+
+    if (!removed) {
+      break;
+    }
+  }
+
+  return body.innerHTML.trim();
+}
+
 const isElementInViewport = (el: HTMLElement, parent: HTMLElement | null) => {
   const rect = el.getBoundingClientRect();
 
@@ -73,7 +119,7 @@ const EpisodeItem = memo(({ episode, actions, onToggleAction }: {
           {episode.airdate || 'N/A'}
         </div>
         {episode.summary && (
-          <div dangerouslySetInnerHTML={{ __html: sanitizeHtml((episode.summary || 'No summary.'))}} className="text-xs text-gray-100" />
+          <div dangerouslySetInnerHTML={{ __html: sanitizeHtml((stripContent(episode.summary) || 'No summary.'))}} className="text-xs text-gray-100" />
         )}
       </div>
 
@@ -631,7 +677,7 @@ export default function NewShowDetails({ show }: ShowDetailsProps) {
               Overview
             </h2>
 
-            {show.overview ? <div className="max-w-none whitespace-pre-line text-gray-300 text-lg space-y-3" dangerouslySetInnerHTML={{ __html: sanitizeHtml(show.overview) }} /> : (
+            {show.overview ? <div className="max-w-none whitespace-pre-line text-gray-300 text-lg space-y-3" dangerouslySetInnerHTML={{ __html: sanitizeHtml(stripContent(show.overview)) }} /> : (
               <div className="max-w-none">
                 <p className="text-gray-300 whitespace-pre-line text-lg">
                   No overview available.
