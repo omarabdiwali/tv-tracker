@@ -121,7 +121,7 @@ function Item({ show, id, image, imageSmall, title, releaseDate, episodeCount,
     const nextEpisodePosition = show.nextEpisodeNumber
       ? ((show.nextEpisodeNumber - 1) / totalEpisodeCount) * 100
       : 0;
-    const isLastEpisode = nextEpisodePosition + (1 / totalEpisodeCount * 100) == 100;
+    const isLastEpisode = show.nextEpisodeNumber == totalEpisodeCount;
 
     return (
       <div onClick={(e) => { e.preventDefault(); e.stopPropagation(); }} className="absolute flex bottom-[0%] w-full bg-red-600 h-1">

@@ -35,11 +35,8 @@ const queryTMDB = async (page: string, statusInfo: StatusObjType) => {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { page } = req.query;
   const session: SessionType = await getServerSession(req, res, authOptions);
-
   if (req.method != "GET") return res.status(200).json({ success: false, message: 'Method not allowed.' });
-  if (!page || (page != '1' && page != '2')) return res.status(200).json({ sucess: false, message: 'Invalid parameter.' });
   if (!session || !session.user?.id) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
 
   await dbConnect();
@@ -56,6 +53,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return acc;
   }, {})
 
-  const movies = await queryTMDB(page as string, statusInfo);
+  const movieQueries = await Promise.all([
+    queryTMDB("1", statusInfo),
+    queryTMDB("2", statusInfo)
+  ])
+
+  const unique = new Set<string>();
+  const movies = [];
+
+  for (const query of movieQueries) {
+    for (const movie of query) {
+      if (unique.has(movie.id)) continue;
+      movies.push(movie);
+      unique.add(movie.id);
+    }
+  }
+  
   return res.status(200).json({ success: true, movies });
 }

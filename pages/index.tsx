@@ -16,20 +16,18 @@ function Title() {
 export default function Home() {
   const { status } = useSession();
   const [trending, setTrending] = useState<ItemProps[]>([]);
-  const [trending1, setTrending1] = useState<ItemProps[]>([]);
   const [error, setError] = useState("");
 
   useEffect(() => {
     if (status === 'authenticated') {
-      fetchTrendingMovies(1);
-      fetchTrendingMovies(2);
+      fetchTrendingMovies();
     }
   }, [status]);
 
-  const fetchTrendingMovies = async (page: number) => {
-    fetch(`/api/movie/trending?page=${page}`).then(res => res.json()).then(data => {
+  const fetchTrendingMovies = async () => {
+    fetch(`/api/movie/trending`).then(res => res.json()).then(data => {
       if (data.success) {
-        page == 1 ? setTrending(data.movies) : setTrending1(data.movies);
+        setTrending(data.movies);
       } else {
         if (data.message == 'Unauthenticated user.') signOut();
         setError(data.message);
@@ -38,25 +36,6 @@ export default function Home() {
       console.error(err);
       setError(err.message);
     })
-  }
-
-  const concatMovies = (a: ItemProps[], b: ItemProps[]) : ItemProps[] => {
-    const unique = new Set();
-    const combination = [];
-
-    for (const movie of a) {
-      if (unique.has(movie.id)) continue;
-      unique.add(movie.id);
-      combination.push(movie);
-    }
-
-    for (const movie of b) {
-      if (unique.has(movie.id)) continue;
-      unique.add(movie.id);
-      combination.push(movie);
-    }
-
-    return combination;
   }
 
   if (status === 'unauthenticated') {
@@ -76,7 +55,7 @@ export default function Home() {
     )
   }
 
-  if (status === 'loading' || (trending.length == 0 && trending1.length == 0)) {
+  if (status === 'loading' || trending.length == 0) {
     return (
       <>
         <Title />
@@ -92,7 +71,7 @@ export default function Home() {
       <Title />
       <h2 className="text-2xl font-bold text-gray-100 mb-2 ml-4">Trending Movies</h2>
       <div className="grid items-stretch grid-cols-[repeat(auto-fill,_minmax(170px,_1fr))] gap-4 m-4">
-        {concatMovies(trending, trending1).map((movie) => {
+        {trending.map((movie) => {
           return <Item 
                     key={`movie-trending-${movie.id}`}
                     id={movie.id} title={movie.title}
