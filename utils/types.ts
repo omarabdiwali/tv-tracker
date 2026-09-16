@@ -37,6 +37,7 @@ export type EpisodeObjType = {
 }
 
 export interface UserMovie {
+  userId?: Types.ObjectId;
   movieId: string;
   watched: boolean;
   saved?: boolean;
@@ -44,6 +45,7 @@ export interface UserMovie {
 }
 
 export interface UserShow {
+  userId?: Types.ObjectId;
   showId: string;
   episodes?: EpisodeObjType;
   progress?: ProgressType;
@@ -120,12 +122,28 @@ export interface ShowDetailsProps {
   show: ShowProps;
 }
 
+export interface IUserShow extends Document {
+  userId: Types.ObjectId,
+  showId: string;
+  episodes?: EpisodeObjType;
+  progress?: ProgressType;
+  lastHash?: string;
+  saved?: boolean;
+  rating?: number;
+  completed?: boolean;
+}
+
+export interface IUserMovie extends Document {
+  userId: Types.ObjectId,
+  movieId: string;
+  watched: boolean;
+  saved?: boolean;
+  rating?: number;
+}
+
 export interface IUser extends Document {
   email: string;
-  googleId?: string;
-  movies: UserMovie[];
-  shows: UserShow[];
-  lastPurgedAt: Date;
+  googleId: string;
 }
 
 export interface IMovie extends Document {

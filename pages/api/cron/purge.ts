@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import Users from '@/models/Users';
 import dbConnect from '@/utils/dbConnect';
-import { purgeMoviesAndShows } from '@/utils/util';
+import UserMovies from '@/models/UserMovies';
+import UserShows from '@/models/UserShows';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const authHeader = req.headers.authorization;
@@ -11,13 +11,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     await dbConnect();
-    const fiveDaysAgo = new Date(Date.now() - 86400000 * 5);
-    const usersToPurge = await Users.find({ lastPurgedAt: { $lte: fiveDaysAgo } });
-    for (const user of usersToPurge) {
-      await purgeMoviesAndShows(user);
-    }
-
-    return res.status(200).json({ success: true, message: `Purged ${usersToPurge.length} user(s).` });
+    const moviesPurged = await UserMovies.deleteMany({ saved: false, watched: false, rating: 0 });
+    const showsPurged = await UserShows.deleteMany({ saved: false, completed: false, rating: 0, episodes: null });
+    return res.status(200).json({ success: true, message: `Purged ${moviesPurged.deletedCount} movie(s) and ${showsPurged.deletedCount} show(s)!` });
   } catch (error) {
     return res.status(500).json({ error: 'Internal Server Error' });
   }

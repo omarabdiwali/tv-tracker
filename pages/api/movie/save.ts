@@ -3,9 +3,10 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]";
 import dbConnect from "@/utils/dbConnect";
 import Users from "@/models/Users";
-import { IUser, SessionType } from "@/utils/types";
+import { SessionType } from "@/utils/types";
 import Movie from "@/models/Movie";
 import { hasValue, buildPosterURL, getIMDBRatings, correctRatingInfo, verifyRequiredKeys } from "@/utils/util";
+import UserMovies from "@/models/UserMovies";
 
 const queryTMDB = async (movieId: string, targetTitle: string) => {
   const apiKey = process.env.TMDB_API_KEY;
@@ -54,14 +55,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   await dbConnect();
+  const [user, movieExists, userMovie] = await Promise.all([
+    Users.exists({ _id: session.user.id }),
+    Movie.exists({ id }),
+    UserMovies.findOne({ userId: session.user.id, movieId: id })
+  ])
 
-  const user : IUser | null = await Users.findById(session.user.id, 'movies');
-  if (!user) return res.status(200).json({ success: false, message: "Unauthenticated user." });
-  
-  const index = user.movies.findIndex((movie) => movie.movieId == `${id}`);
-  const movie = await Movie.exists({ id });
-
-  if (!movie) {
+  if (!user) return res.status(200).json({ success: false, message: "Unauthenticated user." });  
+  if (!movieExists) {
     const info = await queryTMDB(id as string, title as string);
     if (!verifyRequiredKeys(info)) {
       return res.status(200).json({ success: false, message: "Invalid movie." });
@@ -69,20 +70,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     await Movie.create(info);
   }
 
-  if (index != -1) {
-    const movieObj = user.movies[index];
-    if (save == movieObj.saved) {
+  if (userMovie) {
+    if (save == userMovie.saved) {
       return res.status(200).json({ success: true, message: `${title} has already been ${save ? 'saved to' : 'removed from'} watchlist.` });
     }
   }
   
-  if (index != -1) {
-    user.movies[index].saved = save;
+  if (userMovie) {
+    userMovie.saved = save;
+    await userMovie.save();
   } else {
-    const movieObj = { movieId: `${id}`, saved: save, watched: false, rating: 0 };
-    user.movies.push(movieObj);
+    const movieObj = { userId: session.user.id, movieId: `${id}`, saved: save, watched: false, rating: 0 };
+    await UserMovies.create(movieObj);
   }
 
-  await user.save();
   return res.status(200).json({ success: true, message: `${title} has been ${save ? "saved to" : "removed from"} watchlist!` });
 }

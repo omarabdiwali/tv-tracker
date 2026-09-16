@@ -3,9 +3,10 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]";
 import dbConnect from "@/utils/dbConnect";
 import Users from "@/models/Users";
-import { IUser, SessionType, UserShow } from "@/utils/types";
+import { SessionType } from "@/utils/types";
 import Show from "@/models/Show";
 import { hasValue } from "@/utils/util";
+import UserShows from "@/models/UserShows";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method != "POST") return res.status(200).json({ success: false, message: 'Method not allowed.' });
@@ -18,33 +19,36 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   await dbConnect();
-  const user: IUser | null = await Users.findById(session.user.id, 'shows');
+  const [user, showExists, show] = await Promise.all([
+    Users.exists({ _id: session.user.id }),
+    Show.exists({ id: showId }),
+    UserShows.findOne({ userId: session.user.id, showId })
+  ])
+  
   if (!user) return res.status(200).json({ success: false, message: "Unauthenticated user." });
-
-  const index = user.shows.findIndex((show) => show.showId == `${showId}`);
-  const showExists = await Show.exists({ id: showId });
   if (!showExists) return res.status(200).json({ success: false, message: "Invalid show." });
   
-  if (index == -1) {
+  if (!show) {
     const item = value ? { [epId]: btnTyp } : {};
-    const showObj: UserShow = { showId: `${showId}`, saved: false, episodes: item, rating: 0 };
-    user.shows.push(showObj);
-  } else {
-    if (value) {
-      if (user.shows[index].episodes) {
-        user.shows[index].episodes[epId] = btnTyp;
-      } else {
-        user.shows[index].episodes = { [epId]: btnTyp };
-      }
-      user.markModified(`shows.${index}.episodes`);
+    const showObj = { userId: session.user.id, showId: `${showId}`, saved: false, episodes: item, rating: 0 };
+    await UserShows.create(showObj);
+    return res.status(200).json({ success: true });
+  }
+  
+  if (value) {
+    if (show.episodes) {
+      show.episodes[epId] = btnTyp;
     } else {
-      if (user.shows[index].episodes && epId in user.shows[index].episodes) {
-        delete user.shows[index].episodes[epId];
-        user.markModified(`shows.${index}.episodes`);
-      }
+      show.episodes = { [epId]: btnTyp };
+    }
+    show.markModified('episodes');
+  } else {
+    if (show.episodes && epId in show.episodes) {
+      delete show.episodes[epId];
+      show.markModified('episodes');
     }
   }
 
-  await user.save();
+  await show.save();
   return res.status(200).json({ success: true });
 }

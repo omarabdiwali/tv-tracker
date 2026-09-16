@@ -1,4 +1,4 @@
-import { IMDBData, IUser, SeasonEpisodeCountType } from "./types";
+import { IMDBData, SeasonEpisodeCountType } from "./types";
 
 export const wikiLangEd = `enwiki,jawiki,eswiki,dewiki,ruwiki,frwiki,itwiki,zhwiki,ptwiki,plwiki,arwiki,fawiki,idwiki,nlwiki,trwiki,ukwiki,hewiki,svwiki,kowiki,cswiki,viwiki,huwiki,fiwiki,rowwiki,thwiki,elwiki,srwiki,dawiki,bgwiki,hrwiki,skwiki,nowiki,mswiki,cawiki,hiwiki,ltwiki,tawiki,slwiki,etwiki,lvwiki,bnwiki,urwiki,kawiki,sqwiki,azwiki,tewiki,mlwiki,glwiki,mkwiki,kkwiki`
 
@@ -70,31 +70,6 @@ export const formatNumberOfVotes = (count: string | number) : string => {
   } else {
     const asMillion = (parsedCount / 1000000).toFixed(1);
     return `${asMillion}M votes`;
-  }
-}
-
-export const purgeMoviesAndShows = async (user: IUser) => {
-  const refreshTime = 86400000 * 5;
-  if (timeToRefresh(user.lastPurgedAt, refreshTime)) {
-    const userMovies = [];
-    const userShows = [];
-
-    for (const movie of user.movies) {
-      if (movie.rating || movie.saved || movie.watched) {
-        userMovies.push(movie);
-      }
-    }
-
-    for (const show of user.shows) {
-      if (show.rating || show.saved || show.completed || Object.keys(show.episodes ?? {}).length) {
-        userShows.push(show);
-      }
-    }
-
-    user.movies = userMovies;
-    user.shows = userShows;
-    user.lastPurgedAt = new Date();
-    await user.save();
   }
 }
 

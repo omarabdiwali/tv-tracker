@@ -3,8 +3,9 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]";
 import dbConnect from "@/utils/dbConnect";
 import Users from "@/models/Users";
-import { IUser, SessionType, StatusObjType } from "@/utils/types";
+import { SessionType, StatusObjType, UserShow } from "@/utils/types";
 import { getNestedProperty, hasValue } from "@/utils/util";
+import UserShows from "@/models/UserShows";
 
 const getYear = (str: string) => {
   return str.split('-', 1).at(0);
@@ -58,9 +59,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!session || !session.user?.id) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
 
   await dbConnect();
-  const user: IUser | null = await Users.findById(session.user.id, 'shows').lean();
-  if (!user) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
-  const statusInfo = user.shows.reduce((acc: StatusObjType, show) => {
+  const [user, userShows] = await Promise.all([
+    Users.exists({ _id: session.user.id }),
+    UserShows.find({ userId: session.user.id }).lean()
+  ])
+
+  if (!user) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });  
+  const statusInfo = userShows.reduce((acc: StatusObjType, show: UserShow) => {
     if (!show.completed && !show.saved) return acc;
     acc[show.showId] = -(Number(show.completed || 0)) + Number(show.saved || 0);
     return acc;

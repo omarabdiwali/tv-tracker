@@ -2,12 +2,13 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]";
 import Users from '@/models/Users'
-import { IShow, IUser, UserShow, ShowWatchlist, SessionType, EpisodesData, EpisodeObjType, ProgressType } from "@/utils/types";
+import { IShow, UserShow, ShowWatchlist, SessionType, EpisodesData, EpisodeObjType, ProgressType } from "@/utils/types";
 import dbConnect from "@/utils/dbConnect";
 import Show from "@/models/Show";
 import { getNextEpisodeNumber, hasValue } from "@/utils/util";
 import { createHash } from "crypto";
 import { Types } from "mongoose";
+import UserShows from "@/models/UserShows";
 
 type ObjType = {
   [id: string] : UserShow
@@ -248,8 +249,8 @@ const addCategory = async (userId: string, shows: IShow[], userShows: ObjType) =
         progress = progressRLE(info.episodes, showEps.episodes);
         itemsToUpdate.push({
           updateOne: {
-            filter: { _id: userId, "shows.showId": show.id },
-            update: { $set: { "shows.$.lastHash": checkHash, "shows.$.progress": progress } }
+            filter: { userId, showId: show.id },
+            update: { $set: { lastHash: checkHash, progress } }
           }
         })
       }
@@ -284,7 +285,7 @@ const addCategory = async (userId: string, shows: IShow[], userShows: ObjType) =
     });
   }
 
-  if (itemsToUpdate.length) await Users.bulkWrite(itemsToUpdate);
+  if (itemsToUpdate.length) await UserShows.bulkWrite(itemsToUpdate);
   if (showsToUpdate.length) await Show.bulkWrite(showsToUpdate, { timestamps: false });
   return populated;
 }
@@ -296,16 +297,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   await dbConnect();
   const showFields = 'id image imageSmall title episodeCount releaseDate nextEpisode lastEpisode nextUpdatedAt status seasonEpisodeCount';
-  const user: IUser | null = await Users.findById(session.user.id, 'shows').lean();
-  if (!user) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
+  const [user, userShows] = await Promise.all([
+    Users.exists({ _id: session.user.id }),
+    UserShows.find({ userId: session.user.id }).lean(),
+  ])
 
-  const showIds = user.shows.map((show) => show.showId);
-  const showObj: ObjType = user.shows.reduce((acc: ObjType, show) => {
+  if (!user) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
+  const showObj: ObjType = userShows.reduce((acc: ObjType, show) => {
     acc[show.showId] = show;
     return acc;
   }, {})
 
-  const userShows = await Show.find({ id: { $in: showIds } }, showFields).lean();
-  const formatted = await addCategory(session.user.id, userShows, showObj);
+  const showIds = Object.keys(showObj);
+  const shows = await Show.find({ id: { $in: showIds } }, showFields).lean();
+  const formatted = await addCategory(session.user.id, shows, showObj);
   return res.status(200).json({ success: true, shows: formatted });
 }

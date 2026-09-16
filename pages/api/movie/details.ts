@@ -2,10 +2,11 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]";
 import Users from "@/models/Users";
-import { IMovie, IUser, SessionType } from "@/utils/types";
+import { SessionType } from "@/utils/types";
 import dbConnect from "@/utils/dbConnect";
 import Movie from "@/models/Movie";
 import { hasValue, buildPosterURL, verifyRequiredKeys, correctRatingInfo, getIMDBRatings, timeToRefresh, getCorrectImdbId, wikiLangEd } from "@/utils/util";
+import UserMovies from "@/models/UserMovies";
 
 const replaceValues = (video: any) => {
   return [ video.key, video.official, new Date(video.published_at), video.type ];
@@ -108,17 +109,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!session || !session.user?.id) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
 
   await dbConnect();
-  const user: IUser | null = await Users.findById(session.user.id, 'movies').lean();
-  if (!user) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
+  const fields = 'title genres trailer updatedAt runtime homepage imdbId origin image overview releaseDate voteCount voteAverage id';
+  const [user, movie, userMovie] = await Promise.all([
+    Users.exists({ _id: session.user.id }),
+    Movie.findOne({ id }, fields).lean(),
+    UserMovies.findOne({ userId: session.user.id, movieId: id }).lean()
+  ])
 
-  const index = user.movies.findIndex((movie) => movie.movieId == `${id}`);
-  const saved = index != -1 ? !!user.movies[index].saved : false;
-  const watched = index != -1 ? user.movies[index].watched : false;
-  const rating = index != -1 ? (user.movies[index].rating || 0) : 0;
+  if (!user) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
+  const saved = userMovie ? !!userMovie.saved : false;
+  const watched = userMovie ? userMovie.watched : false;
+  const rating = userMovie ? (userMovie.rating || 0) : 0;
 
   let info: any = {};
-  const fields = 'title genres trailer updatedAt runtime homepage imdbId origin image overview releaseDate voteCount voteAverage id';
-  const movie: IMovie | null = await Movie.findOne({ id }, fields).lean();
   const refreshTime = 86400000 * 5;
 
   if (!movie || movie.trailer == 'n/a' || timeToRefresh(movie.updatedAt, refreshTime)) {

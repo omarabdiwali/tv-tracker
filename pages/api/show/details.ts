@@ -3,9 +3,10 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]";
 import dbConnect from "@/utils/dbConnect";
 import Users from "@/models/Users";
-import { IUser, EpisodesData, IShow, SeasonEpisodeCountType, SessionType } from "@/utils/types";
+import { EpisodesData, SeasonEpisodeCountType, SessionType } from "@/utils/types";
 import Show from "@/models/Show";
 import { hasValue, correctRatingInfo, getIMDBRatings, timeToRefresh, getCorrectImdbId } from "@/utils/util";
+import UserShows from "@/models/UserShows";
 
 const getEpisodeId = (href: string | undefined | null) => {
   if (!href) return null;
@@ -132,15 +133,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   let showInfo = {};
   const showKeys = 'title genres language status homepage imdbId image overview releaseDate voteAverage voteCount id episodes episodeCount nextEpisode lastEpisode updatedAt';
   await dbConnect();
-  const user: IUser | null = await Users.findById(session.user.id, 'shows').lean();
+  const [user, show, userShow] = await Promise.all([
+    Users.exists({ _id: session.user.id }),
+    Show.findOne({ id }, showKeys).lean(),
+    UserShows.findOne({ userId: session.user.id, showId: id }).lean()
+  ])
+  
   if (!user) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
-
-  const index = user.shows.findIndex((show) => show.showId == `${id}`);
-  const saved = index != -1 ? !!user.shows[index].saved : false;
-  const actions = index != -1 ? user.shows[index].episodes : {};
-  const rating = index != -1 ? (user.shows[index].rating || 0) : 0;
-  const completed = index != -1 ? !!user.shows[index].completed : false;
-  const show: IShow | null = await Show.findOne({ id }, showKeys);
+  const saved = userShow ? !!userShow.saved : false;
+  const actions = userShow ? userShow.episodes : {};
+  const rating = userShow ? (userShow.rating || 0) : 0;
+  const completed = userShow ? !!userShow.completed : false;
   const refreshTime = show ? show.status != 'Ended' ? 86400000 / 4 : 86400000 * 5 : 0;
 
   if (!show || !show.episodes || timeToRefresh(show.updatedAt, refreshTime)) {

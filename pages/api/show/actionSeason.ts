@@ -3,9 +3,10 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]";
 import dbConnect from "@/utils/dbConnect";
 import Users from "@/models/Users";
-import { EpisodeObjType, IUser, SessionType, UserShow } from "@/utils/types";
+import { EpisodeObjType, SessionType, UserShow } from "@/utils/types";
 import Show from "@/models/Show";
 import { hasValue } from "@/utils/util";
+import UserShows from "@/models/UserShows";
 
 const createEpisodeObj = (episodeIds: (string | number)[], value: 1 | 2) : EpisodeObjType => {
   const item: EpisodeObjType = {};
@@ -28,29 +29,31 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   await dbConnect();
-  const user: IUser | null = await Users.findById(session.user.id, 'shows');
-  if (!user) return res.status(200).json({ success: false, message: "Unauthenticated user." });
+  const [user, showExists, show] = await Promise.all([
+    Users.exists({ _id: session.user.id }),
+    Show.exists({ id: showId }),
+    UserShows.findOne({ userId: session.user.id, showId })
+  ])
 
-  const index = user.shows.findIndex((show) => show.showId == `${showId}`);
-  const showExists = await Show.exists({ id: showId });
+  if (!user) return res.status(200).json({ success: false, message: "Unauthenticated user." });
   if (!showExists) return res.status(200).json({ success: false, message: "Invalid show." });
   
-  if (index == -1) {
+  if (!show) {
     const episodes = createEpisodeObj(episodeIds, btnTyp);
-    const showObj: UserShow = { showId: `${showId}`, saved: false, episodes, rating: 0 };
-    user.shows.push(showObj);
-  } else {
-    const episodes: EpisodeObjType = user.shows[index].episodes ?? {};
-    if (value) {
-      episodeIds.forEach((id: string | number) => episodes[id] = btnTyp);
-    } else {
-      episodeIds.forEach((id: string | number) => delete episodes[id]);
-    }
-
-    user.shows[index].episodes = episodes;
-    user.markModified(`shows.${index}.episodes`);
+    const showObj = { userId: session.user.id, showId: `${showId}`, saved: false, episodes, rating: 0 };
+    await UserShows.create(showObj);
+    return res.status(200).json({ success: true });
   }
-
-  await user.save();
+  
+  const episodes: EpisodeObjType = show.episodes ?? {};
+  if (value) {
+    episodeIds.forEach((id: string | number) => episodes[id] = btnTyp);
+  } else {
+    episodeIds.forEach((id: string | number) => delete episodes[id]);
+  }
+  
+  show.episodes = episodes;
+  show.markModified('episodes');
+  await show.save();
   return res.status(200).json({ success: true });
 }

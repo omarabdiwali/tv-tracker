@@ -30,7 +30,7 @@ export const authOptions: AuthOptions = {
           dbUser.email = incomingEmail;
           await dbUser.save();
         } else if (!dbUser) {
-          dbUser = await Users.create({ googleId: account.providerAccountId, email: incomingEmail, movies: [], shows: [] });
+          dbUser = await Users.create({ googleId: account.providerAccountId, email: incomingEmail });
         }
         
         token.userId = dbUser?._id.toString();

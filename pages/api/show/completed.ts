@@ -2,10 +2,11 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]";
 import dbConnect from "@/utils/dbConnect";
-import { IUser, SessionType } from "@/utils/types";
+import { SessionType } from "@/utils/types";
 import Users from "@/models/Users";
 import Show from "@/models/Show";
 import { hasValue } from "@/utils/util";
+import UserShows from "@/models/UserShows";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method != "POST") return res.status(200).json({ success: false, message: 'Method not allowed.' });
@@ -18,20 +19,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   await dbConnect();
+  const [user, showExists, show] = await Promise.all([
+    Users.exists({ _id: session.user.id }),
+    Show.exists({ id }),
+    UserShows.findOne({ userId: session.user.id, showId: id })
+  ])
 
-  const user: IUser | null = await Users.findById(session.user.id, 'shows');
-  const showExists = await Show.exists({ id });
   if (!user) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
-  if (!showExists) return res.status(200).json({ success: false, message: 'Invalid show.' });
-  
-  const showIndex = user.shows.findIndex((shows) => shows.showId == `${id}`);
-  if (showIndex == -1) {
-    const showObj = { showId: `${id}`, saved: false, completed, episodes: {}, rating: 0 };
-    user.shows.push(showObj);
+  if (!showExists) return res.status(200).json({ success: false, message: 'Invalid show.' });  
+  if (!show) {
+    const showObj = { userId: session.user.id, showId: `${id}`, saved: false, completed, episodes: {}, rating: 0 };
+    await UserShows.create(showObj);
   } else {
-    user.shows[showIndex].completed = completed;
+    show.completed = completed;
+    await show.save();
   }
 
-  await user.save();
   return res.status(200).json({ success: true, message: 'shows completed status updated.' });
 }

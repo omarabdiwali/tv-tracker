@@ -499,7 +499,7 @@ function InfoBoxes({ status, releaseDate, lastEpisode, nextEpisode } : InfoBoxes
   )
 }
 
-export default function NewShowDetails({ show }: ShowDetailsProps) {
+export default function ShowDetails({ show }: ShowDetailsProps) {
   const { data: _, status } = useSession();
   const [buttonText, setButtonText] = useState(show.saved ? "Remove from Watchlist" : "Add to Watchlist");
   const [disabled, setDisabled] = useState(false);

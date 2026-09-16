@@ -2,9 +2,10 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]";
 import Users from '@/models/Users'
-import { IMovie, IUser, MovieWatchlist, SessionType, UserMovie } from "@/utils/types";
+import { IMovie, MovieWatchlist, SessionType, UserMovie } from "@/utils/types";
 import dbConnect from "@/utils/dbConnect";
 import Movie from "@/models/Movie";
+import UserMovies from "@/models/UserMovies";
 
 type ObjType = {
   [id: string] : UserMovie
@@ -36,19 +37,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!session || !session.user?.id) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
 
   await dbConnect();
-  const movieFields = 'id imageSmall title releaseDate'
-  const user: IUser | null = await Users.findById(session.user.id, 'movies').lean();
-  if (!user) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
+  const [user, userMovies] = await Promise.all([
+    Users.exists({ _id: session.user.id }),
+    UserMovies.find({ userId: session.user.id }).lean(),
+  ])
 
-  const movieIds = user.movies.map((movie) => movie.movieId);
-  const movieObj: ObjType = user.movies.reduce((acc: ObjType, movie) => {
+  if (!user) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
+  const movieFields = 'id imageSmall title releaseDate';
+
+  const movieObj: ObjType = userMovies.reduce((acc: ObjType, movie) => {
     acc[movie.movieId] = movie;
     return acc;
   }, {})
 
+  const movieIds = Object.keys(movieObj);
   const savedMovies = await Movie.find({ id: { $in: movieIds } }, movieFields).lean();
   const formatted = addWatchedStatus(savedMovies, movieObj);
-
-  if (!user) return res.status(200).json({ success: false, message: 'Error creating user.' });
   return res.status(200).json({ success: true, movies: formatted });
 }

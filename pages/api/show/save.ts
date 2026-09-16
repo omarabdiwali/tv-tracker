@@ -3,9 +3,10 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]";
 import dbConnect from "@/utils/dbConnect";
 import Users from "@/models/Users";
-import { IUser, SessionType } from "@/utils/types";
+import { SessionType } from "@/utils/types";
 import Show from "@/models/Show";
 import { hasValue, verifyRequiredKeys, correctRatingInfo, getIMDBRatings } from "@/utils/util";
+import UserShows from "@/models/UserShows";
 
 const parseEpisodeInfo = (data: any) => {
   if (!data) return null;
@@ -67,11 +68,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   await dbConnect();
-  const user : IUser | null = await Users.findById(session.user.id, 'shows');
-  if (!user) return res.status(200).json({ success: false, message: "Unauthenticated user." });
-  const index = user.shows.findIndex(show => show.showId == `${id}`);
-  const show = await Show.exists({ id });
+  const [user, show, userShow] = await Promise.all([
+    Users.exists({ _id: session.user.id }),
+    Show.exists({ id }),
+    UserShows.findOne({ userId: session.user.id, showId: id })
+  ])
 
+  if (!user) return res.status(200).json({ success: false, message: "Unauthenticated user." });
   if (!show) {
     const info = await queryTVMaze(id as string, title as string);
     if (Object.keys(info).length == 0) {
@@ -81,20 +84,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
   }
 
-  if (index != -1) {
-    const showObj = user.shows[index];
-    if (save == showObj.saved) {
+  if (userShow) {
+    if (save == userShow.saved) {
       return res.status(200).json({ success: true, message: `${title} has already been ${save ? 'saved to' : 'removed from'} watchlist.` });
     }
   }
 
-  if (index != -1) {
-    user.shows[index].saved = save;
+  if (userShow) {
+    userShow.saved = save;
+    await userShow.save();
   } else {
-    const showObj = { showId: `${id}`, saved: save, episodes: {}, rating: 0 };
-    user.shows.push(showObj);
+    const showObj = { userId: session.user.id, showId: `${id}`, saved: save, episodes: {}, rating: 0 };
+    await UserShows.create(showObj);
   }
 
-  await user.save();
   return res.status(200).json({ success: true, message: `${title} has been ${save ? "saved to" : "removed from"} watchlist!` });
 }
