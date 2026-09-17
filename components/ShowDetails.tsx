@@ -8,7 +8,7 @@ import { ShowDetailsProps, Episode, EpisodesData, EpisodeObjType } from '@/utils
 import { useState, useCallback, memo, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { useSnackbar } from 'notistack';
-import { formatNumberOfVotes } from '@/utils/util';
+import { formatNumberOfVotes, DEFAULT_IMG } from '@/utils/util';
 
 import { FaImdb, FaStar } from 'react-icons/fa';
 import { HiOutlineStatusOnline } from 'react-icons/hi';
@@ -505,7 +505,7 @@ export default function ShowDetails({ show }: ShowDetailsProps) {
   const [disabled, setDisabled] = useState(false);
   const [loading, setLoading] = useState(false);
   const [completed, setCompleted] = useState(!!show.completed);
-  const [imgSrc, setImgSrc] = useState(show.image || 'https://static.tvmaze.com/images/no-img/no-img-portrait-text.png');
+  const [imgSrc, setImgSrc] = useState(show.image || DEFAULT_IMG);
   const { enqueueSnackbar } = useSnackbar();
   const router = useRouter();
 
@@ -588,14 +588,14 @@ export default function ShowDetails({ show }: ShowDetailsProps) {
           <div className="sticky top-6">
             <div className="mx-auto overflow-hidden shadow-2xl transform transition-transform duration-300 hover:scale-105">
               <Image
-                unoptimized={imgSrc == 'https://static.tvmaze.com/images/no-img/no-img-portrait-text.png' ? true : false}
+                unoptimized={imgSrc == DEFAULT_IMG ? true : false}
                 alt={`${show.title} poster`}
                 src={imgSrc}
                 width={342}
                 height={513}
                 preload={true}
                 className='rounded-2xl mx-auto'
-                onError={() => setImgSrc('https://static.tvmaze.com/images/no-img/no-img-portrait-text.png')}
+                onError={() => setImgSrc(DEFAULT_IMG)}
               />
             </div>
 

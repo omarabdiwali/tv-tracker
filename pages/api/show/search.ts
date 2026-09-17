@@ -4,7 +4,7 @@ import { authOptions } from "../auth/[...nextauth]";
 import dbConnect from "@/utils/dbConnect";
 import Users from "@/models/Users";
 import { SessionType, StatusObjType, UserShow } from "@/utils/types";
-import { getNestedProperty, hasValue } from "@/utils/util";
+import { getNestedProperty, hasValue, DEFAULT_IMG } from "@/utils/util";
 import UserShows from "@/models/UserShows";
 
 const getYear = (str: string) => {
@@ -31,11 +31,11 @@ const queryTVMaze = async (queryString: string, statusInfo: StatusObjType) => {
       let image = getNestedProperty(show, ['show', 'image', 'medium']);
       if (!image) {
         image = getNestedProperty(show, ['show', 'image', 'original']);
-        image = image || 'https://static.tvmaze.com/images/no-img/no-img-portrait-text.png';
+        image = image || DEFAULT_IMG;
       }
 
       if (!hasValue(id) || !title || !image) continue;
-      if (image == 'https://static.tvmaze.com/images/no-img/no-img-portrait-text.png') {
+      if (image == DEFAULT_IMG) {
         if (!releaseDate || Number(getYear(releaseDate)) < 1970) continue;
         noImageItems.push({ id, title, image, releaseDate, saved, watched });
       } else {

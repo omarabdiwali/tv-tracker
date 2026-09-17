@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSnackbar } from "notistack";
 import { useState } from "react";
 import { IoIosAdd, IoIosCheckmark, IoIosHourglass, IoIosRemove } from "react-icons/io";
+import { DEFAULT_IMG } from "@/utils/util";
 
 const getYear = (releaseDate: string | undefined | null) => {
   if (!releaseDate) return null;
@@ -18,7 +19,7 @@ const getYear = (releaseDate: string | undefined | null) => {
 export default function Item({ movie, id, image, title, releaseDate, type, saved, watched, updateShows, showReleaseDate=false }: ItemProps) {
   const [action, setAction] = useState(saved ? 'remove' : 'add');
   const [disabled, setDisabled] = useState(false);
-  const [imgSrc, setImgSrc] = useState(image || 'https://static.tvmaze.com/images/no-img/no-img-portrait-text.png');
+  const [imgSrc, setImgSrc] = useState(image || DEFAULT_IMG);
   const { enqueueSnackbar } = useSnackbar();
   const year = getYear(releaseDate);
 
@@ -90,7 +91,7 @@ export default function Item({ movie, id, image, title, releaseDate, type, saved
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               className="p-3 object-contain"
               loading="eager"
-              onError={() => setImgSrc('https://static.tvmaze.com/images/no-img/no-img-portrait-text.png')}
+              onError={() => setImgSrc(DEFAULT_IMG)}
             />
           </div>
 

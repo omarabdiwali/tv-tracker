@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import dbConnect from '@/utils/dbConnect';
 import { IShow } from '@/utils/types';
-import { hasValue } from '@/utils/util';
+import { hasValue, DEFAULT_IMG } from '@/utils/util';
 import Show from '@/models/Show';
 
 const parseEpisodeInfo = (data: any) => {
@@ -20,7 +20,7 @@ const getEpisodesAndImage = async (showId: string) => {
   return fetch(url).then(res => res.json()).then(data => {
     if (!isNaN(parseInt(data.status))) return { success: false };
     const showStatus = data.status;
-    const img = data.image?.original || data.image?.medium || 'https://static.tvmaze.com/images/no-img/no-img-portrait-text.png';
+    const img = data.image?.original || data.image?.medium || DEFAULT_IMG;
     const imgSmall = data.image?.medium;
     const lastEp = parseEpisodeInfo(data._embedded?.previousepisode);
     const nxtEp = parseEpisodeInfo(data._embedded?.nextepisode);

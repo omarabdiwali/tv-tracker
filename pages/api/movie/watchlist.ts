@@ -16,7 +16,7 @@ const addWatchedStatus = (movies: IMovie[], userMovies: ObjType) => {
 
   for (const movie of movies) {
     const info = userMovies[movie.id];
-    if (!info) continue;
+    if (!info || (!info.saved && !info.watched)) continue;
     populated.push({
       id: movie.id,
       title: movie.title,

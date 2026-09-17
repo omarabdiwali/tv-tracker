@@ -5,7 +5,7 @@ import Users from '@/models/Users'
 import { IShow, UserShow, ShowWatchlist, SessionType, EpisodesData, EpisodeObjType, ProgressType } from "@/utils/types";
 import dbConnect from "@/utils/dbConnect";
 import Show from "@/models/Show";
-import { getNextEpisodeNumber, hasValue } from "@/utils/util";
+import { getNextEpisodeNumber, hasValue, DEFAULT_IMG } from "@/utils/util";
 import { createHash } from "crypto";
 import { Types } from "mongoose";
 import UserShows from "@/models/UserShows";
@@ -72,7 +72,7 @@ const getEpisodesAndImage = async (showId: string) => {
   return fetch(url).then(res => res.json()).then(data => {
     if (!isNaN(parseInt(data.status))) return { success: false };
     const status = data.status;
-    const image = data.image?.original || data.image?.medium || 'https://static.tvmaze.com/images/no-img/no-img-portrait-text.png';
+    const image = data.image?.original || data.image?.medium || DEFAULT_IMG;
     const imageSmall = data.image?.medium;
     const lastEpisode = parseEpisodeInfo(data._embedded?.previousepisode);
     const nextEpisode = parseEpisodeInfo(data._embedded?.nextepisode);

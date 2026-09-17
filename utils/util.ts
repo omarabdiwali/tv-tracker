@@ -1,6 +1,7 @@
 import { IMDBData, SeasonEpisodeCountType } from "./types";
 
-export const wikiLangEd = `enwiki,jawiki,eswiki,dewiki,ruwiki,frwiki,itwiki,zhwiki,ptwiki,plwiki,arwiki,fawiki,idwiki,nlwiki,trwiki,ukwiki,hewiki,svwiki,kowiki,cswiki,viwiki,huwiki,fiwiki,rowwiki,thwiki,elwiki,srwiki,dawiki,bgwiki,hrwiki,skwiki,nowiki,mswiki,cawiki,hiwiki,ltwiki,tawiki,slwiki,etwiki,lvwiki,bnwiki,urwiki,kawiki,sqwiki,azwiki,tewiki,mlwiki,glwiki,mkwiki,kkwiki`
+export const wikiLangEd = `enwiki,jawiki,eswiki,dewiki,ruwiki,frwiki,itwiki,zhwiki,ptwiki,plwiki,arwiki,fawiki,idwiki,nlwiki,trwiki,ukwiki,hewiki,svwiki,kowiki,cswiki,viwiki,huwiki,fiwiki,rowwiki,thwiki,elwiki,srwiki,dawiki,bgwiki,hrwiki,skwiki,nowiki,mswiki,cawiki,hiwiki,ltwiki,tawiki,slwiki,etwiki,lvwiki,bnwiki,urwiki,kawiki,sqwiki,azwiki,tewiki,mlwiki,glwiki,mkwiki,kkwiki`;
+export const DEFAULT_IMG = "https://static.tvmaze.com/images/no-img/no-img-portrait-text.png";
 
 export const timeToRefresh = (from: Date, refreshTime: number): boolean => {
   const current = new Date().getTime();

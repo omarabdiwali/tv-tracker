@@ -5,7 +5,7 @@ import dbConnect from "@/utils/dbConnect";
 import Users from "@/models/Users";
 import { EpisodesData, SeasonEpisodeCountType, SessionType } from "@/utils/types";
 import Show from "@/models/Show";
-import { hasValue, correctRatingInfo, getIMDBRatings, timeToRefresh, getCorrectImdbId } from "@/utils/util";
+import { hasValue, correctRatingInfo, getIMDBRatings, timeToRefresh, getCorrectImdbId, DEFAULT_IMG } from "@/utils/util";
 import UserShows from "@/models/UserShows";
 
 const getEpisodeId = (href: string | undefined | null) => {
@@ -108,7 +108,7 @@ const queryTVMaze = async (showId: string, prevImdbId: string | undefined) => {
     const seasonEpisodeCount = countNumberOfEpisodes(episodes);
     
     const episodeCount = seasonEpisodeCount.total;
-    const image = data.image?.original || data.image?.medium || 'https://static.tvmaze.com/images/no-img/no-img-portrait-text.png';
+    const image = data.image?.original || data.image?.medium || DEFAULT_IMG;
     const imageSmall = data.image?.medium;
     const nextUpdatedAt = new Date();
 

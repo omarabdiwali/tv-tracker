@@ -1,4 +1,5 @@
 import { ProgressType, ShowWatchlist } from "@/utils/types";
+import { DEFAULT_IMG } from "@/utils/util";
 import Image from "next/image";
 import Link from "next/link";
 import { useSnackbar } from "notistack";
@@ -70,7 +71,7 @@ function Item({ show, id, image, imageSmall, title, releaseDate, episodeCount,
   progress, saved, nextEpisode, lastEpisode, showStatus, updateShows }: ItemProps) {
   const [action, setAction] = useState(saved ? 'remove' : 'add');
   const [disabled, setDisabled] = useState(false);
-  const [imgSrc, setImgSrc] = useState(imageSmall || image || 'https://static.tvmaze.com/images/no-img/no-img-portrait-text.png');
+  const [imgSrc, setImgSrc] = useState(imageSmall || image || DEFAULT_IMG);
 
   const { enqueueSnackbar } = useSnackbar();
   const year = releaseDate ? releaseDate.split('-', 1).at(0) : null;
@@ -188,12 +189,12 @@ function Item({ show, id, image, imageSmall, title, releaseDate, episodeCount,
             <Image
               alt={title}
               src={imgSrc}
-              unoptimized={imageSmall || imgSrc == 'https://static.tvmaze.com/images/no-img/no-img-portrait-text.png' ? true : false}
+              unoptimized={imageSmall || imgSrc == DEFAULT_IMG ? true : false}
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               className="p-3 object-contain"
               loading="eager"
-              onError={() => setImgSrc('https://static.tvmaze.com/images/no-img/no-img-portrait-text.png')}
+              onError={() => setImgSrc(DEFAULT_IMG)}
             />
           </div>
 

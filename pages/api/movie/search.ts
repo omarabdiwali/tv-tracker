@@ -4,7 +4,7 @@ import { authOptions } from "../auth/[...nextauth]";
 import dbConnect from "@/utils/dbConnect";
 import { SessionType, StatusObjType } from "@/utils/types";
 import Users from "@/models/Users";
-import { buildPosterURL, hasValue } from "@/utils/util";
+import { buildPosterURL, hasValue, DEFAULT_IMG } from "@/utils/util";
 import UserMovies from "@/models/UserMovies";
 
 const getYear = (str: string) => {
@@ -23,7 +23,7 @@ const queryTMDB = async (queryString: string, statusInfo: StatusObjType) => {
     for (const movie of data.results) {
       const id = movie.id;
       const releaseDate = movie.release_date;
-      const image = movie.poster_path ? buildPosterURL(movie.poster_path, 'w185') : 'https://static.tvmaze.com/images/no-img/no-img-portrait-text.png';
+      const image = movie.poster_path ? buildPosterURL(movie.poster_path, 'w185') : DEFAULT_IMG;
       const title = movie.title;
 
       const statusVal = `${id}` in statusInfo ? statusInfo[`${id}`] : -2;
@@ -31,7 +31,7 @@ const queryTMDB = async (queryString: string, statusInfo: StatusObjType) => {
       const watched = statusVal == 0 || statusVal == -1;
 
       if (!hasValue(id) || !title || !image) continue;
-      if (image == 'https://static.tvmaze.com/images/no-img/no-img-portrait-text.png') {
+      if (image == DEFAULT_IMG) {
         if (!releaseDate || Number(getYear(releaseDate)) < 1970) continue;
         noImageItems.push({ id, title, image, releaseDate, saved, watched });
       } else {

@@ -9,7 +9,7 @@ import { RxClock } from 'react-icons/rx';
 import StarRating from './StarRating';
 import { useRouter } from 'next/router';
 import { useSnackbar } from 'notistack';
-import { formatNumberOfVotes } from '@/utils/util';
+import { formatNumberOfVotes, DEFAULT_IMG } from '@/utils/util';
 
 export default function MovieDetails({ movie }: MovieDetailsProps) {
   const { data: _, status } = useSession();
@@ -17,7 +17,7 @@ export default function MovieDetails({ movie }: MovieDetailsProps) {
   const [disabled, setDisabled] = useState(false);
   const [watchStatus, setWatchStatus] = useState(movie.watched);
   const [loading, setLoading] = useState(false);
-  const [imgSrc, setImgSrc] = useState(movie.image || 'https://static.tvmaze.com/images/no-img/no-img-portrait-text.png');
+  const [imgSrc, setImgSrc] = useState(movie.image || DEFAULT_IMG);
   const router = useRouter();
   const { enqueueSnackbar } = useSnackbar();
 
@@ -113,7 +113,7 @@ export default function MovieDetails({ movie }: MovieDetailsProps) {
                 height={513}
                 priority={true}
                 className='rounded-2xl mx-auto'
-                onError={() => setImgSrc('https://static.tvmaze.com/images/no-img/no-img-portrait-text.png')}
+                onError={() => setImgSrc(DEFAULT_IMG)}
               />
             </div>
 

@@ -5,7 +5,7 @@ import Users from "@/models/Users";
 import { SessionType } from "@/utils/types";
 import dbConnect from "@/utils/dbConnect";
 import Movie from "@/models/Movie";
-import { hasValue, buildPosterURL, verifyRequiredKeys, correctRatingInfo, getIMDBRatings, timeToRefresh, getCorrectImdbId, wikiLangEd } from "@/utils/util";
+import { hasValue, buildPosterURL, verifyRequiredKeys, correctRatingInfo, getIMDBRatings, timeToRefresh, getCorrectImdbId, wikiLangEd, DEFAULT_IMG } from "@/utils/util";
 import UserMovies from "@/models/UserMovies";
 
 const replaceValues = (video: any) => {
@@ -78,8 +78,8 @@ const queryTMDB = async (movieId: string, prevImdbId: string | undefined) : Prom
     const voteAverage = ratingInfo.rating;
     
     const runtime = data.runtime ? `${data.runtime} mins` : data.runtime;
-    const image = data.poster_path ? buildPosterURL(data.poster_path, 'w342') : 'https://static.tvmaze.com/images/no-img/no-img-portrait-text.png';
-    const imageSmall = data.poster_path ? buildPosterURL(data.poster_path, 'w185') : 'https://static.tvmaze.com/images/no-img/no-img-portrait-text.png';
+    const image = data.poster_path ? buildPosterURL(data.poster_path, 'w342') : DEFAULT_IMG;
+    const imageSmall = data.poster_path ? buildPosterURL(data.poster_path, 'w185') : DEFAULT_IMG;
     const trailer = getBestVideo(data.videos.results);
 
     return {
@@ -104,7 +104,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { id } = req.query;
   const session: SessionType = await getServerSession(req, res, authOptions);
   
-  if (req.method != "GET") return res.status(200).json({ success: false, message: 'Method not allowed.' })
+  if (req.method != "GET") return res.status(200).json({ success: false, message: 'Method not allowed.' });
   if (!id) return res.status(200).json({ success: false, message: 'Missing parameter.' });
   if (!session || !session.user?.id) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
 
@@ -130,7 +130,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!verifyRequiredKeys(data)) {
       return res.status(200).json({ success: false, message: "Invalid movie." });
     } else {
-      !movie ? await Movie.create(data) : await Movie.findOneAndUpdate({ id }, data)
+      !movie ? await Movie.create(data) : await Movie.findOneAndUpdate({ id }, data);
     }
 
     info = formatData(data, saved, watched, rating);

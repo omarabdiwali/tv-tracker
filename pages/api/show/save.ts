@@ -5,7 +5,7 @@ import dbConnect from "@/utils/dbConnect";
 import Users from "@/models/Users";
 import { SessionType } from "@/utils/types";
 import Show from "@/models/Show";
-import { hasValue, verifyRequiredKeys, correctRatingInfo, getIMDBRatings } from "@/utils/util";
+import { hasValue, verifyRequiredKeys, correctRatingInfo, getIMDBRatings, DEFAULT_IMG } from "@/utils/util";
 import UserShows from "@/models/UserShows";
 
 const parseEpisodeInfo = (data: any) => {
@@ -43,7 +43,7 @@ const queryTVMaze = async (showId: string, targetTitle: string) => {
     const voteAverage = ratingInfo.rating;
     const voteCount = ratingInfo.votes;
     const status = data.status;
-    const image = data.image?.original || data.image?.medium || 'https://static.tvmaze.com/images/no-img/no-img-portrait-text.png';
+    const image = data.image?.original || data.image?.medium || DEFAULT_IMG;
     const imageSmall = data.image?.medium;
 
     if (!hasValue(id) || !title || title != targetTitle || !image) return {};

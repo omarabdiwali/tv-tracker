@@ -5,7 +5,7 @@ import dbConnect from "@/utils/dbConnect";
 import Users from "@/models/Users";
 import { SessionType } from "@/utils/types";
 import Movie from "@/models/Movie";
-import { hasValue, buildPosterURL, getIMDBRatings, correctRatingInfo, verifyRequiredKeys } from "@/utils/util";
+import { hasValue, buildPosterURL, getIMDBRatings, correctRatingInfo, verifyRequiredKeys, DEFAULT_IMG } from "@/utils/util";
 import UserMovies from "@/models/UserMovies";
 
 const queryTMDB = async (movieId: string, targetTitle: string) => {
@@ -28,8 +28,8 @@ const queryTMDB = async (movieId: string, targetTitle: string) => {
     const voteAverage = ratingInfo.rating;
     
     const runtime = data.runtime ? `${data.runtime} mins` : data.runtime;
-    const image = data.poster_path ? buildPosterURL(data.poster_path, 'w342') : 'https://static.tvmaze.com/images/no-img/no-img-portrait-text.png';
-    const imageSmall = data.poster_path ? buildPosterURL(data.poster_path, 'w185') : 'https://static.tvmaze.com/images/no-img/no-img-portrait-text.png';
+    const image = data.poster_path ? buildPosterURL(data.poster_path, 'w342') : DEFAULT_IMG;
+    const imageSmall = data.poster_path ? buildPosterURL(data.poster_path, 'w185') : DEFAULT_IMG;
     const trailer = "n/a";
 
     if (title && title != targetTitle) return {};
