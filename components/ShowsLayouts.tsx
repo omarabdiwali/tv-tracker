@@ -146,7 +146,7 @@ function Item({ show, id, image, imageSmall, title, releaseDate, episodeCount,
             />
           )
         })}
-        {show.nextEpisodeNumber && show.nextEpisodeNumber <= totalEpisodeCount&& !hideNext && (
+        {show.nextEpisodeNumber && show.nextEpisodeNumber <= totalEpisodeCount && !hideNext && (
           <div
             className="absolute bottom-[0%] h-full cursor-default z-50 bg-blue-500"
             style={{

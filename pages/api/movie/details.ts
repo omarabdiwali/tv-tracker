@@ -128,12 +128,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const data = await queryTMDB(id as string, movie?.imdbId);
 
     if (!verifyRequiredKeys(data)) {
-      return res.status(200).json({ success: false, message: "Invalid movie." });
+      if (movie) { info = formatData(movie, saved, watched, rating); } 
+      else return res.status(200).json({ success: false, message: "Invalid movie." });
     } else {
       !movie ? await Movie.create(data) : await Movie.findOneAndUpdate({ id }, data);
+      info = formatData(data, saved, watched, rating);
     }
-
-    info = formatData(data, saved, watched, rating);
   } else {
     info = formatData(movie, saved, watched, rating);
   }

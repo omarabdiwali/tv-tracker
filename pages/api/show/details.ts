@@ -150,12 +150,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const info = await queryTVMaze(id as string, show?.imdbId);
     
     if (!verifyRequiredKeys(info)) {
-      return res.status(200).json({ success: false, message: "Invalid show." });
+      if (show) { showInfo = show; }
+      else return res.status(200).json({ success: false, message: "Invalid show." });
     } else {
       !show ? await Show.create(info) : await Show.findOneAndUpdate({ id }, info);
+      showInfo = info;
     }
-
-    showInfo = info;
   } else {
     showInfo = show;
   }
