@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]";
 import Users from '@/models/Users'
-import { IShow, UserShow, ShowWatchlist, SessionType, EpisodesData, EpisodeObjType, ProgressType } from "@/utils/types";
+import { IShow, UserShow, ShowWatchlist, SessionType, EpisodeObjType, ProgressType, SeasonData } from "@/utils/types";
 import dbConnect from "@/utils/dbConnect";
 import Show from "@/models/Show";
 import { getNextEpisodeNumber, hasValue, DEFAULT_IMG } from "@/utils/util";
@@ -106,7 +106,7 @@ const squishRLE = (rle: number[][], episodeInfo: Map<number, string>): ProgressT
   return merged;
 };
 
-const progressRLE = (actions: EpisodeObjType, seasons: EpisodesData | undefined) : ProgressType => {
+const progressRLE = (actions: EpisodeObjType, seasons: SeasonData | undefined) : ProgressType => {
   const ids = Object.keys(actions);
   
   if (ids.length == 0 || !seasons) return [];
@@ -114,8 +114,8 @@ const progressRLE = (actions: EpisodeObjType, seasons: EpisodesData | undefined)
   const episodeInfo = new Map<number, string>();
   let count = 0;
   
-  for (const [season, episodes] of Object.entries(seasons)) {
-    for (const ep of episodes) {
+  for (const [season, seasonInfo] of Object.entries(seasons)) {
+    for (const ep of seasonInfo.episodes) {
       const episodeString = `${ep.number}`.padStart(2, '0');
       const lastEpInfo = `${season}x${episodeString}`;
       
@@ -162,8 +162,8 @@ const getHash = (obj: EpisodeObjType) => {
   return createHash('sha256').update(stringified).digest('hex');
 }
 
-const getEpisodes = async (id: Types.ObjectId) => {
-  return await Show.findById(id, 'episodes');
+const getSeasons = async (id: Types.ObjectId) => {
+  return await Show.findById(id, 'seasons').lean();
 } 
 
 // Categories are as follows:
@@ -245,8 +245,8 @@ const addCategory = async (userId: string, shows: IShow[], userShows: ObjType) =
       if (checkHash == info.lastHash) {
         progress = info.progress ?? [];
       } else {
-        const showEps = await getEpisodes(show._id);
-        progress = progressRLE(info.episodes, showEps.episodes);
+        const showEps = await getSeasons(show._id);
+        progress = progressRLE(info.episodes, showEps.seasons);
         itemsToUpdate.push({
           updateOne: {
             filter: { userId, showId: show.id },

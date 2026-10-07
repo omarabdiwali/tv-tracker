@@ -55,9 +55,14 @@ export interface UserShow {
   completed?: boolean;
 }
 
-export type EpisodesData = {
-  [season: number]: Episode[];
-};
+export type SeasonInfo = {
+  name?: string,
+  episodes: Episode[]
+}
+
+export type SeasonData = {
+  [season: number]: SeasonInfo
+}
 
 export interface Episode {
   id: string | number;
@@ -96,7 +101,7 @@ export interface ShowProps {
   title: string;
   image: string;
   overview: string;
-  episodes?: EpisodesData;
+  seasons?: SeasonData;
   actions?: EpisodeObjType;
   imdbId?: string;
   genres?: string[];
@@ -179,7 +184,7 @@ export interface IShow extends Document {
   imdbId: string;
   releaseDate: string;
   overview: string;
-  episodes: EpisodesData;
+  seasons: SeasonData;
   genres: Array<string>;
   voteAverage: number;
   voteCount: number;

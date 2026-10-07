@@ -13,7 +13,7 @@ const showSchema = new Schema<IShow>({
   image: { type: String, required: true },
   imageSmall : { type: String, required: false },
   title: { type: String, required: true },
-  episodes: { type: Object, required: false },
+  seasons: { type: Object, required: false },
   genres: { type: [String], required: false },
   voteAverage: { type: Number, required: false },
   voteCount: { type: Number, required: false },

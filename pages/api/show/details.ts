@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]";
 import dbConnect from "@/utils/dbConnect";
 import Users from "@/models/Users";
-import { EpisodesData, SeasonEpisodeCountType, SessionType } from "@/utils/types";
+import { SeasonData, SeasonEpisodeCountType, SessionType } from "@/utils/types";
 import Show from "@/models/Show";
 import { hasValue, correctRatingInfo, getIMDBRatings, timeToRefresh, getCorrectImdbId, DEFAULT_IMG } from "@/utils/util";
 import UserShows from "@/models/UserShows";
@@ -16,31 +16,31 @@ const getEpisodeId = (href: string | undefined | null) => {
   return id;
 }
 
-const countNumberOfEpisodes = (seasons: EpisodesData): SeasonEpisodeCountType => {
+const countNumberOfEpisodes = (seasons: SeasonData): SeasonEpisodeCountType => {
   const seasonEpisodeCount: SeasonEpisodeCountType = { 'total': 0 };
-  for (const [season, episodes] of Object.entries(seasons)) {
+  for (const [season, seasonInfo] of Object.entries(seasons)) {
     const seasonInt = Number(season);
     if (isNaN(seasonInt)) continue;
     if (!(seasonInt in seasonEpisodeCount)) {
       seasonEpisodeCount[seasonInt] = 0;
     }
 
-    seasonEpisodeCount[seasonInt] += episodes.length;
-    seasonEpisodeCount.total += episodes.length;
+    seasonEpisodeCount[seasonInt] += seasonInfo.episodes.length;
+    seasonEpisodeCount.total += seasonInfo.episodes.length;
   }
 
   return seasonEpisodeCount;
 }
 
 interface ParseEpisodes {
-  episodes: EpisodesData,
+  seasons: SeasonData,
   nextEpisode: string | null,
   lastEpisode: string | null
 }
 
-const parseEpisodes = (episodes: any, nextEpisodeId: string | null, lastEpisodeId: string | null): ParseEpisodes => {
+const parseSeasons = (seasons: any, episodes: any, nextEpisodeId: string | null, lastEpisodeId: string | null): ParseEpisodes => {
   if (!episodes) return {
-    episodes: {},
+    seasons: {},
     nextEpisode: null,
     lastEpisode: null
   };
@@ -48,7 +48,16 @@ const parseEpisodes = (episodes: any, nextEpisodeId: string | null, lastEpisodeI
   let nextEpisode = null;
   let lastEpisode = null;
 
-  const seasons: any = {};
+  const parsedSeasons: any = {};
+  let seasonCount = 1;
+
+  for (const season of seasons) {
+    const seasonNumber: number = season.number ?? seasonCount;
+    const name = season.name;
+    parsedSeasons[seasonNumber] = name ? { name, episodes: [] } : { episodes: [] };
+    seasonCount += 1;
+  }
+  
   for (const episode of episodes) {
     const id = episode.id;
     const title = episode.name || "Untitled";
@@ -67,11 +76,11 @@ const parseEpisodes = (episodes: any, nextEpisodeId: string | null, lastEpisodeI
       lastEpisode = `${season}x${episodeString} / ${airdate}`;
     }
 
-    (seasons[season] ??= []).push({ id, title, number, airdate, summary });
+    parsedSeasons[season].episodes.push({ id, title, number, airdate, summary });
   }
 
   return {
-    episodes: seasons,
+    seasons: parsedSeasons,
     nextEpisode,
     lastEpisode
   }
@@ -83,7 +92,7 @@ const verifyRequiredKeys = (info: any) => {
 }
 
 const queryTVMaze = async (showId: string, prevImdbId: string | undefined) => {
-  const url = `https://api.tvmaze.com/shows/${showId}?embed=episodes`;
+  const url = `https://api.tvmaze.com/shows/${showId}?embed[]=episodes&embed[]=seasons`;
 
   return fetch(url).then(res => res.json()).then(async (data) => {
     if (!isNaN(parseInt(data.status))) return {};
@@ -104,8 +113,8 @@ const queryTVMaze = async (showId: string, prevImdbId: string | undefined) => {
     
     const lastEpisodeId = getEpisodeId(data._links?.previousepisode?.href);
     const nextEpisodeId = getEpisodeId(data._links?.nextepisode?.href);
-    const { episodes, nextEpisode, lastEpisode } = parseEpisodes(data._embedded.episodes, nextEpisodeId, lastEpisodeId);
-    const seasonEpisodeCount = countNumberOfEpisodes(episodes);
+    const { seasons, nextEpisode, lastEpisode } = parseSeasons(data._embedded.seasons, data._embedded.episodes, nextEpisodeId, lastEpisodeId);
+    const seasonEpisodeCount = countNumberOfEpisodes(seasons);
     
     const episodeCount = seasonEpisodeCount.total;
     const image = data.image?.original || data.image?.medium || DEFAULT_IMG;
@@ -114,7 +123,7 @@ const queryTVMaze = async (showId: string, prevImdbId: string | undefined) => {
 
     return {
       title, genres, language, status, homepage, imdbId, image, overview, imageSmall, seasonEpisodeCount,
-      releaseDate, voteAverage, voteCount, id, episodes, nextEpisode, lastEpisode, episodeCount, nextUpdatedAt
+      releaseDate, voteAverage, voteCount, id, seasons, nextEpisode, lastEpisode, episodeCount, nextUpdatedAt
     }
   }).catch(err => {
     console.error(err);
@@ -131,7 +140,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!session || !session.user?.id) return res.status(200).json({ success: false, message: 'Unauthenticated user.' });
 
   let showInfo = {};
-  const showKeys = 'title genres language status homepage imdbId image overview releaseDate voteAverage voteCount id episodes episodeCount nextEpisode lastEpisode updatedAt';
+  const showKeys = 'title genres language status homepage imdbId image overview releaseDate voteAverage voteCount id seasons episodeCount nextEpisode lastEpisode updatedAt';
   await dbConnect();
   const [user, show, userShow] = await Promise.all([
     Users.exists({ _id: session.user.id }),
@@ -146,7 +155,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const completed = userShow ? !!userShow.completed : false;
   const refreshTime = show ? show.status != 'Ended' ? 86400000 / 4 : 86400000 * 5 : 0;
 
-  if (!show || !show.episodes || timeToRefresh(show.updatedAt, refreshTime)) {
+  if (!show || !show.seasons || timeToRefresh(show.updatedAt, refreshTime)) {
     const info = await queryTVMaze(id as string, show?.imdbId);
     
     if (!verifyRequiredKeys(info)) {

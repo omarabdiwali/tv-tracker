@@ -165,6 +165,7 @@ function Item({ show, id, image, imageSmall, title, releaseDate, episodeCount,
       <button
         onClick={saveItem}
         disabled={disabled}
+        title={action == 'add' ? 'Add to Watchlist' : 'Remove from Watchlist'}
         className={`
           absolute left-[75%] top-[8%] z-10
           bg-black/80 py-[3px] px-[5px] rounded-md

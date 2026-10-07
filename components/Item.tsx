@@ -66,6 +66,7 @@ export default function Item({ movie, id, image, title, releaseDate, type, saved
       <button
         onClick={saveItem}
         disabled={disabled}
+        title={action == 'add' ? 'Add to Watchlist' : action == 'remove' ? 'Remove from Watchlist' : ''}
         className={`
           absolute left-[75%] top-[8%] z-10
           bg-black/80 py-[3px] px-[5px] rounded-md

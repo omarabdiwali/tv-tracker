@@ -4,7 +4,7 @@ import Link from 'next/link';
 import StarRating from './StarRating';
 
 import { useSession } from 'next-auth/react';
-import { ShowDetailsProps, Episode, EpisodesData, EpisodeObjType } from '@/utils/types';
+import { ShowDetailsProps, Episode, EpisodeObjType, SeasonData } from '@/utils/types';
 import { useState, useCallback, memo, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { useSnackbar } from 'notistack';
@@ -161,12 +161,14 @@ const EpisodeItem = memo(({ episode, actions, onToggleAction }: {
 
 const SeasonSection = ({
   seasonNumber,
+  seasonName,
   episodes,
   actions: initialActions,
   onToggle,
   onMarkAll
 }: {
   seasonNumber: number;
+  seasonName?: string;
   episodes: Episode[];
   actions: EpisodeObjType;
   onToggle: (typ: 1 | 2, id: string, value: boolean) => Promise<boolean>;
@@ -261,8 +263,8 @@ const SeasonSection = ({
     return result;
   }, [onToggle])
 
-  const handleMarkAllClick1 = useCallback(async (btnTyp: 1 | 2) => {
-    if (loading) return;
+  const handleMarkAllClick = useCallback(async (btnTyp: 1 | 2) => {
+    if (loading || episodes.length == 0) return;
     setCurrentActive(btnTyp);
     setLoading(true);
     const episodeIds = episodes.map((ep) => `${ep.id}`);
@@ -290,10 +292,11 @@ const SeasonSection = ({
         onClick={() => setIsOpen(!isOpen)}
         className="w-full flex items-center cursor-pointer justify-between p-4 bg-gray-800 hover:bg-gray-700 transition-colors duration-200"
       >
-        <div className="flex items-center gap-3">
-          <h3 className="text-sm sm:text-lg font-bold text-white">
+        <div className="flex items-center gap-2">
+          <h3 className="text-sm sm:text-lg font-bold text-white mr-1">
             Season {seasonNumber}
           </h3>
+          {seasonName && <span className='hidden sm:block text-xs my-auto text-gray-300'>{seasonName}</span>}
           {episodes.length > 0 && episodes.at(0)?.airdate && <span className="hidden sm:block sm:text-xs text-gray-400">
             {episodes.at(0)?.airdate}
           </span>}
@@ -306,9 +309,9 @@ const SeasonSection = ({
             title="Mark Season as Watched"
             onClick={(e) => {
               e.stopPropagation();
-              handleMarkAllClick1(2);
+              handleMarkAllClick(2);
             }}
-            className={`flex items-center gap-1 px-1.5 py-1.5 text-xs ${watchedCount == episodes.length ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-600/80 hover:bg-gray-500 text-gray-300'} cursor-pointer text-white rounded-full transition-colors duration-200`}
+            className={`flex items-center gap-1 px-1.5 py-1.5 text-xs ${watchedCount == episodes.length && episodes.length != 0 ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-600/80 hover:bg-gray-500 text-gray-300'} cursor-pointer text-white rounded-full transition-colors duration-200`}
           >
             {loading && currentActive == 2 ? (
               <IoIosHourglass size={14} className="animate-spin" />
@@ -320,9 +323,9 @@ const SeasonSection = ({
             title="Mark Season as Skipped"
             onClick={(e) => {
               e.stopPropagation();
-              handleMarkAllClick1(1);
+              handleMarkAllClick(1);
             }}
-            className={`flex items-center gap-1 px-1.5 py-1.5 text-xs ${skippedCount == episodes.length ? 'bg-orange-500 hover:bg-orange-600' : 'bg-gray-600/80 hover:bg-gray-500 text-gray-300'} cursor-pointer text-white rounded-full transition-colors duration-200`}
+            className={`flex items-center gap-1 px-1.5 py-1.5 text-xs ${skippedCount == episodes.length && episodes.length != 0 ? 'bg-orange-500 hover:bg-orange-600' : 'bg-gray-600/80 hover:bg-gray-500 text-gray-300'} cursor-pointer text-white rounded-full transition-colors duration-200`}
           >
             {loading && currentActive == 1 ? (
               <IoIosHourglass size={14} className="animate-spin" />
@@ -352,11 +355,11 @@ const SeasonSection = ({
 
 interface EpisodeListProps {
   showId: string | number;
-  episodes: EpisodesData;
+  seasons: SeasonData;
   actions: EpisodeObjType
 }
 
-function EpisodeList({ showId, episodes, actions }: EpisodeListProps) {
+function EpisodeList({ showId, seasons, actions }: EpisodeListProps) {
   const { enqueueSnackbar } = useSnackbar();
 
   const handleToggle = useCallback(async (btnTyp: 1 | 2, episodeId: string, value: boolean) => {
@@ -426,11 +429,11 @@ function EpisodeList({ showId, episodes, actions }: EpisodeListProps) {
     });
   }, [showId, enqueueSnackbar]);
 
-  const seasonNumbers = Object.keys(episodes)
+  const seasonNumbers = Object.keys(seasons)
     .map(Number)
     .sort((a, b) => a - b);
 
-  if (!episodes || seasonNumbers.length === 0) {
+  if (!seasons || seasonNumbers.length === 0) {
     return (
       <div className="p-6 text-center text-gray-400">
         No episodes available for this show.
@@ -441,14 +444,16 @@ function EpisodeList({ showId, episodes, actions }: EpisodeListProps) {
   return (
     <div className="space-y-3">
       {seasonNumbers.map(seasonNum => (
+        seasons[seasonNum].episodes.length ? 
         <SeasonSection
           key={seasonNum}
           seasonNumber={seasonNum}
-          episodes={episodes[seasonNum]}
+          seasonName={seasons[seasonNum]?.name}
+          episodes={seasons[seasonNum].episodes}
           actions={actions}
           onToggle={handleToggle}
           onMarkAll={handleMarkAll}
-        />
+        /> : null
       ))}
     </div>
   );
@@ -698,7 +703,7 @@ export default function ShowDetails({ show }: ShowDetailsProps) {
             <StarRating rating={show.rating || 0} id={`${show.id}`} type={'show'} />
           </div>
 
-          {status == 'authenticated' && show.episodes && Object.keys(show.episodes).length > 0 && (
+          {status == 'authenticated' && show.seasons && Object.keys(show.seasons).length > 0 && (
             <div className="space-y-4">
               <div className='flex items-center'>
                 <h2 className="flex-1 text-2xl font-bold text-white">
@@ -710,7 +715,7 @@ export default function ShowDetails({ show }: ShowDetailsProps) {
               </div>
               <EpisodeList
                 showId={show.id}
-                episodes={show.episodes}
+                seasons={show.seasons ?? {}}
                 actions={show.actions ?? {}}
               />
             </div>
