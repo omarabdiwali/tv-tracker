@@ -19,13 +19,11 @@ const getEpisodeId = (href: string | undefined | null) => {
 const countNumberOfEpisodes = (seasons: SeasonData): SeasonEpisodeCountType => {
   const seasonEpisodeCount: SeasonEpisodeCountType = { 'total': 0 };
   for (const [season, seasonInfo] of Object.entries(seasons)) {
-    const seasonInt = Number(season);
-    if (isNaN(seasonInt)) continue;
-    if (!(seasonInt in seasonEpisodeCount)) {
-      seasonEpisodeCount[seasonInt] = 0;
+    if (!(season in seasonEpisodeCount)) {
+      seasonEpisodeCount[season] = 0;
     }
 
-    seasonEpisodeCount[seasonInt] += seasonInfo.episodes.length;
+    seasonEpisodeCount[season] += seasonInfo.episodes.length;
     seasonEpisodeCount.total += seasonInfo.episodes.length;
   }
 

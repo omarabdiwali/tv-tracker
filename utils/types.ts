@@ -61,7 +61,7 @@ export type SeasonInfo = {
 }
 
 export type SeasonData = {
-  [season: number]: SeasonInfo
+  [season: string | number]: SeasonInfo
 }
 
 export interface Episode {

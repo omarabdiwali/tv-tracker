@@ -703,15 +703,15 @@ export default function ShowDetails({ show }: ShowDetailsProps) {
             <StarRating rating={show.rating || 0} id={`${show.id}`} type={'show'} />
           </div>
 
-          {status == 'authenticated' && show.seasons && Object.keys(show.seasons).length > 0 && (
+          {status == 'authenticated' && show.episodeCount ? (
             <div className="space-y-4">
               <div className='flex items-center'>
                 <h2 className="flex-1 text-2xl font-bold text-white">
                   Episodes
                 </h2>
-                {show.episodeCount && <div className='text-md font-bold text-gray-400'>
+                <div className='text-md font-bold text-gray-400'>
                   {`${show.episodeCount} ${show.episodeCount > 1 ? 'Episodes' : 'Episode'}`}
-                </div>}
+                </div>
               </div>
               <EpisodeList
                 showId={show.id}
@@ -719,7 +719,7 @@ export default function ShowDetails({ show }: ShowDetailsProps) {
                 actions={show.actions ?? {}}
               />
             </div>
-          )}
+          ) : <div className='text-md font-bold opacity-40 justify-self-center'>No scheduled episodes at this time.</div>}
         </div>
       </div>
     </div>
