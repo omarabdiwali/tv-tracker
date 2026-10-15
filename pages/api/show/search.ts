@@ -36,7 +36,7 @@ const queryTVMaze = async (queryString: string, statusInfo: StatusObjType) => {
 
       if (!hasValue(id) || !title || !image) continue;
       if (image == DEFAULT_IMG) {
-        if (!releaseDate || Number(getYear(releaseDate)) < 1970) continue;
+        if (releaseDate && Number(getYear(releaseDate)) < 1970) continue;
         noImageItems.push({ id, title, image, releaseDate, saved, watched });
       } else {
         items.push({ id, title, image, releaseDate, saved, watched });
