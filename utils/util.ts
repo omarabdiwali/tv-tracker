@@ -49,7 +49,7 @@ export const correctRatingInfo = (imdbData: IMDBData, otherRating: any, otherVot
   }
 }
 
-export const getIMDBRatings = async (id: string | undefined) : Promise<IMDBData> => {
+export const getIMDBRatings = async (id?: string) : Promise<IMDBData> => {
   if (!id) return {};
   const url = `https://api.agregarr.org/api/ratings?id=${id}`;  
   return fetch(url).then(res => res.json()).then(data => {
@@ -74,12 +74,12 @@ export const formatNumberOfVotes = (count: string | number) : string => {
   }
 }
 
-export const getCorrectImdbId = (prev: string | undefined, current: string | undefined) => {
+export const getCorrectImdbId = (prev?: string, current?: string) => {
   if (prev && !current) return prev;
   return current;
 }
 
-export const getNextEpisodeNumber = (nextEpisode: string | undefined | null, seasonEpisodeCount: SeasonEpisodeCountType | undefined) => {
+export const getNextEpisodeNumber = (nextEpisode?: string | null, seasonEpisodeCount?: SeasonEpisodeCountType) => {
   if (nextEpisode == null || nextEpisode == undefined) return;
 
   const end = nextEpisode.indexOf(' / ');
@@ -92,7 +92,7 @@ export const getNextEpisodeNumber = (nextEpisode: string | undefined | null, sea
   return passedEpisodes + number;
 }
 
-const getPassedEpisodes = (season: number | undefined, seasonEpisodeCount: SeasonEpisodeCountType | undefined) => {
+const getPassedEpisodes = (season?: number, seasonEpisodeCount?: SeasonEpisodeCountType) => {
   if (!season || season == 1 || !seasonEpisodeCount) return 0;
   let passedEpisodes = 0;
   for (const [prevSeason, count] of Object.entries(seasonEpisodeCount)) {

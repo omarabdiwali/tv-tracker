@@ -6,7 +6,7 @@ import { useState } from "react";
 import { IoIosAdd, IoIosCheckmark, IoIosHourglass, IoIosRemove } from "react-icons/io";
 import { DEFAULT_IMG } from "@/utils/util";
 
-const getYear = (releaseDate: string | undefined | null) => {
+const getYear = (releaseDate?: string | null) => {
   if (!releaseDate) return null;
   let year: string | null | undefined = releaseDate.split('-', 1).at(0);
   if (year == null || isNaN(Number(year))) {

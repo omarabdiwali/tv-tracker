@@ -460,10 +460,10 @@ function EpisodeList({ showId, seasons, actions }: EpisodeListProps) {
 }
 
 interface InfoBoxesProps {
-  status: string | null | undefined;
-  releaseDate: string | null | undefined;
-  lastEpisode: string | null | undefined;
-  nextEpisode: string | null | undefined;
+  status?: string | null;
+  releaseDate?: string | null;
+  lastEpisode?: string | null;
+  nextEpisode?: string | null;
 }
 
 function InfoBoxes({ status, releaseDate, lastEpisode, nextEpisode } : InfoBoxesProps) {
@@ -703,7 +703,7 @@ export default function ShowDetails({ show }: ShowDetailsProps) {
             <StarRating rating={show.rating || 0} id={`${show.id}`} type={'show'} />
           </div>
 
-          {status == 'authenticated' && show.episodeCount ? (
+          {status == 'authenticated' ? show.episodeCount ? (
             <div className="space-y-4">
               <div className='flex items-center'>
                 <h2 className="flex-1 text-2xl font-bold text-white">
@@ -719,7 +719,7 @@ export default function ShowDetails({ show }: ShowDetailsProps) {
                 actions={show.actions ?? {}}
               />
             </div>
-          ) : <div className='text-md font-bold opacity-40 justify-self-center'>No scheduled episodes at this time.</div>}
+          ) : <div className='text-md font-bold opacity-40 justify-self-center'>No scheduled episodes at this time.</div> : null}
         </div>
       </div>
     </div>

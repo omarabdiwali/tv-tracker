@@ -12,7 +12,7 @@ const replaceValues = (video: any) => {
   return [ video.key, video.official, new Date(video.published_at), video.type ];
 }
 
-const buildWikiDataUrl = (wikidataId: string | null | undefined) => {
+const buildWikiDataUrl = (wikidataId?: string | null) => {
   if (!wikidataId) return;
   return `https://www.wikidata.org/wiki/Special:GoToLinkedPage/${wikiLangEd}/${wikidataId}`;
 }
@@ -56,7 +56,7 @@ const getBestVideo = (videos: any) => {
   return `https://www.youtube.com/watch?v=${currentBest}`;
 }
 
-const queryTMDB = async (movieId: string, prevImdbId: string | undefined) : Promise<any> => {
+const queryTMDB = async (movieId: string, prevImdbId?: string) : Promise<any> => {
   const apiKey = process.env.TMDB_API_KEY;
   const url = `https://api.themoviedb.org/3/movie/${movieId}?api_key=${apiKey}&language=en-US&append_to_response=videos,external_ids`;
 

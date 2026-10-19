@@ -106,7 +106,7 @@ const squishRLE = (rle: number[][], episodeInfo: Map<number, string>): ProgressT
   return merged;
 };
 
-const progressRLE = (actions: EpisodeObjType, seasons: SeasonData | undefined) : ProgressType => {
+const progressRLE = (actions: EpisodeObjType, seasons?: SeasonData) : ProgressType => {
   const ids = Object.keys(actions);
   
   if (ids.length == 0 || !seasons) return [];

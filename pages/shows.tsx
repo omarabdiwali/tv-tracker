@@ -64,7 +64,7 @@ export default function Shows() {
 
   const hasAnyEpisode = (show: ShowWatchlist) => show.nextEpisode || show.lastEpisode;
 
-  const doComparison = (a: string | null | undefined, b: string | null | undefined, value: number = 1) => {
+  const doComparison = (a?: string | null, b?: string | null, value: number = 1) => {
     if (!a && !b) return 0;
     if (!a && b) return value;
     if (a && !b) return -value;

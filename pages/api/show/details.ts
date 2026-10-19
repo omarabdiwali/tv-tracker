@@ -8,7 +8,7 @@ import Show from "@/models/Show";
 import { hasValue, correctRatingInfo, getIMDBRatings, timeToRefresh, getCorrectImdbId, DEFAULT_IMG } from "@/utils/util";
 import UserShows from "@/models/UserShows";
 
-const getEpisodeId = (href: string | undefined | null) => {
+const getEpisodeId = (href?: string | null) => {
   if (!href) return null;
   const lastSlashIndex = href.lastIndexOf('/');
   if (lastSlashIndex == -1) return null;
@@ -74,6 +74,10 @@ const parseSeasons = (seasons: any, episodes: any, nextEpisodeId: string | null,
       lastEpisode = `${season}x${episodeString} / ${airdate}`;
     }
 
+    if (!(season in parsedSeasons)) {
+      parsedSeasons[season] = { episodes: [] };
+    }
+    
     parsedSeasons[season].episodes.push({ id, title, number, airdate, summary });
   }
 
@@ -89,7 +93,7 @@ const verifyRequiredKeys = (info: any) => {
   return hasValue(id) && hasValue(image) && hasValue(title);
 }
 
-const queryTVMaze = async (showId: string, prevImdbId: string | undefined) => {
+const queryTVMaze = async (showId: string, prevImdbId?: string) => {
   const url = `https://api.tvmaze.com/shows/${showId}?embed[]=episodes&embed[]=seasons`;
 
   return fetch(url).then(res => res.json()).then(async (data) => {

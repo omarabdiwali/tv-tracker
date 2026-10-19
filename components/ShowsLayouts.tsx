@@ -39,7 +39,7 @@ const ratingsSections = [
   { key: 0, label: 'Unrated' },
 ] as const;
 
-const parseAirDate = (str: string | null | undefined) => {
+const parseAirDate = (str?: string | null) => {
   if (!str) return null;
   const strd = str.slice(str.indexOf('/') + 2)
   const d = new Date(strd);

@@ -4,6 +4,8 @@ import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
 import { IoIosFilm, IoIosHome, IoIosTv } from "react-icons/io";
 import { BiSolidCameraMovie } from "react-icons/bi";
+import { FaMagnifyingGlass } from "react-icons/fa6";
+import { IoLogOut } from "react-icons/io5";
 
 export function Header() {
   const { data: _, status } = useSession();
@@ -78,6 +80,14 @@ export function Header() {
                 <IoIosFilm size={20} />
               </button>
             </Link>
+            <button
+              type="button"
+              onClick={handleSignOut}
+              title="Sign Out"
+              className="block sm:hidden p-2 sm:p-3 cursor-pointer bg-mist-800 hover:bg-mist-700 rounded-lg transition-colors flex-shrink-0"
+            >
+              <IoLogOut size={20} />
+            </button>
           </div>
 
         <form onSubmit={handleSubmit} className="flex flex-1 w-full sm:w-auto min-w-0 gap-2">
@@ -89,13 +99,21 @@ export function Header() {
             className="flex-1 min-w-0 bg-[var(--input-bg)] text-gray-200 placeholder-gray-400 px-3 py-2 rounded-lg border border-[var(--border-color)] focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all text-sm"
           />
           <button
-            type="button"
-            onClick={handleSignOut}
-            className="bg-orange-400 hover:bg-orange-300 text-black px-3 sm:px-4 py-2 cursor-pointer rounded-lg transition-colors font-medium text-sm whitespace-nowrap"
+            type="submit"
+            title="Search"
+            className="py-2 px-3 sm:px-[14px] sm:py-3 cursor-pointer hover:bg-slate-900 bg-slate-800 rounded-full transition-colors flex-shrink-0"
           >
-            Sign Out
+            <FaMagnifyingGlass size={16} />
           </button>
         </form>
+        <button
+          type="button"
+          onClick={handleSignOut}
+          title="Sign Out"
+          className="hidden sm:block p-2 sm:p-3 cursor-pointer bg-mist-800 hover:bg-mist-700 rounded-lg transition-colors flex-shrink-0"
+        >
+          <IoLogOut size={20} />
+        </button>
       </div>)}
     </header>
   );
