@@ -24,3 +24,9 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.stretch {
+  width: -moz-available;
+  width: -webkit-fill-available;
+  width: stretch;
+}

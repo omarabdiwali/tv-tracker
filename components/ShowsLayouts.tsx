@@ -138,20 +138,20 @@ function Item({ show, id, image, imageSmall, title, releaseDate, episodeCount,
             <div
               key={section[1]}
               title={section[3] && width != "stretch" ? `Last Watched: ${section[3]}` : ""}
-              className={`absolute z-100 bg-green-400 h-full cursor-default transition-all duration-500`}
+              className={`absolute ${width == 'stretch' ? 'stretch' : null} z-100 bg-green-400 h-full cursor-default transition-all duration-500`}
               style={{
                 left: `${left}`,
-                width: `${width}`,
+                width: width != 'stretch' ? `${width}` : undefined,
               }}
             />
           )
         })}
         {show.nextEpisodeNumber && show.nextEpisodeNumber <= totalEpisodeCount && !hideNext && (
           <div
-            className="absolute bottom-[0%] h-full cursor-default z-50 bg-blue-500"
+            className={`absolute ${isLastEpisode ? 'stretch' : null} bottom-[0%] h-full cursor-default z-50 bg-blue-500`}
             style={{
               left: `${nextEpisodePosition}%`,
-              width: `${!isLastEpisode ? `${1 / totalEpisodeCount * 100}%` : 'stretch'}`,
+              width: !isLastEpisode ? `${1 / totalEpisodeCount * 100}%` : undefined,
             }}
             title={`Next: ${nextEpisode}`}
           />
